@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import * as r2Service from '@/lib/r2-service';
-
-const prisma = new PrismaClient();
 
 // This route should be called by a CRON job (e.g. Vercel Cron)
 // Protected by a secret token in the header or URL params
