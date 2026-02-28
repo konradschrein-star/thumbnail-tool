@@ -53,7 +53,6 @@ lib/**/*.d.ts.map
 
 # Sensitive: Reference images and test assets
 /assets/test/
-/public/archetypes/
 /public/generated/
 
 # Sensitive: Database files (contain user data)

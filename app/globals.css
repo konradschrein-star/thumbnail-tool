@@ -1,6 +1,7 @@
 :root {
     --background: #09090b;
     --foreground: #fafafa;
+    --sidebar-width: 280px;
 
     /* ... rest of variables ... */
     --font-inter: 'Inter', sans-serif;
