@@ -39,6 +39,10 @@ export function validateEnv(): EnvValidationResult {
  * Server-side check for API routes
  */
 export function ensureEnvOrThrow() {
+    // Skip critical checks during static optimization/build
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+        return;
+    }
     const result = validateEnv();
     if (!result.isValid) {
         throw new Error(`Critical environment variables missing: ${result.missing.join(', ')}`);

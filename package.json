@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3071",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "build:lib": "tsc --project tsconfig.lib.json",
     "start": "next start -p 3071",
     "test:generate": "tsx scripts/test-generate.ts",
