@@ -31,7 +31,7 @@ export interface AIRequestPayload {
   userPrompt: string;
   base64Images: {
     archetype: { data: string; mimeType: string };
-    persona: { data: string; mimeType: string };
+    persona?: { data: string; mimeType: string };
     logo?: { data: string; mimeType: string };
   };
 }
@@ -289,14 +289,14 @@ export async function assemblePayload(
   const [archetypeResult, personaResult, logoResult] = await Promise.all(encodingTasks);
 
   if (!archetypeResult || !archetypeResult.data) throw new Error("Archetype image is required");
-  if (!personaResult || !personaResult.data) throw new Error("Persona image is required");
+  // Persona is now optional for Nano Banana
 
   return {
     systemPrompt,
     userPrompt,
     base64Images: {
       archetype: archetypeResult,
-      persona: personaResult,
+      ...(personaResult && personaResult.data ? { persona: personaResult } : {}),
       ...(logoResult && logoResult.data ? { logo: logoResult } : {}),
     },
   };

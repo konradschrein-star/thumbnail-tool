@@ -67,24 +67,48 @@ export async function callNanoBanana(
     // Merge system and user prompts
     const fullPrompt = `${payload.systemPrompt}\n\n${payload.userPrompt}`;
 
-    console.log('   Calling Nano Banana (nano-banana-pro-preview)...');
-    console.log(`   Prompt length: ${fullPrompt.length} characters`);
-    console.log(`   Reference images: ${imageParts.length}`);
+    // Unified multi-part content (RELEVENT: Gemini preview models often fail if parts are split across messages)
+    const primaryContent = {
+      role: 'user',
+      parts: [
+        { text: fullPrompt },
+        ...imageParts.map(p => ({ inlineData: p.inlineData }))
+      ]
+    };
 
-    // Nano Banana uses generateContent with responseModalities set to IMAGE
-    const response = await ai.models.generateContent({
-      model: 'nano-banana-pro-preview',
-      contents: [
-        fullPrompt,
-        ...imageParts
-      ],
-      config: {
-        responseModalities: ["IMAGE"],
-        imageGenerationConfig: {
-          aspectRatio: "16:9"  // YouTube standard
-        }
-      } as any
-    });
+    const callWithPayload = async (content: any) => {
+      return await ai.models.generateContent({
+        model: 'nano-banana-pro-preview',
+        contents: [content],
+        config: {
+          responseModalities: ["IMAGE"],
+          imageGenerationConfig: {
+            aspectRatio: "16:9"
+          }
+        } as any
+      });
+    };
+
+    let response;
+    try {
+      console.log('   Calling Nano Banana (Unified Payload)...');
+      response = await callWithPayload(primaryContent);
+    } catch (error: any) {
+      const msg = error.message || "";
+      if (msg.includes("Unable to process input image") && imageParts.length > 1) {
+        console.warn('   ⚠️ Multi-image payload failed. Retrying with Archetype ONLY...');
+        const fallbackContent = {
+          role: 'user',
+          parts: [
+            { text: fullPrompt },
+            { inlineData: imageParts[0].inlineData }
+          ]
+        };
+        response = await callWithPayload(fallbackContent);
+      } else {
+        throw error;
+      }
+    }
 
     // Check for content blocking/safety filters
     if (response.promptFeedback && response.promptFeedback.blockReason) {
