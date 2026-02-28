@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // GET /api/jobs?channelId=xxx&status=xxx - List generation jobs for the current user
 export async function GET(request: NextRequest) {
