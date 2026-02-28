@@ -1,32 +1,97 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { BlurFade } from '../ui/blur-fade';
+import { BorderBeam } from '../ui/border-beam';
+import { ShimmerButton } from '../ui/shimmer-button';
+import {
+  Wand2,
+  Layout,
+  Tv,
+  Image as ImageIcon,
+  Zap,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Sparkles,
+  Loader2,
+  Download
+} from 'lucide-react';
+import { generateProfessionalFilename, downloadRemoteImage } from '@/lib/download-utils';
 import Input from '../shared/Input';
 import Button from '../shared/Button';
 import ErrorMessage from '../shared/ErrorMessage';
-import { spacing, colors, borderRadius } from '../../styles';
 import useChannels from '../../hooks/useChannels';
 import useArchetypes from '../../hooks/useArchetypes';
 import useGenerate from '../../hooks/useGenerate';
 
-export default function GenerateForm() {
+interface GenerateFormProps {
+  initialData?: any;
+}
+
+export default function GenerateForm({ initialData }: GenerateFormProps) {
   const { channels } = useChannels();
-  const [selectedChannelId, setSelectedChannelId] = useState('');
+  const [selectedChannelId, setSelectedChannelId] = useState(initialData?.channelId || '');
   const { archetypes } = useArchetypes(selectedChannelId);
   const { loading, error, success, result, generateThumbnail, reset } = useGenerate();
 
-  const [archetypeId, setArchetypeId] = useState('');
-  const [videoTopic, setVideoTopic] = useState('');
-  const [thumbnailText, setThumbnailText] = useState('');
-  const [customPrompt, setCustomPrompt] = useState('');
-  const [showCustomPrompt, setShowCustomPrompt] = useState(false);
+  const searchParams = useSearchParams();
+  const redoJobId = searchParams.get('jobId');
 
+  const [archetypeId, setArchetypeId] = useState(initialData?.archetypeId || '');
+  const [videoTopic, setVideoTopic] = useState(initialData?.videoTopic || initialData?.videoTitle || ''); // Handle both
+  const [thumbnailText, setThumbnailText] = useState(initialData?.thumbnailText || '');
+  const [draftPrompt, setDraftPrompt] = useState(initialData?.promptUsed || '');
+  const [showDraftPrompt, setShowDraftPrompt] = useState(!!initialData?.promptUsed);
+  const [archetypeSearch, setArchetypeSearch] = useState('');
+  const [versionCount, setVersionCount] = useState(1);
   const [validationErrors, setValidationErrors] = useState<{
     channelId?: string;
     archetypeId?: string;
     videoTopic?: string;
     thumbnailText?: string;
   }>({});
+
+  // Load job for Redo if jobId exists
+  useEffect(() => {
+    if (redoJobId && channels.length > 0) {
+      const loadJobForRedo = async () => {
+        try {
+          const response = await fetch(`/api/jobs/${redoJobId}`);
+          if (!response.ok) return;
+          const jobData = await response.json();
+
+          setSelectedChannelId(jobData.channelId || '');
+          setArchetypeId(jobData.archetypeId || '');
+          setVideoTopic(jobData.videoTopic || '');
+          setThumbnailText(jobData.thumbnailText || '');
+          setDraftPrompt(jobData.customPrompt || '');
+          if (jobData.customPrompt) setShowDraftPrompt(true);
+        } catch (err) {
+          console.error('[REDO] Load error:', err);
+        }
+      };
+      loadJobForRedo();
+    }
+  }, [redoJobId, channels.length]);
+
+  // Auto-populate draft prompt when selections change
+  useEffect(() => {
+    if (selectedChannelId && archetypeId && videoTopic) {
+      const channel = channels.find((c: any) => c.id === selectedChannelId);
+      const archetype = archetypes.find((a: any) => a.id === archetypeId);
+
+      if (channel && archetype) {
+        // This is a rough estimation of what the system will generate
+        const preview = `A high-impact thumbnail for "${videoTopic}" featuring ${channel.name}.\n` +
+          `Text: "${thumbnailText}"\n` +
+          `Style: ${archetype.name}\n` +
+          `Instructions: ${archetype.layoutInstructions}`;
+        setDraftPrompt(preview);
+      }
+    }
+  }, [selectedChannelId, archetypeId, videoTopic, thumbnailText, channels, archetypes]);
 
   // Reset archetype when channel changes
   useEffect(() => {
@@ -56,8 +121,22 @@ export default function GenerateForm() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleDownload = async (url: string, index: number) => {
+    const channel = channels.find((c: any) => c.id === selectedChannelId);
+    const archetype = archetypes.find((a: any) => a.id === archetypeId);
+
+    const filename = generateProfessionalFilename(
+      channel?.name || 'Channel',
+      archetype?.category || 'General',
+      videoTopic || 'Thumbnail',
+      index + 1
+    );
+
+    await downloadRemoteImage(url, filename);
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
 
     if (!validate()) return;
 
@@ -67,7 +146,8 @@ export default function GenerateForm() {
         archetypeId,
         videoTopic: videoTopic.trim(),
         thumbnailText: thumbnailText.trim(),
-        customPrompt: customPrompt.trim() || undefined,
+        customPrompt: draftPrompt.trim() || undefined,
+        versionCount,
       });
     } catch (err) {
       // Error is handled by useGenerate hook
@@ -80,231 +160,882 @@ export default function GenerateForm() {
     setArchetypeId('');
     setVideoTopic('');
     setThumbnailText('');
-    setCustomPrompt('');
-    setShowCustomPrompt(false);
+    setDraftPrompt('');
+    setVersionCount(1);
+    setShowDraftPrompt(false);
     setValidationErrors({});
   };
 
+  const handleRedo = () => {
+    handleSubmit();
+  };
+
   return (
-    <div>
-      <h2 style={{ marginBottom: spacing.lg }}>Generate Thumbnail</h2>
+    <div className="generate-container">
+      <BlurFade delay={0.1}>
+        <div className="view-header">
+          <h2 className="view-title">Generate Thumbnail</h2>
+          <p className="view-subtitle">Transform your video ideas into high-converting visual assets</p>
+        </div>
+      </BlurFade>
 
       {success && result ? (
-        // Success State
-        <div
-          style={{
-            textAlign: 'center',
-            padding: spacing.xxl,
-            backgroundColor: colors.successLight,
-            borderRadius: borderRadius.md,
-          }}
-        >
-          <div style={{ fontSize: '3rem', marginBottom: spacing.md }}>✅</div>
-          <h3 style={{ color: colors.success, marginBottom: spacing.md }}>
-            Thumbnail Generated Successfully!
-          </h3>
+        <div className="success-wrapper">
+          <BlurFade delay={0.2} direction="up">
+            <div className="success-container glass-dark">
+              <div className="success-header">
+                <div className="check-icon"><CheckCircle2 size={32} /></div>
+                <h3>Success!</h3>
+                <p>Your premium thumbnail{result.jobs && result.jobs.length > 1 ? 's have' : ' has'} been generated.</p>
+              </div>
 
-          {/* Thumbnail Preview */}
-          <div
-            style={{
-              marginBottom: spacing.lg,
-              display: 'inline-block',
-              border: `2px solid ${colors.success}`,
-              borderRadius: borderRadius.md,
-              overflow: 'hidden',
-            }}
-          >
-            <img
-              src={result.job.outputUrl}
-              alt="Generated thumbnail"
-              style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
-            />
-          </div>
+              <div className={`result-preview-grid ${result.jobs && result.jobs.length > 1 ? 'multi' : 'single'}`}>
+                {(result.jobs || [result.job]).map((job, idx) => (
+                  <div key={job.id || idx} className="result-item glass">
+                    <img
+                      src={job.outputUrl}
+                      alt={`Generated thumbnail ${idx + 1}`}
+                      className="generated-image"
+                    />
+                    <div className="result-actions-overlay">
+                      <Button
+                        size="small"
+                        variant="secondary"
+                        onClick={() => handleDownload(job.outputUrl, idx)}
+                        className="action-btn"
+                      >
+                        <Zap size={14} style={{ marginRight: '0.4rem' }} /> Download
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="secondary"
+                        onClick={() => window.open(job.outputUrl, '_blank')}
+                        className="action-btn"
+                      >
+                        <Layout size={14} style={{ marginRight: '0.4rem' }} /> Full Size
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-          <div style={{ display: 'flex', gap: spacing.md, justifyContent: 'center' }}>
-            <Button
-              variant="secondary"
-              onClick={() => window.open(result.job.outputUrl, '_blank')}
-            >
-              Open Full Size
-            </Button>
-            <Button onClick={handleReset}>Generate Another</Button>
-          </div>
+              <div className="success-actions">
+                <Button variant="secondary" onClick={handleRedo} disabled={loading}>
+                  {loading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} style={{ marginRight: '0.6rem' }} />}
+                  Redo Batch
+                </Button>
+                <ShimmerButton onClick={handleReset} background="#ffffff" className="success-shimmer">
+                  New Generation
+                </ShimmerButton>
+              </div>
+            </div>
+          </BlurFade>
         </div>
       ) : (
-        // Form State
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="form-wrapper">
           {error && <ErrorMessage message={error} onDismiss={() => reset()} />}
 
-          {/* Channel Selector */}
-          <div style={{ marginBottom: spacing.md }}>
-            <label
-              style={{
-                display: 'block',
-                marginBottom: spacing.sm,
-                fontWeight: '500',
-                color: colors.text,
-              }}
-            >
-              Channel <span style={{ color: colors.error }}>*</span>
-            </label>
-            <select
-              value={selectedChannelId}
-              onChange={(e) => setSelectedChannelId(e.target.value)}
-              disabled={loading}
-              style={{
-                padding: '0.625rem',
-                border: `1px solid ${validationErrors.channelId ? colors.error : colors.border}`,
-                borderRadius: borderRadius.md,
-                fontSize: '1rem',
-                width: '100%',
-                fontFamily: 'inherit',
-                backgroundColor: loading ? colors.backgroundDark : colors.white,
-              }}
-            >
-              <option value="">Select a channel</option>
-              {channels.map((channel) => (
-                <option key={channel.id} value={channel.id}>
-                  {channel.name}
-                </option>
-              ))}
-            </select>
-            {validationErrors.channelId && (
-              <div style={{ marginTop: spacing.sm, color: colors.error, fontSize: '0.875rem' }}>
-                {validationErrors.channelId}
+          <div className="form-grid">
+            <BlurFade delay={0.2} direction="right">
+              <div className="form-column glass">
+                <div className="column-content">
+                  <div className="column-header">
+                    <Tv size={18} className="text-muted-foreground" />
+                    <h3 className="column-title">Source Details</h3>
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label">
+                      Channel <span className="required">*</span>
+                    </label>
+                    <select
+                      value={selectedChannelId}
+                      onChange={(e) => setSelectedChannelId(e.target.value)}
+                      disabled={loading}
+                      className={`form-select ${validationErrors.channelId ? 'has-error' : ''}`}
+                      title="Select Channel"
+                    >
+                      <option value="">Select a channel</option>
+                      {channels.map((channel: any) => (
+                        <option key={channel.id} value={channel.id}>
+                          {channel.name}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedChannelId && (
+                      <div className="preview-small-card glass-dark">
+                        {channels.find((c: any) => c.id === selectedChannelId)?.personaAssetPath && (
+                          <div className="preview-item">
+                            <span className="preview-label">Persona</span>
+                            <img src={channels.find((c: any) => c.id === selectedChannelId)?.personaAssetPath} alt="Persona preview" />
+                          </div>
+                        )}
+                        {channels.find((c: any) => c.id === selectedChannelId)?.logoAssetPath && (
+                          <div className="preview-item">
+                            <span className="preview-label">Logo</span>
+                            <img src={channels.find((c: any) => c.id === selectedChannelId)?.logoAssetPath} alt="Logo preview" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {validationErrors.channelId && (
+                      <div className="error-text">{validationErrors.channelId}</div>
+                    )}
+                  </div>
+
+                  <div className="field-group">
+                    <label className="field-label">
+                      Archetype <span className="required">*</span>
+                    </label>
+                    <div className="search-box">
+                      <Input
+                        placeholder="Search archetypes..."
+                        value={archetypeSearch}
+                        onChange={setArchetypeSearch}
+                        className="search-input"
+                      />
+                    </div>
+                    <select
+                      value={archetypeId}
+                      onChange={(e) => setArchetypeId(e.target.value)}
+                      disabled={!selectedChannelId || loading}
+                      className={`form-select ${validationErrors.archetypeId ? 'has-error' : ''}`}
+                      title="Select Archetype"
+                    >
+                      <option value="">
+                        {selectedChannelId
+                          ? archetypes.length > 0
+                            ? 'Select an archetype'
+                            : 'No archetypes for this channel'
+                          : 'Select a channel first'}
+                      </option>
+                      {archetypes
+                        .filter((a: any) => a.name.toLowerCase().includes(archetypeSearch.toLowerCase()) || a.category?.toLowerCase().includes(archetypeSearch.toLowerCase()))
+                        .map((archetype: any) => (
+                          <option key={archetype.id} value={archetype.id}>
+                            [{archetype.category || 'General'}] {archetype.name}
+                          </option>
+                        ))}
+                    </select>
+                    {archetypeId && (
+                      <div className="archetype-preview-card glass-dark">
+                        <img
+                          src={archetypes.find((a: any) => a.id === archetypeId)?.imageUrl}
+                          alt="Archetype reference"
+                          className="archetype-preview-img"
+                        />
+                        <div className="archetype-preview-info">
+                          <span className="archetype-preview-tag">{archetypes.find((a: any) => a.id === archetypeId)?.category || 'General'}</span>
+                          <p className="archetype-preview-instructions">{archetypes.find((a: any) => a.id === archetypeId)?.layoutInstructions}</p>
+                        </div>
+                      </div>
+                    )}
+                    {validationErrors.archetypeId && (
+                      <div className="error-text">{validationErrors.archetypeId}</div>
+                    )}
+                  </div>
+
+                  <div className="advanced-toggle">
+                    <button
+                      type="button"
+                      className={`toggle-btn ${showDraftPrompt ? 'active' : ''}`}
+                      onClick={() => setShowDraftPrompt(!showDraftPrompt)}
+                      disabled={loading}
+                    >
+                      <span className="icon">{showDraftPrompt ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
+                      Editable Generation Prompt
+                    </button>
+                  </div>
+
+                  {showDraftPrompt && (
+                    <BlurFade delay={0.1}>
+                      <div className="advanced-content">
+                        <Input
+                          label="Prompt Draft"
+                          value={draftPrompt}
+                          onChange={setDraftPrompt}
+                          placeholder="This prompt will be sent to the AI..."
+                          multiline
+                          rows={6}
+                          disabled={loading}
+                        />
+                        <p className="field-hint">You can manually tweak the AI's instructions here before generating.</p>
+                      </div>
+                    </BlurFade>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
+            </BlurFade>
 
-          {/* Archetype Selector */}
-          <div style={{ marginBottom: spacing.md }}>
-            <label
-              style={{
-                display: 'block',
-                marginBottom: spacing.sm,
-                fontWeight: '500',
-                color: colors.text,
-              }}
-            >
-              Archetype <span style={{ color: colors.error }}>*</span>
-            </label>
-            <select
-              value={archetypeId}
-              onChange={(e) => setArchetypeId(e.target.value)}
-              disabled={!selectedChannelId || loading}
-              style={{
-                padding: '0.625rem',
-                border: `1px solid ${validationErrors.archetypeId ? colors.error : colors.border}`,
-                borderRadius: borderRadius.md,
-                fontSize: '1rem',
-                width: '100%',
-                fontFamily: 'inherit',
-                backgroundColor:
-                  !selectedChannelId || loading ? colors.backgroundDark : colors.white,
-                cursor: !selectedChannelId || loading ? 'not-allowed' : 'pointer',
-              }}
-            >
-              <option value="">
-                {selectedChannelId
-                  ? archetypes.length > 0
-                    ? 'Select an archetype'
-                    : 'No archetypes for this channel'
-                  : 'Select a channel first'}
-              </option>
-              {archetypes.map((archetype) => (
-                <option key={archetype.id} value={archetype.id}>
-                  {archetype.name}
-                </option>
-              ))}
-            </select>
-            {validationErrors.archetypeId && (
-              <div style={{ marginTop: spacing.sm, color: colors.error, fontSize: '0.875rem' }}>
-                {validationErrors.archetypeId}
+            <BlurFade delay={0.3} direction="left">
+              <div className="form-column glass">
+                <div className="column-content">
+                  <div className="column-header">
+                    <Sparkles size={18} className="text-muted-foreground" />
+                    <h3 className="column-title">Content Generation</h3>
+                  </div>
+                  <Input
+                    label="Video Topic"
+                    value={videoTopic}
+                    onChange={setVideoTopic}
+                    placeholder="e.g., How to build a high-IQ Vibe Coder app"
+                    required
+                    error={validationErrors.videoTopic}
+                    disabled={loading}
+                  />
+
+                  <Input
+                    label="Thumbnail Text"
+                    value={thumbnailText}
+                    onChange={setThumbnailText}
+                    placeholder="e.g., VIBE CODER"
+                    required
+                    error={validationErrors.thumbnailText}
+                    disabled={loading}
+                    maxLength={50}
+                  />
+
+                  <div className="generation-status">
+                    {loading ? (
+                      <div className="loading-state-premium glass-dark relative overflow-hidden">
+                        <BorderBeam size={200} duration={4} colorFrom="#ffffff" colorTo="#333333" />
+                        <div className="loading-content">
+                          <div className="animation-container">
+                            <div className="sparkle-orbit">
+                              <Sparkles className="premium-sparkle-main" size={48} />
+                            </div>
+                            <div className="scan-line" />
+                          </div>
+                          <div className="status-text-premium">
+                            <h4 className="animate-pulse">Titan AI is Crafting...</h4>
+                            <p>Synthesizing {versionCount} High-IQ Version{versionCount > 1 ? 's' : ''}</p>
+                            <div className="progress-bar-container">
+                              <div className="progress-bar-fill animate-shimmer" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="info-card glass">
+                        <div className="info-icon"><Zap size={18} /></div>
+                        <p>AI will analyze your selected archetype and video topic to create a high-converting thumbnail.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="field-group version-selector">
+                    <label className="field-label">Versions to Generate</label>
+                    <div className="version-controls">
+                      {[1, 2, 3, 4].map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          className={`version-btn ${versionCount === v ? 'active' : ''}`}
+                          onClick={() => setVersionCount(v)}
+                          disabled={loading}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="form-actions">
+                    <ShimmerButton
+                      type="submit"
+                      disabled={loading}
+                      className="submit-btn"
+                      background="#ffffff"
+                    >
+                      <Sparkles size={18} style={{ marginRight: '0.6rem' }} />
+                      {loading ? 'Creating Batch...' : `Generate ${versionCount} Version${versionCount > 1 ? 's' : ''}`}
+                    </ShimmerButton>
+                  </div>
+                </div>
               </div>
-            )}
+            </BlurFade>
           </div>
-
-          {/* Video Topic */}
-          <Input
-            label="Video Topic"
-            value={videoTopic}
-            onChange={setVideoTopic}
-            placeholder="e.g., How to master TypeScript in 2024"
-            required
-            error={validationErrors.videoTopic}
-            disabled={loading}
-          />
-
-          {/* Thumbnail Text */}
-          <Input
-            label="Thumbnail Text"
-            value={thumbnailText}
-            onChange={setThumbnailText}
-            placeholder="e.g., MASTER TYPESCRIPT"
-            required
-            error={validationErrors.thumbnailText}
-            disabled={loading}
-            maxLength={50}
-          />
-
-          {/* Custom Prompt (Optional) */}
-          <div style={{ marginBottom: spacing.md }}>
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={() => setShowCustomPrompt(!showCustomPrompt)}
-              disabled={loading}
-            >
-              {showCustomPrompt ? '▼' : '▶'} Advanced: Custom Prompt Override
-            </Button>
-          </div>
-
-          {showCustomPrompt && (
-            <Input
-              label="Custom Prompt (Optional)"
-              value={customPrompt}
-              onChange={setCustomPrompt}
-              placeholder="Override the default prompt with a custom one"
-              multiline
-              rows={4}
-              disabled={loading}
-            />
-          )}
-
-          {/* Submit Button */}
-          <div style={{ display: 'flex', gap: spacing.md, justifyContent: 'flex-end' }}>
-            <Button type="submit" disabled={loading} style={{ minWidth: '200px' }}>
-              {loading ? (
-                <>
-                  <span>Generating...</span>
-                </>
-              ) : (
-                'Generate Thumbnail'
-              )}
-            </Button>
-          </div>
-
-          {loading && (
-            <div
-              style={{
-                marginTop: spacing.lg,
-                padding: spacing.lg,
-                backgroundColor: colors.primaryLight,
-                borderRadius: borderRadius.md,
-                textAlign: 'center',
-                color: colors.primary,
-              }}
-            >
-              <div style={{ fontSize: '2rem', marginBottom: spacing.sm }}>⏳</div>
-              <strong>Generating your thumbnail...</strong>
-              <p style={{ margin: spacing.sm, fontSize: '0.875rem' }}>
-                This may take 10-30 seconds
-              </p>
-            </div>
-          )}
         </form>
       )}
+
+      <style jsx>{`
+        .generate-container {
+          max-width: 1000px;
+          margin: 0 auto;
+          animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .view-header {
+          margin-bottom: 2.5rem;
+        }
+
+        .view-title {
+          font-size: 2.25rem;
+          font-weight: 800;
+          margin: 0;
+          color: #ffffff;
+          letter-spacing: -0.02em;
+        }
+
+        .view-subtitle {
+          color: var(--muted-foreground);
+          margin-top: 0.5rem;
+          font-size: 1rem;
+        }
+
+        .form-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 2rem;
+        }
+
+        .form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 3rem;
+        }
+
+        @media (max-width: 850px) {
+          .form-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+          }
+        }
+
+        .form-column {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          height: 100%;
+        }
+
+        :global(.magic-wrapper) {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .column-content {
+          padding: 2rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          height: 100%;
+        }
+
+        .field-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .field-label {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: var(--muted-foreground);
+          letter-spacing: 0.02em;
+        }
+
+        .required {
+          color: #ef4444;
+        }
+
+        .form-select {
+          width: 100%;
+          padding: 0.875rem 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          color: var(--foreground);
+          font-family: inherit;
+          font-size: 0.9375rem;
+          transition: all 0.2s ease;
+          outline: none;
+          cursor: pointer;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2371717a' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 1rem center;
+          background-size: 1rem;
+        }
+        
+        .form-select option {
+          background-color: #09090b;
+          color: #fafafa;
+        }
+
+        .form-select:focus {
+          border-color: #52525b;
+          background-color: rgba(255, 255, 255, 0.05);
+          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+        }
+
+        .form-select.has-error {
+          border-color: #ef4444;
+          background-color: rgba(239, 68, 68, 0.02);
+        }
+
+        .version-selector {
+          margin-top: 0.5rem;
+        }
+
+        .version-controls {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .version-btn {
+          flex: 1;
+          padding: 0.6rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          color: var(--muted-foreground);
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .version-btn:hover {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: #52525b;
+        }
+
+        .version-btn.active {
+          background: #ffffff;
+          color: #000000;
+          border-color: #ffffff;
+        }
+
+        .error-text {
+          font-size: 0.75rem;
+          color: #ef4444;
+          margin-top: 0.25rem;
+        }
+
+        .preview-small-card {
+          margin-top: 1rem;
+          padding: 1rem;
+          display: flex;
+          gap: 1rem;
+          border-radius: var(--radius);
+        }
+
+        .preview-item {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .preview-label {
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--muted-foreground);
+          font-weight: 700;
+        }
+
+        .preview-item img {
+          width: 50px;
+          height: 50px;
+          object-fit: cover;
+          border-radius: 4px;
+          border: 1px solid var(--border);
+        }
+
+        .archetype-preview-card {
+          margin-top: 1rem;
+          border-radius: var(--radius);
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border);
+        }
+
+        .archetype-preview-img {
+          width: 100%;
+          height: 120px;
+          object-fit: cover;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .archetype-preview-info {
+          padding: 1rem;
+        }
+
+        .archetype-preview-tag {
+          font-size: 0.7rem;
+          background: #ffffff;
+          color: #000000;
+          padding: 0.2rem 0.5rem;
+          border-radius: 4px;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+
+        .archetype-preview-instructions {
+          font-size: 0.8rem;
+          color: var(--muted-foreground);
+          margin-top: 0.5rem;
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .advanced-toggle {
+          margin-top: 0.5rem;
+        }
+
+        .toggle-btn {
+          background: transparent;
+          border: none;
+          color: var(--muted-foreground);
+          font-size: 0.875rem;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 0;
+          transition: color 0.2s ease;
+        }
+
+        .toggle-btn:hover {
+          color: var(--foreground);
+        }
+
+        .toggle-btn .icon {
+          font-size: 0.75rem;
+          transition: transform 0.2s ease;
+        }
+
+        .toggle-btn.active .icon {
+          transform: rotate(0deg);
+        }
+
+        .advanced-content {
+          animation: slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .generation-status {
+          margin-top: auto;
+        }
+
+        .info-card {
+          padding: 1.25rem;
+          border-radius: var(--radius);
+          display: flex;
+          gap: 1rem;
+          align-items: flex-start;
+          font-size: 0.875rem;
+          color: var(--muted-foreground);
+          line-height: 1.5;
+        }
+
+        .info-icon {
+          font-size: 1.25rem;
+          line-height: 1;
+        }
+
+        .loading-state {
+          padding: 2rem;
+          border-radius: var(--radius);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1.5rem;
+          text-align: center;
+        }
+
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(255, 255, 255, 0.1);
+          border-top-color: var(--foreground);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        .status-text strong {
+          display: block;
+          font-size: 1.125rem;
+          margin-bottom: 0.5rem;
+          color: var(--foreground);
+        }
+
+        .status-text p {
+          margin: 0;
+          font-size: 0.875rem;
+          color: var(--muted-foreground);
+        }
+
+        /* Premium Loading State */
+        .loading-state-premium {
+          padding: 3rem 2rem;
+          border-radius: var(--radius);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2rem;
+          text-align: center;
+          background: rgba(0, 0, 0, 0.4);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .loading-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1.5rem;
+          position: relative;
+          z-index: 10;
+        }
+
+        .animation-container {
+          position: relative;
+          width: 100px;
+          height: 100px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .sparkle-orbit {
+          position: relative;
+          animation: orbit 4s linear infinite;
+        }
+
+        .premium-sparkle-main {
+          color: #ffffff;
+          filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
+        }
+
+        .scan-line {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, #ffffff, transparent);
+          box-shadow: 0 0 15px #ffffff;
+          animation: scan 2s ease-in-out infinite;
+          opacity: 0.5;
+        }
+
+        .status-text-premium h4 {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #ffffff;
+          margin-bottom: 0.5rem;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        .status-text-premium p {
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.6);
+          margin-bottom: 1.5rem;
+        }
+
+        .progress-bar-container {
+          width: 200px;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 2px;
+          overflow: hidden;
+          margin: 0 auto;
+        }
+
+        .progress-bar-fill {
+          width: 40%;
+          height: 100%;
+          background: linear-gradient(90deg, #333, #fff, #333);
+          background-size: 200% 100%;
+          border-radius: 2px;
+        }
+
+        @keyframes orbit {
+          from { transform: rotate(0deg) translateY(5px) rotate(0deg); }
+          to { transform: rotate(360deg) translateY(5px) rotate(-360deg); }
+        }
+
+        @keyframes scan {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(100px); }
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+
+        .form-actions {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 1rem;
+        }
+
+        :global(.submit-btn) {
+          width: 100%;
+        }
+
+        /* Success State */
+        .success-wrapper {
+          position: relative;
+          width: 100%;
+          display: flex;
+          justify-content: center;
+        }
+
+        .success-container {
+          padding: 3rem;
+          border-radius: var(--radius);
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2rem;
+          position: relative;
+          overflow: hidden;
+          width: 100%;
+          max-width: 900px;
+        }
+
+        .success-header {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .check-icon {
+          width: 64px;
+          height: 64px;
+          background: #ffffff;
+          color: #000000;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .success-header h3 {
+          margin: 0;
+          font-size: 2rem;
+          font-weight: 700;
+          color: #ffffff;
+        }
+
+        .result-preview-grid {
+          width: 100%;
+          display: grid;
+          gap: 1.5rem;
+          margin: 1rem 0;
+        }
+
+        .result-preview-grid.single {
+          grid-template-columns: 1fr;
+          max-width: 600px;
+        }
+
+        .result-preview-grid.multi {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 600px) {
+          .result-preview-grid.multi {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        .result-item {
+          position: relative;
+          border-radius: var(--radius);
+          overflow: hidden;
+          transition: transform 0.3s ease;
+        }
+
+        .result-item:hover {
+          transform: translateY(-4px);
+        }
+
+        .generated-image {
+          width: 100%;
+          height: auto;
+          display: block;
+          aspect-ratio: 16/9;
+          object-fit: cover;
+        }
+
+        .result-actions-overlay {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          padding: 1rem;
+          background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+          display: flex;
+          justify-content: center;
+          gap: 0.5rem;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+
+        .result-item:hover .result-actions-overlay {
+          opacity: 1;
+        }
+
+        :global(.action-btn) {
+          padding: 0.4rem 0.8rem !important;
+          font-size: 0.75rem !important;
+        }
+
+        .success-actions {
+          display: flex;
+          gap: 1rem;
+          margin-top: 1rem;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slide-down {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scale-up {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slide-down {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scale-up {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }

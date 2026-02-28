@@ -66,3 +66,6 @@ lib/**/*.d.ts.map
 
 # Sensitive: Local plans and memory
 /.claude/
+
+# Sensitive: Database backups
+/backups/

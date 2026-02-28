@@ -1,0 +1,22 @@
+/* CSS variables for Magic UI components to avoid inline style lints */
+
+.magic-ui-border-beam {
+    --border-beam-width: 1.5px;
+    --border-beam-size: 150px;
+    --border-beam-color-from: #ffaa40;
+    --border-beam-color-to: #9c40ff;
+}
+
+.magic-ui-shimmer-button {
+    --shimmer-spread: 90deg;
+    --shimmer-color: #ffffff;
+    --shimmer-radius: 100px;
+    --shimmer-speed: 3s;
+    --shimmer-cut: 0.05em;
+    --shimmer-bg: rgba(0, 0, 0, 1);
+}
+
+.magic-ui-flickering-grid {
+    --flickering-grid-width: 0px;
+    --flickering-grid-height: 0px;
+}

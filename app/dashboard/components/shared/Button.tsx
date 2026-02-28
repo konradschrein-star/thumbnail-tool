@@ -1,86 +1,127 @@
 'use client';
 
-import { colors, commonStyles } from '../../styles';
+import React from 'react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger';
-export type ButtonSize = 'normal' | 'small';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+export type ButtonSize = 'normal' | 'small' | 'large';
 
-interface ButtonProps {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   variant?: ButtonVariant;
   size?: ButtonSize;
-  disabled?: boolean;
-  type?: 'button' | 'submit' | 'reset';
-  style?: React.CSSProperties;
 }
 
 export default function Button({
   children,
-  onClick,
   variant = 'primary',
   size = 'normal',
-  disabled = false,
-  type = 'button',
-  style = {},
+  className = '',
+  ...props
 }: ButtonProps) {
-  const baseStyle = {
-    ...commonStyles.button,
-    ...(size === 'small' ? commonStyles.buttonSmall : {}),
-  };
-
-  const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
-    primary: {
-      backgroundColor: disabled ? colors.textMuted : colors.primary,
-      color: colors.white,
-    },
-    secondary: {
-      backgroundColor: disabled ? colors.backgroundDark : colors.background,
-      color: disabled ? colors.textMuted : colors.text,
-      border: `1px solid ${colors.border}`,
-    },
-    danger: {
-      backgroundColor: disabled ? colors.textMuted : colors.danger,
-      color: colors.white,
-    },
-  };
-
-  const hoverStyle = !disabled ? {
-    ':hover': {
-      primary: { backgroundColor: colors.primaryHover },
-      secondary: { backgroundColor: colors.backgroundDark },
-      danger: { backgroundColor: colors.dangerHover },
-    }[variant],
-  } : {};
-
   return (
     <button
-      type={type}
-      onClick={(e) => onClick && onClick(e)}
-      disabled={disabled}
-      style={{
-        ...baseStyle,
-        ...variantStyles[variant],
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.6 : 1,
-        ...style,
-      }}
-      onMouseEnter={(e) => {
-        if (!disabled && variant === 'primary') {
-          e.currentTarget.style.backgroundColor = colors.primaryHover;
-        } else if (!disabled && variant === 'danger') {
-          e.currentTarget.style.backgroundColor = colors.dangerHover;
-        } else if (!disabled && variant === 'secondary') {
-          e.currentTarget.style.backgroundColor = colors.backgroundDark;
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.backgroundColor = variantStyles[variant].backgroundColor as string;
-        }
-      }}
+      {...props}
+      className={`btn btn-${variant} btn-${size} ${className}`}
     >
       {children}
+      <style jsx>{`
+        .btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: var(--radius);
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 1px solid transparent;
+          white-space: nowrap;
+          outline: none;
+        }
+
+        .btn:disabled {
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+
+        /* Sizes */
+        .btn-normal {
+          padding: 0.625rem 1.25rem;
+          font-size: 0.875rem;
+        }
+
+        .btn-small {
+          padding: 0.375rem 0.75rem;
+          font-size: 0.75rem;
+        }
+
+        .btn-large {
+          padding: 0.75rem 1.5rem;
+          font-size: 1rem;
+        }
+
+        /* Variants */
+        .btn-primary {
+          background: var(--primary);
+          color: var(--primary-foreground);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+          background: #e4e4e7;
+          transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+          background: var(--secondary);
+          color: var(--secondary-foreground);
+          border-color: var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+          background: #3f3f46;
+          border-color: #52525b;
+        }
+
+        .btn-danger {
+          background: #ef4444;
+          color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+          background: #dc2626;
+        }
+
+        .btn-ghost {
+          background: transparent;
+          color: var(--muted-foreground);
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.05);
+          color: var(--foreground);
+        }
+
+        /* Shine Effect for Primary */
+        .btn-primary::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.2),
+            transparent
+          );
+          transition: 0.5s;
+        }
+
+        .btn-primary:hover::after {
+          left: 100%;
+        }
+      `}</style>
     </button>
   );
 }

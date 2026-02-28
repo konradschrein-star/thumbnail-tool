@@ -21,6 +21,7 @@ export interface Job {
   archetype: {
     id: string;
     name: string;
+    category: string | null;
     imageUrl: string;
   };
 }
@@ -28,6 +29,7 @@ export interface Job {
 export interface JobFilters {
   channelId?: string;
   status?: string;
+  limit?: number;
 }
 
 export default function useJobs(filters?: JobFilters) {
@@ -42,6 +44,7 @@ export default function useJobs(filters?: JobFilters) {
       const params = new URLSearchParams();
       if (filters?.channelId) params.append('channelId', filters.channelId);
       if (filters?.status) params.append('status', filters.status);
+      if (filters?.limit) params.append('limit', filters.limit.toString());
 
       const url = `/api/jobs${params.toString() ? `?${params.toString()}` : ''}`;
       const response = await fetch(url);

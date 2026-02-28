@@ -4,6 +4,7 @@ A production-grade thumbnail generation system powered by Google's Nano Banana A
 
 ## ✨ Features
 
+### Core Functionality
 - **Multi-Channel Support**: Manage unlimited channels, each with unique personas and styles
 - **Character Consistency**: Advanced persona system ensures the same character appears across all thumbnails
 - **Archetype Templates**: 7+ pre-built layout styles (Educational, Dramatic, Modern, etc.)
@@ -12,6 +13,12 @@ A production-grade thumbnail generation system powered by Google's Nano Banana A
 - **Job Tracking**: Complete history with filtering and thumbnail previews
 - **Type-Safe**: Built with TypeScript for reliability
 - **Fast Generation**: 15-20 second thumbnail generation via Google AI
+
+### Production-Ready Security
+- **Authentication**: NextAuth.js v5 with JWT sessions and bcrypt password hashing
+- **Rate Limiting**: IP-based throttling (5 req/min on generation endpoints)
+- **Database Backups**: Automated backup system with cleanup
+- **Route Protection**: Middleware-based authentication for all sensitive routes
 
 ## 🚀 Quick Start
 
@@ -39,11 +46,14 @@ npx prisma generate
 npx prisma migrate dev
 npx prisma db seed
 
+# Create initial admin user
+npm run setup
+
 # Start development server
 npm run dev
 ```
 
-Visit http://localhost:3000 to access the dashboard!
+Visit http://localhost:3000/auth/signin to sign in with your admin credentials!
 
 ## 📖 Usage
 
@@ -121,7 +131,20 @@ Never commit `.env` files. Required variables:
 ```env
 GOOGLE_API_KEY=your_api_key_here
 DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET=your_nextauth_secret_here
+NEXTAUTH_URL=http://localhost:3000
+NODE_ENV=development
 ```
+
+Generate `NEXTAUTH_SECRET` with: `openssl rand -base64 32`
+
+### Authentication
+
+- ✅ NextAuth.js v5 with credentials provider
+- ✅ Password hashing with bcrypt (10 rounds)
+- ✅ JWT session strategy (30-day expiration)
+- ✅ Protected routes via middleware
+- ✅ Automatic redirection for unauthenticated users
 
 ### File Upload Security
 
@@ -135,12 +158,22 @@ DATABASE_URL="file:./dev.db"
 - ✅ Input validation on all endpoints
 - ✅ Error messages don't leak sensitive data
 - ✅ Prisma parameterized queries (SQL injection protection)
-- 🔜 Rate limiting (recommended for production)
-- 🔜 Authentication (recommended for production)
+- ✅ Rate limiting (5 req/min on `/api/generate`)
+- ✅ Authentication required for all dashboard and API routes
+
+See [SECURITY.md](./SECURITY.md) for complete security documentation.
 
 ## 📊 Database Schema
 
 ### Core Models
+
+**User**: Authentication and access control
+- `id`: Unique identifier
+- `email`: User email (unique)
+- `password`: Hashed password (bcrypt)
+- `name`: Optional display name
+- `createdAt`: Account creation timestamp
+- `updatedAt`: Last update timestamp
 
 **Channel**: Represents a YouTube channel
 - `id`: Unique identifier
@@ -168,6 +201,13 @@ DATABASE_URL="file:./dev.db"
 
 ## 🎯 API Endpoints
 
+### Authentication
+
+```http
+POST   /api/auth/[...nextauth]  # NextAuth.js endpoints (signin, signout, session)
+POST   /api/auth/register       # Register new user
+```
+
 ### Channels
 
 ```http
@@ -191,10 +231,12 @@ DELETE /api/archetypes/[id]           # Delete archetype
 ### Generation
 
 ```http
-POST   /api/generate          # Generate thumbnail
+POST   /api/generate          # Generate thumbnail (rate limited: 5/min)
 GET    /api/jobs              # List jobs (with filters)
 POST   /api/upload            # Upload reference image
 ```
+
+**Note**: All API endpoints (except `/api/auth/*`) require authentication.
 
 ## 🧪 Testing
 
@@ -225,6 +267,10 @@ npx prisma generate      # Generate Prisma client
 npx prisma migrate dev   # Create/apply migrations
 npx prisma db seed       # Seed initial data
 npx prisma studio        # Open database UI
+npm run db:backup        # Backup database to /backups/
+
+# Setup
+npm run setup            # Create initial admin user
 
 # Type checking
 npx tsc --noEmit         # Check TypeScript errors
@@ -262,7 +308,7 @@ npx tsc --noEmit         # Check TypeScript errors
 - **Safety Filters**: Persona photos (real people) trigger content blocks. Use text-only descriptions with archetype-only reference images.
 - **Generation Time**: 15-20 seconds per thumbnail (Google API latency)
 - **No Real-time Updates**: Refresh job history to see status changes
-- **Single User**: No authentication system (add before production deployment)
+- **Basic User Management**: Single admin user setup. Multi-user and role-based access control available for future enhancement.
 
 ## 📚 Key Learnings
 
@@ -286,16 +332,20 @@ npx tsc --noEmit         # Check TypeScript errors
 
 Before deploying to production:
 
-- [ ] Add authentication (NextAuth.js recommended)
-- [ ] Implement rate limiting (express-rate-limit or similar)
-- [ ] Add error tracking (Sentry or similar)
-- [ ] Set up monitoring (Vercel Analytics or similar)
-- [ ] Configure CORS properly
-- [ ] Add database backups
+- [x] Add authentication (NextAuth.js v5 implemented)
+- [x] Implement rate limiting (5 req/min on `/api/generate`)
+- [x] Add database backups (`npm run db:backup`)
+- [x] Review and harden API security (input validation, error handling)
+- [ ] Configure production environment variables
+- [ ] Set up HTTPS (hosting-specific)
+- [ ] Add error monitoring (Sentry, LogRocket, or similar - if needed)
+- [ ] Configure CORS for production domain
 - [ ] Set up CI/CD pipeline
-- [ ] Review and harden API security
-- [ ] Add logging (Winston or Pino)
+- [ ] Add comprehensive logging (Winston or Pino)
 - [ ] Configure CSP headers
+- [ ] Test backup restore procedures
+- [ ] Set up automated daily backups (cron job)
+- [ ] Apply rate limiting to additional endpoints (upload, CRUD)
 
 ## 📄 License
 

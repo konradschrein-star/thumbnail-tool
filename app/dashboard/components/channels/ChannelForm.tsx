@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Lightbulb } from 'lucide-react';
 import Input from '../shared/Input';
 import Button from '../shared/Button';
-import { spacing } from '../../styles';
 import type { Channel, CreateChannelData, UpdateChannelData } from '../../hooks/useChannels';
 
 interface ChannelFormProps {
@@ -16,6 +16,9 @@ interface ChannelFormProps {
 export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: ChannelFormProps) {
   const [name, setName] = useState(initialData?.name || '');
   const [personaDescription, setPersonaDescription] = useState(initialData?.personaDescription || '');
+  const [primaryColor, setPrimaryColor] = useState(initialData?.primaryColor || '#ffffff');
+  const [secondaryColor, setSecondaryColor] = useState(initialData?.secondaryColor || '#000000');
+  const [tags, setTags] = useState(initialData?.tags || '');
   const [errors, setErrors] = useState<{ name?: string; personaDescription?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -24,6 +27,9 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
     if (initialData) {
       setName(initialData.name);
       setPersonaDescription(initialData.personaDescription);
+      setPrimaryColor(initialData.primaryColor || '#ffffff');
+      setSecondaryColor(initialData.secondaryColor || '#000000');
+      setTags(initialData.tags || '');
     }
   }, [initialData]);
 
@@ -56,6 +62,9 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
       await onSubmit({
         name: name.trim(),
         personaDescription: personaDescription.trim(),
+        primaryColor,
+        secondaryColor,
+        tags: tags.trim(),
       });
     } catch (err: any) {
       setSubmitError(err.message || 'Failed to save channel');
@@ -65,7 +74,7 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="form-container">
       <Input
         label="Channel Name"
         value={name}
@@ -89,43 +98,109 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
         minLength={50}
       />
 
-      <div
-        style={{
-          fontSize: '0.875rem',
-          color: '#666',
-          marginBottom: spacing.md,
-          padding: spacing.md,
-          backgroundColor: '#f0f0f0',
-          borderRadius: '8px',
-        }}
-      >
-        <strong>Tip:</strong> For consistent character generation, include 15+ specific attributes:
-        age, hair (length, color, style), eyes, facial structure, build, clothing, complexion,
-        expression, lighting, etc.
+      <div className="branding-section">
+        <h3>Branding Tokens (V3)</h3>
+        <div className="color-grid">
+          <Input
+            label="Primary Color"
+            type="text"
+            value={primaryColor}
+            onChange={setPrimaryColor}
+            placeholder="#ffffff"
+          />
+          <Input
+            label="Secondary Color"
+            type="text"
+            value={secondaryColor}
+            onChange={setSecondaryColor}
+            placeholder="#000000"
+          />
+        </div>
+        <Input
+          label="Branding Tags"
+          value={tags}
+          onChange={setTags}
+          placeholder="minimal, vibrant, dark, tech..."
+          description="Comma-separated tokens that influence AI style."
+        />
+      </div>
+
+      <div className="tip-box">
+        <div className="tip-icon"><Lightbulb size={16} /></div>
+        <p><strong>Pro Tip:</strong> For consistent character generation, include 15+ specific attributes:
+          age, hair (style & color), eyes, facial structure, build, clothing, complexion, and lighting.</p>
       </div>
 
       {submitError && (
-        <div
-          style={{
-            color: '#ff0000',
-            marginBottom: spacing.md,
-            padding: spacing.md,
-            backgroundColor: '#ffe6e6',
-            borderRadius: '8px',
-          }}
-        >
+        <div className="error-alert">
           {submitError}
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: spacing.md, justifyContent: 'flex-end' }}>
-        <Button variant="secondary" onClick={onCancel} disabled={isSubmitting}>
+      <div className="form-actions">
+        <Button variant="ghost" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Channel' : 'Save Changes'}
         </Button>
       </div>
+
+      <style jsx>{`
+        .form-container {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .tip-box {
+          font-size: 0.8125rem;
+          color: var(--muted-foreground);
+          margin-bottom: 1.5rem;
+          padding: 1rem;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          line-height: 1.5;
+        }
+
+        .error-alert {
+          color: #fca5a5;
+          margin-bottom: 1.5rem;
+          padding: 0.75rem 1rem;
+          background: rgba(127, 29, 29, 0.1);
+          border: 1px dotted rgba(127, 29, 29, 0.5);
+          border-radius: var(--radius);
+          font-size: 0.875rem;
+        }
+
+        .branding-section {
+          margin: 1.5rem 0;
+          padding: 1.5rem;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+        }
+
+        .branding-section h3 {
+          font-size: 0.875rem;
+          font-weight: 600;
+          margin-bottom: 1rem;
+          color: #ffffff;
+        }
+
+        .color-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+
+        .form-actions {
+          display: flex;
+          gap: 0.75rem;
+          justify-content: flex-end;
+          margin-top: 0.5rem;
+        }
+      `}</style>
     </form>
   );
 }

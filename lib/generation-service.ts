@@ -42,26 +42,41 @@ export async function callNanoBanana(
   try {
     const ai = initializeClient(apiKey);
 
-    // Format reference images: archetype only (no logo, no persona)
-    const imageParts = [
+    // Format reference images: archetype, persona, and optional logo
+    const imageParts: any[] = [
       {
         inlineData: {
           data: payload.base64Images.archetype,
           mimeType: 'image/jpeg'
         }
+      },
+      {
+        inlineData: {
+          data: payload.base64Images.persona,
+          mimeType: 'image/jpeg'
+        }
       }
     ];
+
+    if (payload.base64Images.logo) {
+      imageParts.push({
+        inlineData: {
+          data: payload.base64Images.logo,
+          mimeType: 'image/png'
+        }
+      });
+    }
 
     // Merge system and user prompts
     const fullPrompt = `${payload.systemPrompt}\n\n${payload.userPrompt}`;
 
-    console.log('   Calling Nano Banana (gemini-3-pro-image-preview)...');
+    console.log('   Calling Nano Banana (imagen-3.0-generate-001)...');
     console.log(`   Prompt length: ${fullPrompt.length} characters`);
-    console.log(`   Reference images: ${imageParts.length} (archetype + logo)`);
+    console.log(`   Reference images: ${imageParts.length}`);
 
     // Nano Banana uses generateContent with responseModalities set to IMAGE
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-image-preview',
+      model: 'imagen-3.0-generate-001',
       contents: [
         fullPrompt,
         ...imageParts
@@ -71,7 +86,7 @@ export async function callNanoBanana(
         imageGenerationConfig: {
           aspectRatio: "16:9"  // YouTube standard
         }
-      } as any  // Type assertion needed as SDK types don't include imageGenerationConfig yet
+      } as any
     });
 
     // Check for content blocking/safety filters

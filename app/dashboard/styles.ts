@@ -3,17 +3,17 @@
 
 export const colors = {
   // Primary colors
-  primary: '#0070f3',
-  primaryHover: '#0051cc',
-  primaryLight: '#e6f2ff',
+  primary: '#000000',
+  primaryHover: '#27272a',
+  primaryLight: '#f4f4f5',
 
   // Status colors
-  success: '#0cce6b',
-  successLight: '#d4f4e2',
-  error: '#ff0000',
-  errorLight: '#ffe6e6',
-  warning: '#ff9800',
-  warningLight: '#fff3cd',
+  success: '#18181b',
+  successLight: '#f4f4f5',
+  error: '#000000',
+  errorLight: '#fafafa',
+  warning: '#27272a',
+  warningLight: '#f4f4f5',
 
   // Neutral colors
   border: '#e0e0e0',

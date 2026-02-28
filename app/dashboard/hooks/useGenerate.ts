@@ -8,15 +8,20 @@ export interface GeneratePayload {
   videoTopic: string;
   thumbnailText: string;
   customPrompt?: string;
+  versionCount?: number;
+}
+
+export interface JobResult {
+  id: string;
+  outputUrl: string;
+  status: string;
+  errorMessage?: string;
 }
 
 export interface GenerateResult {
   success: boolean;
-  job: {
-    id: string;
-    outputUrl: string;
-    status: string;
-  };
+  jobs: JobResult[];
+  job: JobResult; // Fallback
 }
 
 export default function useGenerate() {

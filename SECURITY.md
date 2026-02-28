@@ -148,51 +148,100 @@ try {
 
 **Key Dependencies**:
 - `next@^16.1.6` - Latest stable
-- `@google/genai@^0.21.0` - Official Google SDK
+- `@google/genai@^1.42.0` - Official Google SDK
 - `@prisma/client@^5.22.0` - Stable ORM
+
+### 9. Authentication & Authorization
+
+**Status**: ✅ Implemented
+
+**Solution**: NextAuth.js v5 (beta)
+
+**Location**: `lib/auth.ts`, `middleware.ts`
+
+**Features Implemented**:
+- ✅ Credentials-based authentication (email + password)
+- ✅ Password hashing with bcrypt (10 rounds)
+- ✅ JWT session strategy (30-day expiration)
+- ✅ Protected routes via middleware
+- ✅ Sign-in/sign-out functionality
+- ✅ User registration API endpoint
+
+**Protected Routes**:
+- All `/dashboard/*` routes require authentication
+- All `/api/*` routes (except `/api/auth/*`) require authentication
+
+**Setup Script**: Run `npm run setup` to create the initial admin user.
+
+**Code Example**:
+```typescript
+// Middleware protection
+export default auth((req) => {
+  const isLoggedIn = !!req.auth;
+  const isDashboard = req.nextUrl.pathname.startsWith('/dashboard');
+
+  if (isDashboard && !isLoggedIn) {
+    return NextResponse.redirect(new URL('/auth/signin', req.url));
+  }
+});
+```
+
+### 10. Rate Limiting
+
+**Status**: ✅ Implemented
+
+**Solution**: `limiter` package with IP-based tracking
+
+**Location**: `lib/rate-limit.ts`
+
+**Configurations**:
+- **Strict** (5 req/min): Applied to `/api/generate`
+- **Moderate** (30 req/min): Available for general API routes
+- **Auth** (10 req/min): Available for authentication routes
+
+**Applied To**:
+- ✅ `/api/generate` - Prevents abuse of expensive AI operations
+
+**Code Example**:
+```typescript
+// In API route
+const rateLimitResponse = await rateLimit(request, rateLimits.strict);
+if (rateLimitResponse) {
+  return rateLimitResponse; // Returns 429 Too Many Requests
+}
+```
+
+**Future**: Apply rate limiting to upload and CRUD endpoints.
+
+### 11. Database Backups
+
+**Status**: ✅ Implemented
+
+**Solution**: Automated backup script
+
+**Location**: `scripts/backup-database.ts`
+
+**Features**:
+- ✅ Date-stamped backups (`db-YYYY-MM-DD.db`)
+- ✅ Automatic cleanup (keeps last 7 backups)
+- ✅ Backup size reporting
+- ✅ Error handling and validation
+- ✅ Backups stored in `/backups/` (gitignored)
+
+**Usage**:
+```bash
+npm run db:backup
+```
+
+**Recommended**:
+- Set up a cron job for daily backups
+- For production, sync backups to cloud storage (S3, etc.)
 
 ## 🔜 Recommended for Production
 
 The following security measures should be implemented before production deployment:
 
-### 1. Authentication & Authorization
-
-**Priority**: 🔴 Critical
-
-**Recommended Solution**: NextAuth.js
-
-```bash
-npm install next-auth
-```
-
-**Features Needed**:
-- User login/logout
-- Session management
-- Role-based access control (admin, user)
-- Protect all `/api/*` routes
-
-### 2. Rate Limiting
-
-**Priority**: 🔴 Critical
-
-**Recommended Solution**: `next-rate-limit` or Vercel rate limiting
-
-```typescript
-// Example with next-rate-limit
-import rateLimit from 'express-rate-limit';
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-});
-```
-
-**Apply To**:
-- `/api/generate` (expensive operation)
-- `/api/upload` (prevent spam)
-- All POST/PATCH/DELETE endpoints
-
-### 3. CORS Configuration
+### 1. CORS Configuration
 
 **Priority**: 🟡 Medium
 
@@ -214,7 +263,7 @@ module.exports = {
 };
 ```
 
-### 4. Content Security Policy (CSP)
+### 2. Content Security Policy (CSP)
 
 **Priority**: 🟡 Medium
 
@@ -238,23 +287,7 @@ const securityHeaders = [
 ];
 ```
 
-### 5. Error Tracking & Monitoring
-
-**Priority**: 🟡 Medium
-
-**Recommended Solution**: Sentry
-
-```bash
-npm install @sentry/nextjs
-```
-
-**Benefits**:
-- Real-time error alerts
-- Performance monitoring
-- User impact tracking
-- Stack trace analysis
-
-### 6. Logging
+### 3. Logging
 
 **Priority**: 🟢 Low
 
@@ -270,21 +303,7 @@ npm install winston
 - File uploads
 - Errors and exceptions
 
-### 7. Database Backups
-
-**Priority**: 🔴 Critical (for production)
-
-**Recommended**:
-- Automated daily backups of SQLite database
-- Store backups in separate location
-- Test restore procedures regularly
-
-```bash
-# Example backup script
-cp prisma/dev.db backups/db-$(date +%Y%m%d).db
-```
-
-### 8. API Key Rotation
+### 4. API Key Rotation
 
 **Priority**: 🟡 Medium
 
@@ -294,7 +313,7 @@ cp prisma/dev.db backups/db-$(date +%Y%m%d).db
 - Monitor API usage and quotas
 - Implement key rotation without downtime
 
-### 9. Input Sanitization
+### 5. Input Sanitization
 
 **Priority**: 🟡 Medium
 
@@ -309,7 +328,7 @@ npm install dompurify
 - Video topics and thumbnail text
 - Any user input displayed in UI
 
-### 10. HTTPS Only
+### 6. HTTPS Only
 
 **Priority**: 🔴 Critical (for production)
 
@@ -330,42 +349,45 @@ if (process.env.NODE_ENV === 'production' && !req.secure) {
 Use this checklist before production deployment:
 
 ### Environment
-- [ ] `.env` not committed to Git
+- [x] `.env` not committed to Git
 - [ ] Production API keys configured
 - [ ] `NODE_ENV=production` set
-- [ ] Database backed up
-- [ ] HTTPS configured
+- [x] Database backup script created (`npm run db:backup`)
+- [ ] HTTPS configured (deferred to deployment)
 
 ### Authentication
-- [ ] NextAuth.js or equivalent installed
-- [ ] All routes protected
-- [ ] Session management configured
-- [ ] User roles implemented
+- [x] NextAuth.js installed and configured
+- [x] All routes protected via middleware
+- [x] Session management configured (JWT, 30-day expiration)
+- [x] User registration endpoint created
+- [x] Initial admin setup script (`npm run setup`)
+- [ ] Multi-factor authentication (optional, future enhancement)
+- [ ] User roles implemented (future enhancement)
 
 ### API Security
-- [ ] Rate limiting enabled
-- [ ] CORS configured
-- [ ] Input validation on all endpoints
-- [ ] Error messages sanitized
+- [x] Rate limiting enabled (5 req/min on `/api/generate`)
+- [ ] Rate limiting on other endpoints (recommended)
+- [ ] CORS configured (deployment-specific)
+- [x] Input validation on all endpoints
+- [x] Error messages sanitized
 - [ ] API keys rotated
 
 ### File Handling
-- [ ] File upload limits enforced
-- [ ] File types validated
-- [ ] Filenames sanitized
-- [ ] Storage quotas configured
+- [x] File upload limits enforced (5MB)
+- [x] File types validated (JPG, PNG, WEBP only)
+- [x] Filenames sanitized
+- [ ] Storage quotas configured (future enhancement)
 
 ### Monitoring
-- [ ] Error tracking enabled (Sentry)
-- [ ] Logging configured
-- [ ] Performance monitoring active
-- [ ] Alerts configured
+- [ ] Error tracking enabled (Sentry, LogRocket, or similar - optional)
+- [ ] Logging configured (basic console.log, Winston recommended)
+- [ ] Alerts configured (optional)
 
 ### Headers & Security
-- [ ] CSP headers configured
-- [ ] Security headers added
-- [ ] HSTS enabled
-- [ ] X-Frame-Options set
+- [ ] CSP headers configured (recommended)
+- [ ] Security headers added (recommended)
+- [ ] HSTS enabled (deployment-specific)
+- [ ] X-Frame-Options set (recommended)
 
 ### Testing
 - [ ] Security scan performed
@@ -393,6 +415,21 @@ If you discover a security vulnerability, please:
 
 Document security-related updates here:
 
+### [v1.1.0] - 2026-02-25 (Production-Ready Release)
+- ✅ Implemented NextAuth.js v5 authentication
+  - Credentials-based login with bcrypt password hashing
+  - JWT session management (30-day expiration)
+  - Protected routes via middleware
+  - Initial admin setup script
+- ✅ Implemented rate limiting
+  - IP-based tracking with `limiter` package
+  - Applied to `/api/generate` (5 req/min)
+  - Configurable limits for different endpoint types
+- ✅ Created database backup system
+  - Automated backup script with date stamping
+  - Automatic cleanup (keeps last 7 backups)
+  - npm script: `npm run db:backup`
+
 ### [v1.0.0] - 2026-02-25
 - Initial security implementation
 - Environment variable protection
@@ -404,4 +441,4 @@ Document security-related updates here:
 ---
 
 **Last Updated**: 2026-02-25
-**Next Review**: Quarterly
+**Next Review**: Quarterly (or before production deployment)

@@ -5,33 +5,57 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hashed password
+  name      String?
+  role      String   @default("USER") // ADMIN or USER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  generationJobs GenerationJob[]
+  channels       Channel[]       @relation("UserChannels")
+
+  @@map("users")
 }
 
 model Channel {
   id                String   @id @default(cuid())
   name              String
+  userId            String?  // Made optional for migration, but should be required later
   personaDescription String   // Detailed character description for consistency
+  personaAssetPath  String?  // Path to persona image
+  logoAssetPath     String?  // Path to channel logo
+  primaryColor      String?  @default("#ffffff")
+  secondaryColor    String?  @default("#000000")
+  tags              String?  // Comma separated tags for auto-color detection (e.g. "Snapchat, WhatsApp")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+  user              User?    @relation("UserChannels", fields: [userId], references: [id], onDelete: SetNull)
   archetypes        Archetype[]
   generationJobs    GenerationJob[]
 
+  @@index([userId])
   @@map("channels")
 }
 
 model Archetype {
   id                 String   @id @default(cuid())
   name               String
-  channelId          String
-  imageUrl           String   // Path to archetype image (e.g., /archetypes/archetype1.jpeg)
+  channelId          String?  // Made optional for global archetypes
+  imageUrl           String   // Path to archetype image
   layoutInstructions String   // Additional style/layout guidance
+  category           String?  @default("General")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  channel            Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channel            Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
   generationJobs     GenerationJob[]
 
   @@map("archetypes")
@@ -41,20 +65,44 @@ model GenerationJob {
   id            String   @id @default(cuid())
   channelId     String
   archetypeId   String
+  userId        String?  // Link to the user who created it
   videoTopic    String
   thumbnailText String
   customPrompt  String?  // Optional override prompt
+  promptUsed    String?  @db.Text // Final concatenated prompt
   outputUrl     String?  // Path to generated thumbnail
   status        String   @default("pending")  // pending, processing, completed, failed
   errorMessage  String?
+  isManual      Boolean  @default(true) // True if from UI, False if from API
+  metadata      Json?    // For performance analysis (CTR, stats, etc.)
   createdAt     DateTime @default(now())
   completedAt   DateTime?
 
   channel       Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
   archetype     Archetype @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  variants      VariantJob[]
 
   @@index([channelId])
   @@index([archetypeId])
+  @@index([userId])
   @@index([status])
   @@map("generation_jobs")
+}
+
+model VariantJob {
+  id            String   @id @default(cuid())
+  masterJobId   String
+  language      String
+  translatedText String
+  outputUrl     String?
+  status        String   @default("pending")  // pending, processing, completed, failed
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?
+
+  masterJob     GenerationJob @relation(fields: [masterJobId], references: [id], onDelete: Cascade)
+
+  @@index([masterJobId])
+  @@map("variant_jobs")
 }

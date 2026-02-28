@@ -27,7 +27,7 @@ async function main() {
     // Debug: Check what's exported
     console.log('DEBUG: generationService exports:', Object.keys(generationService));
     console.log('DEBUG: callNanoBanana type:', typeof generationService.callNanoBanana);
-    console.log('DEBUG: callNanoBanana value:', generationService.callNanaBanana);
+    console.log('DEBUG: callNanoBanana value:', generationService.callNanoBanana);
 
     // Hardcoded test data
     const testProfile = {
@@ -35,8 +35,8 @@ async function main() {
       systemPrompt: `You are an expert thumbnail designer for a professional YouTube channel.
 Your designs should be bold, eye-catching, and optimized for mobile viewing.
 Always ensure text is large and legible, with high contrast against backgrounds.
-Use the provided persona image and logo to maintain brand consistency.`,
-      personaPath: path.resolve('assets/test/persona.jpg'),
+Use the provided persona.jpeg image and logo.png to maintain brand consistency.`,
+      personaPath: path.resolve('assets/test/persona.jpeg'),
       logoPath: path.resolve('assets/test/logo.png'),
     };
 
@@ -83,7 +83,7 @@ Use the provided persona image and logo to maintain brand consistency.`,
     console.log('');
 
     // Call API
-    const imageBuffer = await generationService.callNanaBanana(
+    const imageBuffer = await generationService.callNanoBanana(
       payload,
       process.env.GOOGLE_API_KEY
     );

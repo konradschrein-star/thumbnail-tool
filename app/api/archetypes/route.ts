@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
 // GET /api/archetypes?channelId=xxx - List archetypes
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const channelId = searchParams.get('channelId');
 
-    const where = channelId ? { channelId } : {};
+    // Fetch both target channel archetypes AND global ones (where channelId is null)
+    const where: any = channelId
+      ? { OR: [{ channelId }, { channelId: null }] }
+      : {};
 
     const archetypes = await prisma.archetype.findMany({
       where,
@@ -18,7 +27,11 @@ export async function GET(request: NextRequest) {
           select: { id: true, name: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      // Note: Category sorting is temporarily disabled because the Prisma client 
+      // is locked on Windows, preventing regeneration of the new schema.
+      orderBy: [
+        { createdAt: 'desc' }
+      ],
     });
 
     return NextResponse.json({ archetypes });
@@ -33,12 +46,17 @@ export async function GET(request: NextRequest) {
 // POST /api/archetypes - Create new archetype
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, channelId, imageUrl, layoutInstructions } = body;
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!name || !channelId || !imageUrl) {
+    const body = await request.json();
+    const { name, channelId, imageUrl, layoutInstructions, category } = body;
+
+    if (!name || !imageUrl) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, channelId, imageUrl' },
+        { error: 'Missing required fields: name, imageUrl' },
         { status: 400 }
       );
     }
@@ -46,10 +64,11 @@ export async function POST(request: NextRequest) {
     const archetype = await prisma.archetype.create({
       data: {
         name,
-        channelId,
+        channelId: channelId || null,
         imageUrl,
         layoutInstructions: layoutInstructions || '',
-      },
+        category: category || 'General',
+      } as any,
     });
 
     return NextResponse.json({ archetype }, { status: 201 });

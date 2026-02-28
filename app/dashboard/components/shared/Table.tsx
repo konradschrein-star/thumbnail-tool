@@ -1,6 +1,6 @@
 'use client';
 
-import { commonStyles, colors } from '../../styles';
+import React from 'react';
 
 interface TableColumn {
   header: string;
@@ -18,32 +18,30 @@ interface TableProps {
 export default function Table({ columns, data, emptyMessage = 'No data available' }: TableProps) {
   if (data.length === 0) {
     return (
-      <div
-        style={{
-          padding: '2rem',
-          textAlign: 'center',
-          color: colors.textMuted,
-          backgroundColor: colors.background,
-          borderRadius: '8px',
-        }}
-      >
-        {emptyMessage}
+      <div className="empty-state glass">
+        <p>{emptyMessage}</p>
+        <style jsx>{`
+          .empty-state {
+            padding: 3rem;
+            text-align: center;
+            color: var(--muted-foreground);
+            border-radius: var(--radius);
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={commonStyles.table}>
+    <div className="table-wrapper glass">
+      <table className="custom-table">
         <thead>
           <tr>
             {columns.map((column) => (
               <th
                 key={column.key}
-                style={{
-                  ...commonStyles.tableHeader,
-                  ...(column.width ? { width: column.width } : {}),
-                }}
+                className={column.key}
+                data-width={column.width}
               >
                 {column.header}
               </th>
@@ -54,7 +52,7 @@ export default function Table({ columns, data, emptyMessage = 'No data available
           {data.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {columns.map((column) => (
-                <td key={column.key} style={commonStyles.tableCell}>
+                <td key={column.key}>
                   {column.render
                     ? column.render(row[column.key], row)
                     : row[column.key]}
@@ -64,6 +62,47 @@ export default function Table({ columns, data, emptyMessage = 'No data available
           ))}
         </tbody>
       </table>
+
+      <style jsx>{`
+        .table-wrapper {
+          overflow: hidden;
+          border-radius: var(--radius);
+          width: 100%;
+        }
+
+        .custom-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 0.875rem;
+        }
+
+        th {
+          text-align: left;
+          padding: 1rem 1.5rem;
+          font-weight: 600;
+          color: var(--muted-foreground);
+          background: rgba(255, 255, 255, 0.02);
+          border-bottom: 1px solid var(--border);
+          text-transform: uppercase;
+          font-size: 0.75rem;
+          letter-spacing: 0.05em;
+        }
+
+        td {
+          padding: 1rem 1.5rem;
+          color: var(--foreground);
+          border-bottom: 1px solid var(--border);
+          transition: background 0.2s ease;
+        }
+
+        tr:last-child td {
+          border-bottom: none;
+        }
+
+        tr:hover td {
+          background: rgba(255, 255, 255, 0.02);
+        }
+      `}</style>
     </div>
   );
 }

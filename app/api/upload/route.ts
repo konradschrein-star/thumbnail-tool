@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { auth } from '@/lib/auth';
+import * as r2Service from '@/lib/r2-service';
 
-// POST /api/upload - Handle file uploads
+// POST /api/upload - Handle file uploads directly to R2
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const folder = (formData.get('folder') as string) || 'archetypes';
@@ -26,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json(
         { error: 'File too large. Maximum size is 5MB.' },
@@ -38,20 +43,12 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filename = `${timestamp}-${originalName}`;
+    const r2Key = `${folder}/${filename}`;
 
-    // Determine upload directory
-    const uploadDir = path.join(process.cwd(), 'public', folder);
-
-    // Ensure directory exists
-    await mkdir(uploadDir, { recursive: true });
-
-    // Save file
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filepath = path.join(uploadDir, filename);
-    await writeFile(filepath, buffer);
 
-    // Return public URL
-    const url = `/${folder}/${filename}`;
+    // Upload to R2 (Mandatory)
+    const url = await r2Service.uploadToR2(buffer, r2Key, file.type);
 
     return NextResponse.json({
       success: true,

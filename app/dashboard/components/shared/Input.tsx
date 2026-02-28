@@ -1,6 +1,6 @@
 'use client';
 
-import { colors, commonStyles, spacing } from '../../styles';
+import React from 'react';
 
 interface InputProps {
   label?: string;
@@ -15,6 +15,7 @@ interface InputProps {
   rows?: number;
   minLength?: number;
   maxLength?: number;
+  className?: string;
 }
 
 export default function Input({
@@ -30,67 +31,89 @@ export default function Input({
   rows = 4,
   minLength,
   maxLength,
+  className = '',
 }: InputProps) {
-  const inputStyle = multiline ? commonStyles.textarea : commonStyles.input;
-
   const Component = multiline ? 'textarea' : 'input';
 
   return (
-    <div style={{ marginBottom: spacing.md }}>
+    <div className={`input-group ${className} ${error ? 'has-error' : ''}`}>
       {label && (
-        <label
-          style={{
-            display: 'block',
-            marginBottom: spacing.sm,
-            fontWeight: '500',
-            color: colors.text,
-          }}
-        >
+        <label className="input-label">
           {label}
-          {required && <span style={{ color: colors.error }}> *</span>}
+          {required && <span className="required">*</span>}
         </label>
       )}
 
       <Component
         {...(multiline ? { rows } : { type })}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange((e.target as any).value)}
         placeholder={placeholder}
         disabled={disabled}
         minLength={minLength}
         maxLength={maxLength}
-        style={{
-          ...inputStyle,
-          borderColor: error ? colors.error : colors.border,
-          backgroundColor: disabled ? colors.backgroundDark : colors.white,
-          cursor: disabled ? 'not-allowed' : 'text',
-        }}
+        className="input-field"
       />
 
-      {error && (
-        <div
-          style={{
-            marginTop: spacing.sm,
-            color: colors.error,
-            fontSize: '0.875rem',
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <div className="error-text">{error}</div>}
 
-      {maxLength && (
-        <div
-          style={{
-            marginTop: spacing.xs,
-            color: colors.textMuted,
-            fontSize: '0.75rem',
-            textAlign: 'right',
-          }}
-        >
-          {value.length} / {maxLength}
-        </div>
-      )}
+      <style jsx>{`
+        .input-group {
+          margin-bottom: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .input-label {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: var(--muted-foreground);
+        }
+
+        .required {
+          color: #ef4444;
+          margin-left: 0.25rem;
+        }
+
+        .input-field {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          color: var(--foreground);
+          font-family: inherit;
+          font-size: 0.875rem;
+          transition: all 0.2s ease;
+          outline: none;
+        }
+
+        .input-field:focus {
+          border-color: #52525b;
+          background: rgba(255, 255, 255, 0.05);
+          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+        }
+
+        .input-field:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .has-error .input-field {
+          border-color: #ef4444;
+        }
+
+        .error-text {
+          font-size: 0.75rem;
+          color: #ef4444;
+        }
+
+        textarea.input-field {
+          resize: vertical;
+          min-height: 100px;
+        }
+      `}</style>
     </div>
   );
 }

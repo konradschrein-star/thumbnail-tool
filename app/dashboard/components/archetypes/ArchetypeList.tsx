@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { Plus, Palette } from 'lucide-react';
 import Button from '../shared/Button';
 import Modal from '../shared/Modal';
 import ErrorMessage from '../shared/ErrorMessage';
 import ArchetypeCard from './ArchetypeCard';
 import ArchetypeForm from './ArchetypeForm';
-import { spacing, colors } from '../../styles';
 import useArchetypes, { type Archetype } from '../../hooks/useArchetypes';
 import useChannels from '../../hooks/useChannels';
+import { BlurFade } from '../ui/blur-fade';
 
 export default function ArchetypeList() {
   const { channels } = useChannels();
@@ -26,7 +27,7 @@ export default function ArchetypeList() {
       setShowCreateModal(false);
       setActionError('');
     } catch (err: any) {
-      throw err; // Let form handle the error
+      throw err;
     }
   };
 
@@ -37,7 +38,7 @@ export default function ArchetypeList() {
       setEditingArchetype(null);
       setActionError('');
     } catch (err: any) {
-      throw err; // Let form handle the error
+      throw err;
     }
   };
 
@@ -53,97 +54,67 @@ export default function ArchetypeList() {
   };
 
   if (loading && archetypes.length === 0) {
-    return <div style={{ textAlign: 'center', padding: spacing.xl }}>Loading archetypes...</div>;
+    return <div className="loading">Loading visual archetypes...</div>;
   }
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: spacing.lg,
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Archetypes</h2>
-        <Button onClick={() => setShowCreateModal(true)}>Create Archetype</Button>
+    <div className="view-container">
+      <div className="view-header">
+        <div>
+          <h2 className="view-title">Visual Archetypes</h2>
+          <p className="view-subtitle">Define and manage design patterns for your thumbnails</p>
+        </div>
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus size={18} style={{ marginRight: '0.4rem' }} /> Create Archetype
+        </Button>
       </div>
 
-      {/* Channel Filter */}
-      <div style={{ marginBottom: spacing.lg }}>
-        <label
-          style={{
-            display: 'block',
-            marginBottom: spacing.sm,
-            fontWeight: '500',
-            color: colors.text,
-          }}
-        >
-          Filter by Channel
-        </label>
-        <select
-          value={selectedChannelId}
-          onChange={(e) => setSelectedChannelId(e.target.value)}
-          style={{
-            padding: '0.625rem',
-            border: `1px solid ${colors.border}`,
-            borderRadius: '8px',
-            fontSize: '1rem',
-            width: '100%',
-            maxWidth: '400px',
-            fontFamily: 'inherit',
-          }}
-        >
-          <option value="">All Channels</option>
-          {channels.map((channel) => (
-            <option key={channel.id} value={channel.id}>
-              {channel.name}
-            </option>
-          ))}
-        </select>
+      {/* Filters */}
+      <div className="filter-bar glass">
+        <div className="filter-group">
+          <label className="filter-label">Filter by Channel</label>
+          <select
+            value={selectedChannelId}
+            onChange={(e) => setSelectedChannelId(e.target.value)}
+            className="filter-select"
+            title="Filter by Channel"
+          >
+            <option value="">All Channels</option>
+            {channels.map((channel) => (
+              <option key={channel.id} value={channel.id}>
+                {channel.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && <ErrorMessage message={error} />}
       {actionError && <ErrorMessage message={actionError} onDismiss={() => setActionError('')} />}
 
       {archetypes.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: spacing.xxl,
-            backgroundColor: colors.background,
-            borderRadius: '8px',
-          }}
-        >
-          <div style={{ fontSize: '3rem', marginBottom: spacing.md }}>🎨</div>
-          <h3 style={{ color: colors.textLight }}>
-            {selectedChannelId ? 'No archetypes for this channel' : 'No archetypes yet'}
-          </h3>
-          <p style={{ color: colors.textMuted }}>
+        <div className="empty-state glass">
+          <div className="empty-icon"><Palette size={48} /></div>
+          <h3>{selectedChannelId ? 'No archetypes for this channel' : 'No archetypes yet'}</h3>
+          <p>
             {selectedChannelId
-              ? 'Create an archetype for this channel'
-              : 'Create your first archetype to get started'}
+              ? 'Create an archetype for this channel to see it here.'
+              : 'Create your first visual archetype to define your channel style.'}
           </p>
-          <Button onClick={() => setShowCreateModal(true)} style={{ marginTop: spacing.md }}>
-            Create Archetype
+          <Button onClick={() => setShowCreateModal(true)}>
+            <Plus size={18} style={{ marginRight: '0.4rem' }} /> Create Archetype
           </Button>
         </div>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: spacing.lg,
-          }}
-        >
-          {archetypes.map((archetype) => (
-            <ArchetypeCard
-              key={archetype.id}
-              archetype={archetype}
-              onEdit={() => setEditingArchetype(archetype)}
-              onDelete={() => setDeletingArchetype(archetype)}
-            />
+        <div className="archetype-grid">
+          {archetypes.map((archetype, index) => (
+            <BlurFade key={archetype.id} delay={0.1 + index * 0.05} inView>
+              <ArchetypeCard
+                archetype={archetype}
+                onEdit={() => setEditingArchetype(archetype)}
+                onDelete={() => setDeletingArchetype(archetype)}
+              />
+            </BlurFade>
           ))}
         </div>
       )}
@@ -153,6 +124,7 @@ export default function ArchetypeList() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Create New Archetype"
+        size="large"
       >
         <ArchetypeForm
           mode="create"
@@ -166,7 +138,8 @@ export default function ArchetypeList() {
       <Modal
         isOpen={!!editingArchetype}
         onClose={() => setEditingArchetype(null)}
-        title="Edit Archetype"
+        title="Edit Visual Archetype"
+        size="large"
       >
         {editingArchetype && (
           <ArchetypeForm
@@ -185,20 +158,141 @@ export default function ArchetypeList() {
         title="Delete Archetype"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setDeletingArchetype(null)}>
+            <Button variant="ghost" onClick={() => setDeletingArchetype(null)}>
               Cancel
             </Button>
             <Button variant="danger" onClick={handleDelete}>
-              Delete
+              Delete Archetype
             </Button>
           </>
         }
       >
-        <p>
-          Are you sure you want to delete <strong>{deletingArchetype?.name}</strong>?
-        </p>
-        <p style={{ color: colors.textMuted }}>This action cannot be undone.</p>
+        <div className="delete-confirm">
+          <p>Are you sure you want to delete <strong>{deletingArchetype?.name}</strong>?</p>
+          <p className="warning-text">This action is permanent and cannot be undone.</p>
+        </div>
       </Modal>
+
+      <style jsx>{`
+        .view-container {
+          animation: fade-in 0.4s ease-out;
+        }
+
+        .view-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          margin-bottom: 2rem;
+        }
+
+        .view-title {
+          font-size: 1.875rem;
+          font-weight: 700;
+          margin: 0;
+          color: var(--foreground);
+        }
+
+        .view-subtitle {
+          color: var(--muted-foreground);
+          margin: 0.25rem 0 0 0;
+          font-size: 0.875rem;
+        }
+
+        .filter-bar {
+          padding: 1rem;
+          margin-bottom: 2rem;
+          border-radius: var(--radius);
+        }
+
+        .filter-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .filter-label {
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--muted-foreground);
+        }
+
+        .filter-select {
+          padding: 0.625rem 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          color: var(--foreground);
+          font-size: 0.875rem;
+          outline: none;
+          max-width: 300px;
+          cursor: pointer;
+        }
+
+        .filter-select option {
+          background-color: #09090b;
+          color: #fafafa;
+        }
+
+        .filter-select:focus {
+          border-color: #52525b;
+        }
+
+        .archetype-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 2rem;
+        }
+
+        .loading {
+          text-align: center;
+          padding: 3rem;
+          color: var(--muted-foreground);
+        }
+
+        .empty-state {
+          padding: 4rem 2rem;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .empty-icon {
+          font-size: 3rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .empty-state h3 {
+          margin: 0;
+          font-size: 1.25rem;
+        }
+
+        .empty-state p {
+          color: var(--muted-foreground);
+          margin-bottom: 1rem;
+          max-width: 400px;
+        }
+
+        .delete-confirm p {
+          margin-bottom: 1rem;
+        }
+
+        .warning-text {
+          color: #fca5a5;
+          font-size: 0.8125rem;
+          padding: 0.75rem;
+          background: rgba(127, 29, 29, 0.1);
+          border-radius: var(--radius);
+        }
+
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

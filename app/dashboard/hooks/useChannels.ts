@@ -6,6 +6,11 @@ export interface Channel {
   id: string;
   name: string;
   personaDescription: string;
+  personaAssetPath?: string;
+  logoAssetPath?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  tags?: string;
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -17,11 +22,21 @@ export interface Channel {
 export interface CreateChannelData {
   name: string;
   personaDescription: string;
+  personaAssetPath?: string;
+  logoAssetPath?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  tags?: string;
 }
 
 export interface UpdateChannelData {
   name?: string;
   personaDescription?: string;
+  personaAssetPath?: string;
+  logoAssetPath?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  tags?: string;
 }
 
 export default function useChannels() {

@@ -3,142 +3,347 @@
 import { useState } from 'react';
 import ErrorMessage from '../shared/ErrorMessage';
 import JobRow from './JobRow';
-import { spacing, colors, commonStyles } from '../../styles';
-import useJobs from '../../hooks/useJobs';
+import useJobs, { Job } from '../../hooks/useJobs';
 import useChannels from '../../hooks/useChannels';
+import { BlurFade } from '../ui/blur-fade';
+import { ClipboardList } from 'lucide-react';
 
-export default function JobHistoryTable() {
+// Helper to group jobs by date
+function groupJobsByDate(jobs: Job[]) {
+  const groups: { [key: string]: Job[] } = {
+    'Today': [],
+    'Yesterday': [],
+    'Last 7 Days': [],
+    'Older': []
+  };
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const lastWeek = new Date(today);
+  lastWeek.setDate(lastWeek.getDate() - 7);
+
+  jobs.forEach(job => {
+    const jobDate = new Date(job.createdAt);
+    if (jobDate >= today) {
+      groups['Today'].push(job);
+    } else if (jobDate >= yesterday) {
+      groups['Yesterday'].push(job);
+    } else if (jobDate >= lastWeek) {
+      groups['Last 7 Days'].push(job);
+    } else {
+      groups['Older'].push(job);
+    }
+  });
+
+  return groups;
+}
+
+interface JobHistoryTableProps {
+  onRedo?: (job: Job) => void;
+}
+
+export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
   const { channels } = useChannels();
   const [channelFilter, setChannelFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const { jobs, loading, error } = useJobs({
     channelId: channelFilter || undefined,
     status: statusFilter || undefined,
+    limit: 30,
   });
 
   if (loading && jobs.length === 0) {
-    return <div style={{ textAlign: 'center', padding: spacing.xl }}>Loading jobs...</div>;
+    return <div className="loading">Loading generation history...</div>;
   }
 
+  const filteredJobs = jobs.filter(job =>
+    job.videoTopic.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const groupedJobs = groupJobsByDate(filteredJobs);
+
   return (
-    <div>
-      <h2 style={{ marginBottom: spacing.lg }}>Job History</h2>
-
-      {/* Filters */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: spacing.md,
-          marginBottom: spacing.lg,
-        }}
-      >
-        {/* Channel Filter */}
-        <div>
-          <label
-            style={{
-              display: 'block',
-              marginBottom: spacing.sm,
-              fontWeight: '500',
-              color: colors.text,
-            }}
-          >
-            Filter by Channel
-          </label>
-          <select
-            value={channelFilter}
-            onChange={(e) => setChannelFilter(e.target.value)}
-            style={{
-              padding: '0.625rem',
-              border: `1px solid ${colors.border}`,
-              borderRadius: '8px',
-              fontSize: '1rem',
-              width: '100%',
-              fontFamily: 'inherit',
-            }}
-          >
-            <option value="">All Channels</option>
-            {channels.map((channel) => (
-              <option key={channel.id} value={channel.id}>
-                {channel.name}
-              </option>
-            ))}
-          </select>
+    <BlurFade delay={0.1} inView>
+      <div className="view-container">
+        <div className="view-header">
+          <div>
+            <h2 className="view-title">Generation History</h2>
+            <p className="view-subtitle">Track and manage your last 30 AI-generated thumbnails</p>
+          </div>
         </div>
 
-        {/* Status Filter */}
-        <div>
-          <label
-            style={{
-              display: 'block',
-              marginBottom: spacing.sm,
-              fontWeight: '500',
-              color: colors.text,
-            }}
-          >
-            Filter by Status
-          </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '0.625rem',
-              border: `1px solid ${colors.border}`,
-              borderRadius: '8px',
-              fontSize: '1rem',
-              width: '100%',
-              fontFamily: 'inherit',
-            }}
-          >
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="completed">Completed</option>
-            <option value="failed">Failed</option>
-          </select>
-        </div>
-      </div>
+        {/* Filters */}
+        <div className="filter-bar glass">
+          <div className="filter-group search-group">
+            <label className="filter-label">Search Topic</label>
+            <input
+              type="text"
+              placeholder="Search by video topic..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="filter-input"
+            />
+          </div>
 
-      {error && <ErrorMessage message={error} />}
-
-      {jobs.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: spacing.xxl,
-            backgroundColor: colors.background,
-            borderRadius: '8px',
-          }}
-        >
-          <div style={{ fontSize: '3rem', marginBottom: spacing.md }}>📋</div>
-          <h3 style={{ color: colors.textLight }}>No generation jobs yet</h3>
-          <p style={{ color: colors.textMuted }}>
-            {channelFilter || statusFilter
-              ? 'No jobs match your filters'
-              : 'Generated thumbnails will appear here'}
-          </p>
-        </div>
-      ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={commonStyles.table}>
-            <thead>
-              <tr>
-                <th style={commonStyles.tableHeader}>Timestamp</th>
-                <th style={commonStyles.tableHeader}>Channel</th>
-                <th style={commonStyles.tableHeader}>Archetype</th>
-                <th style={commonStyles.tableHeader}>Video Topic</th>
-                <th style={commonStyles.tableHeader}>Status</th>
-                <th style={commonStyles.tableHeader}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => (
-                <JobRow key={job.id} job={job} />
+          <div className="filter-group">
+            <label className="filter-label">Channel</label>
+            <select
+              value={channelFilter}
+              onChange={(e) => setChannelFilter(e.target.value)}
+              className="filter-select"
+              title="Filter by Channel"
+            >
+              <option value="">All Channels</option>
+              {channels.map((channel) => (
+                <option key={channel.id} value={channel.id}>
+                  {channel.name}
+                </option>
               ))}
-            </tbody>
-          </table>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label className="filter-label">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="filter-select"
+              title="Filter by Status"
+            >
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
         </div>
-      )}
-    </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        {filteredJobs.length === 0 ? (
+          <div className="empty-state glass">
+            <div className="empty-icon text-muted-foreground"><ClipboardList size={48} /></div>
+            <h3>No jobs found</h3>
+            <p>
+              {channelFilter || statusFilter || searchQuery
+                ? 'No generation jobs match your current search criteria.'
+                : 'Start generating thumbnails to see your history here.'}
+            </p>
+          </div>
+        ) : (
+          <div className="history-list">
+            {Object.entries(groupedJobs).map(([dateGroup, groupJobs]) => {
+              if (groupJobs.length === 0) return null;
+              return (
+                <div key={dateGroup} className="date-group">
+                  <h3 className="date-group-title">{dateGroup}</h3>
+                  <div className="table-container">
+                    <table className="job-table">
+                      <thead>
+                        <tr>
+                          <th>Preview</th>
+                          <th>Timestamp</th>
+                          <th>Channel</th>
+                          <th>Archetype</th>
+                          <th>Video Topic</th>
+                          <th>Status</th>
+                          <th className="action-header">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {groupJobs.map((job) => (
+                          <JobRow
+                            key={job.id}
+                            job={job}
+                            onRedo={onRedo}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <style jsx>{`
+          .view-container {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .view-header {
+            margin-bottom: 2rem;
+          }
+
+          .view-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin: 0;
+            color: #fafafa;
+            letter-spacing: -0.025em;
+          }
+
+          .view-subtitle {
+            color: #94a3b8;
+            margin: 0.25rem 0 0 0;
+            font-size: 0.875rem;
+          }
+
+          .filter-bar {
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-end;
+          }
+
+          .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+          }
+
+          .date-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+          }
+
+          .date-group-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding-left: 0.5rem;
+            border-left: 2px solid #ffffff;
+          }
+
+          .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 200px;
+          }
+
+          .filter-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+          }
+
+            .filter-select, .filter-input {
+              background: rgba(255, 255, 255, 0.03);
+              border: 1px solid rgba(255, 255, 255, 0.08);
+              border-radius: 8px;
+              color: #fafafa;
+              font-size: 0.9375rem;
+              padding: 0.6rem 0.8rem;
+              outline: none;
+              cursor: pointer;
+              transition: all 0.2s ease;
+            }
+
+            .filter-input {
+              cursor: text;
+              width: 100%;
+            }
+
+            .search-group {
+              flex: 1;
+              min-width: 300px;
+            }
+
+            .filter-select option {
+              background-color: #09090b;
+              color: #fafafa;
+            }
+
+            .filter-select:focus, .filter-input:focus {
+              border-color: #ffffff;
+              background: rgba(255, 255, 255, 0.05);
+            }
+
+          .loading {
+            text-align: center;
+            padding: 4rem;
+            color: #94a3b8;
+            font-weight: 500;
+          }
+
+          .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(8px);
+          }
+
+          .job-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+          }
+
+          .job-table th {
+            padding: 1rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.01);
+          }
+
+          .action-header {
+            text-align: right;
+            padding-right: 1.5rem !important;
+          }
+
+          .empty-state {
+            padding: 5rem 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.25rem;
+          }
+
+          .empty-icon {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
+          }
+
+          .empty-state h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #f8fafc;
+          }
+
+          .empty-state p {
+            color: #64748b;
+            margin: 0;
+            max-width: 400px;
+            line-height: 1.6;
+          }
+
+          @media (max-width: 768px) {
+            .filter-bar {
+              flex-direction: column;
+              align-items: stretch;
+            }
+          }
+        `}</style>
+      </div>
+    </BlurFade>
   );
 }

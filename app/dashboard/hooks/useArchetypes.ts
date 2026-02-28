@@ -5,9 +5,10 @@ import { useState, useEffect, useCallback } from 'react';
 export interface Archetype {
   id: string;
   name: string;
-  channelId: string;
+  channelId?: string | null;
   imageUrl: string;
   layoutInstructions: string;
+  category?: string | null;
   createdAt: string;
   updatedAt: string;
   channel?: {
