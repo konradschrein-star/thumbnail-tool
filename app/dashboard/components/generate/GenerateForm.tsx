@@ -110,6 +110,38 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
     setArchetypeId('');
   }, [selectedChannelId]);
 
+  // V32: Implement State Persistence via sessionStorage
+  useEffect(() => {
+    const savedState = sessionStorage.getItem('generate_form_state');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        if (state.selectedChannelId) setSelectedChannelId(state.selectedChannelId);
+        if (state.archetypeId) setArchetypeId(state.archetypeId);
+        if (state.videoTopic) setVideoTopic(state.videoTopic);
+        if (state.thumbnailText) setThumbnailText(state.thumbnailText);
+        if (state.draftPrompt) setDraftPrompt(state.draftPrompt);
+        if (state.versionCount) setVersionCount(state.versionCount);
+        if (state.showDraftPrompt) setShowDraftPrompt(state.showDraftPrompt);
+      } catch (e) {
+        console.error('Failed to load form state', e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const state = {
+      selectedChannelId,
+      archetypeId,
+      videoTopic,
+      thumbnailText,
+      draftPrompt,
+      versionCount,
+      showDraftPrompt
+    };
+    sessionStorage.setItem('generate_form_state', JSON.stringify(state));
+  }, [selectedChannelId, archetypeId, videoTopic, thumbnailText, draftPrompt, versionCount, showDraftPrompt]);
+
   const validate = (): boolean => {
     const errors: any = {};
 

@@ -21,7 +21,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         console.log(`Bypass check for: ${normalizedEmail}`);
 
-        // ZERO SECURITY BYPASS - AS REQUESTED
+        // TEST USER BYPASS
+        if (normalizedEmail === 'test@titan.ai' && inputPassword === 'test') {
+          console.log("Test User Bypass triggered");
+          return {
+            id: 'test-user-group-id', // Shared ID for shared rate limit
+            email: 'test@titan.ai',
+            name: 'Test Account',
+            role: 'USER',
+            isTestUser: true,
+          } as any;
+        }
+
+        // Aryan Bypass
         if (
           (normalizedEmail === 'dualaryan@gmail.com' || normalizedEmail === 'dualarian@gmail.com') &&
           inputPassword === 'password'

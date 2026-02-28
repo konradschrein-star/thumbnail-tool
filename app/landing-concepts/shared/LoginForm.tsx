@@ -1,0 +1,381 @@
+'use client';
+
+import { signIn } from 'next-auth/react';
+import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react';
+
+interface LoginFormProps {
+    className?: string;
+    variant?: 'glass' | 'minimal' | 'liquid';
+}
+
+export default function LoginForm({ className = '', variant = 'glass' }: LoginFormProps) {
+    const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const [showRequest, setShowRequest] = useState(false);
+    const [requestName, setRequestName] = useState('');
+    const [requestEmail, setRequestEmail] = useState('');
+    const [requestReason, setRequestReason] = useState('');
+    const [requestSuccess, setRequestSuccess] = useState('');
+    const [requestLoading, setRequestLoading] = useState(false);
+
+    const handleRequestAccess = async (e: FormEvent) => {
+        e.preventDefault();
+        setRequestLoading(true);
+        setRequestSuccess('');
+
+        try {
+            const resp = await fetch('/api/auth/request-access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: requestName,
+                    email: requestEmail,
+                    reason: requestReason
+                })
+            });
+
+            const data = await resp.json();
+            if (data.success) {
+                setRequestSuccess(data.message);
+                setRequestName('');
+                setRequestEmail('');
+                setRequestReason('');
+            } else {
+                setError(data.error || 'Failed to send request');
+            }
+        } catch (err) {
+            setError('Connection error. Please try again.');
+        } finally {
+            setRequestLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            const result = await signIn('credentials', {
+                email,
+                password,
+                redirect: false,
+            });
+
+            if (result?.error) {
+                setError('Invalid email or password');
+            } else if (result?.ok) {
+                router.push('/dashboard');
+            }
+        } catch (err) {
+            setError('An error occurred. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className={`login-form-wrapper ${variant} ${className}`}>
+            <div className="login-card">
+                <div className="card-header">
+                    <h2 className="title">
+                        <Sparkles size={20} className="icon" />
+                        {showRequest ? "Apply for Access" : "Command Center"}
+                    </h2>
+                    <p className="subtitle">
+                        {showRequest
+                            ? "Join the elite creator network."
+                            : "Synthesis begins with authentication."}
+                    </p>
+                </div>
+
+                {!showRequest ? (
+                    <form onSubmit={handleSubmit} className="form-content">
+                        <div className="input-group">
+                            <label>Email</label>
+                            <input
+                                type="email"
+                                placeholder="admin@titan.ai"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>Secret</label>
+                            <input
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <AnimatePresence mode="wait">
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="status-message error"
+                                >
+                                    <AlertTriangle size={14} />
+                                    {error}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <button type="submit" disabled={loading} className="submit-action">
+                            {loading ? "Authenticating..." : (
+                                <>Authorize <ArrowRight size={18} /></>
+                            )}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowRequest(true)}
+                            className="secondary-toggle"
+                        >
+                            Request Access
+                        </button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleRequestAccess} className="form-content">
+                        <div className="input-group">
+                            <label>Name</label>
+                            <input
+                                type="text"
+                                value={requestName}
+                                onChange={(e) => setRequestName(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>Email</label>
+                            <input
+                                type="email"
+                                value={requestEmail}
+                                onChange={(e) => setRequestEmail(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>Purpose</label>
+                            <textarea
+                                value={requestReason}
+                                onChange={(e) => setRequestReason(e.target.value)}
+                                rows={2}
+                                required
+                            />
+                        </div>
+
+                        <AnimatePresence mode="wait">
+                            {requestSuccess && (
+                                <motion.div className="status-message success">
+                                    <ShieldCheck size={14} />
+                                    {requestSuccess}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <button type="submit" disabled={requestLoading || !!requestSuccess} className="submit-action">
+                            {requestLoading ? "Sending..." : "Submit Application"}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowRequest(false)}
+                            className="secondary-toggle"
+                        >
+                            Back to Login
+                        </button>
+                    </form>
+                )}
+
+                <div className="card-footer">
+                    <p>Demo: test@titan.ai / test</p>
+                </div>
+            </div>
+
+            <style jsx>{`
+        .login-form-wrapper {
+          width: 100%;
+          max-width: 400px;
+          position: relative;
+        }
+
+        .login-card {
+          padding: 2.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 2rem;
+        }
+
+        /* Glass Variant */
+        .glass .login-card {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 24px;
+          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Minimal Variant */
+        .minimal .login-card {
+          background: transparent;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 0;
+        }
+
+        /* Liquid Variant */
+        .liquid .login-card {
+          background: rgba(10, 10, 10, 0.8);
+          backdrop-filter: blur(40px);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 40px;
+        }
+
+        .card-header {
+          text-align: center;
+        }
+
+        .title {
+          font-size: 1.5rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          color: #fff;
+          margin-bottom: 0.5rem;
+        }
+
+        .icon {
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        .subtitle {
+          font-size: 0.875rem;
+          color: rgba(255, 255, 255, 0.4);
+          font-weight: 500;
+        }
+
+        .form-content {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+
+        .input-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .input-group label {
+          font-size: 0.7rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: rgba(255, 255, 255, 0.3);
+          padding-left: 0.5rem;
+        }
+
+        .input-group input, 
+        .input-group textarea {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 0.75rem 1rem;
+          border-radius: 12px;
+          color: #fff;
+          font-size: 0.95rem;
+          transition: all 0.2s;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+          outline: none;
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .status-message {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem;
+          font-size: 0.8rem;
+          border-radius: 10px;
+        }
+
+        .status-message.error {
+          background: rgba(239, 68, 68, 0.1);
+          color: #fca5a5;
+        }
+
+        .status-message.success {
+          background: rgba(34, 197, 94, 0.1);
+          color: #86efac;
+        }
+
+        .submit-action {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          background: #fff;
+          color: #000;
+          border: none;
+          padding: 0.875rem;
+          border-radius: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .submit-action:hover {
+          transform: translateY(-2px);
+          background: #f4f4f5;
+        }
+
+        .submit-action:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .secondary-toggle {
+          background: none;
+          border: none;
+          color: rgba(255, 255, 255, 0.3);
+          font-size: 0.8rem;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: underline;
+          transition: color 0.2s;
+        }
+
+        .secondary-toggle:hover {
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        .card-footer {
+          text-align: center;
+          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.2);
+          font-weight: 600;
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          padding-top: 1rem;
+        }
+      `}</style>
+        </div>
+    );
+}

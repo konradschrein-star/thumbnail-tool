@@ -254,10 +254,10 @@ export default function SignIn() {
 
           <div className="card-footer">
             <p className="hint">
-              Test Group Access: <span className="highlight">test@titan.ai / test</span>
+              Test Account: <span className="highlight">test@titan.ai / test</span>
             </p>
-            <p className="hint-sub" style={{ fontSize: '0.7rem', color: '#4b5563', marginTop: '0.4rem' }}>
-              (Shared 10 generations per day across all test users)
+            <p className="hint-sub">
+              (Shared 10 generations per day group limit)
             </p>
           </div>
         </div>

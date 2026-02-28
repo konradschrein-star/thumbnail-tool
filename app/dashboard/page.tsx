@@ -79,22 +79,22 @@ function DashboardContent() {
     <DashboardLayout>
       <div className="content-wrapper">
         <div className="tab-content">
-          <div style={{ display: activeTab === 'channels' ? 'block' : 'none' }}>
+          <div className={`tab-pane ${activeTab === 'channels' ? 'active' : ''}`}>
             <ChannelList />
           </div>
-          <div style={{ display: activeTab === 'archetypes' ? 'block' : 'none' }}>
+          <div className={`tab-pane ${activeTab === 'archetypes' ? 'active' : ''}`}>
             <ArchetypeList />
           </div>
-          <div style={{ display: activeTab === 'generate' ? 'block' : 'none' }}>
+          <div className={`tab-pane ${activeTab === 'generate' ? 'active' : ''}`}>
             <GenerateForm initialData={redoData} />
           </div>
-          <div style={{ display: activeTab === 'history' ? 'block' : 'none' }}>
+          <div className={`tab-pane ${activeTab === 'history' ? 'active' : ''}`}>
             <JobHistoryTable onRedo={handleRedo} />
           </div>
-          <div style={{ display: activeTab === 'translate' ? 'block' : 'none' }}>
+          <div className={`tab-pane ${activeTab === 'translate' ? 'active' : ''}`}>
             <TranslatePage />
           </div>
-          <div style={{ display: activeTab === 'api-docs' ? 'block' : 'none' }}>
+          <div className={`tab-pane ${activeTab === 'api-docs' ? 'active' : ''}`}>
             <APIDocsPage />
           </div>
         </div>
@@ -108,6 +108,12 @@ function DashboardContent() {
         .tab-content {
           margin-top: 1.5rem;
           animation: slideUp 0.4s ease-out;
+        }
+        .tab-pane {
+          display: none;
+        }
+        .tab-pane.active {
+          display: block;
         }
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(10px); }
