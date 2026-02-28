@@ -15,6 +15,7 @@ interface InputProps {
   rows?: number;
   minLength?: number;
   maxLength?: number;
+  description?: string;
   className?: string;
 }
 
@@ -31,6 +32,7 @@ export default function Input({
   rows = 4,
   minLength,
   maxLength,
+  description,
   className = '',
 }: InputProps) {
   const Component = multiline ? 'textarea' : 'input';
@@ -55,6 +57,7 @@ export default function Input({
         className="input-field"
       />
 
+      {description && <div className="description-text">{description}</div>}
       {error && <div className="error-text">{error}</div>}
 
       <style jsx>{`
@@ -102,6 +105,12 @@ export default function Input({
 
         .has-error .input-field {
           border-color: #ef4444;
+        }
+
+        .description-text {
+          font-size: 0.75rem;
+          color: var(--muted-foreground);
+          margin-top: -0.25rem;
         }
 
         .error-text {
