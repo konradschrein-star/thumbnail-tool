@@ -30,9 +30,9 @@ export interface AIRequestPayload {
   systemPrompt: string;
   userPrompt: string;
   base64Images: {
-    archetype: string;
-    persona: string;
-    logo?: string;
+    archetype: { data: string; mimeType: string };
+    persona: { data: string; mimeType: string };
+    logo?: { data: string; mimeType: string };
   };
 }
 
@@ -51,11 +51,11 @@ export function sanitizePrompt(text: string, maxLength: number): string {
 }
 
 /**
- * Encodes an image to base64 from a local path or a remote URL.
+ * Encodes an image to base64 and detects its MIME type.
  * Aggressively attempts local resolution for any internal paths/URLs.
  */
-export async function encodeImageToBase64(pathOrUrl: string): Promise<string> {
-  if (!pathOrUrl) return '';
+export async function encodeImageToBase64(pathOrUrl: string): Promise<{ data: string; mimeType: string }> {
+  if (!pathOrUrl) return { data: '', mimeType: 'image/jpeg' };
 
   try {
     const projectRoot = process.cwd();
@@ -66,14 +66,22 @@ export async function encodeImageToBase64(pathOrUrl: string): Promise<string> {
     const filename = pathOrUrl.split('/').pop()?.split('?')[0];
     if (filename && EMERGENCY_ASSET_MAP[filename]) {
       console.log(`[STORAGE] Using embedded asset for ${filename}`);
-      return EMERGENCY_ASSET_MAP[filename];
+      let data = EMERGENCY_ASSET_MAP[filename];
+
+      // Strip data URL prefix if it exists
+      if (data.includes(';base64,')) {
+        data = data.split(';base64,').pop()!;
+      }
+
+      const mimeType = detectMimeTypeFromBase64(data);
+      console.log(`[ENCODER] Embedded ${filename}: ${mimeType} (${(data.length * 0.75 / 1024).toFixed(1)}KB)`);
+      return { data, mimeType };
     }
 
     // 1. Candidate Extraction
     if (pathOrUrl.startsWith('http')) {
       try {
         const url = new URL(pathOrUrl);
-        // If it's an internal-looking URL, try to resolve the path locally
         if (
           url.hostname === 'localhost' ||
           url.hostname === '127.0.0.1' ||
@@ -82,16 +90,13 @@ export async function encodeImageToBase64(pathOrUrl: string): Promise<string> {
         ) {
           internalPath = url.pathname;
         }
-      } catch (e) {
-        // Fallback: just use URL as is
-      }
+      } catch (e) { }
     } else {
       internalPath = pathOrUrl;
     }
 
     // 2. Try Local Filesystem Resolve (Aggressive)
     if (internalPath) {
-      // Clean path: remove leading / and any query params
       const cleanPath = internalPath.split('?')[0].startsWith('/')
         ? internalPath.split('?')[0].slice(1)
         : internalPath.split('?')[0];
@@ -106,7 +111,6 @@ export async function encodeImageToBase64(pathOrUrl: string): Promise<string> {
       for (const candidate of candidates) {
         try {
           const normalized = resolve(candidate);
-          // Safety: ensure it's inside the project
           if (normalized.startsWith(resolve(projectRoot))) {
             const stats = await fs.stat(normalized);
             if (stats.isFile()) {
@@ -115,36 +119,73 @@ export async function encodeImageToBase64(pathOrUrl: string): Promise<string> {
               break;
             }
           }
-        } catch (err) {
-          // Continue to next candidate
-        }
+        } catch (err) { }
       }
     }
 
+    let buffer: Buffer;
     if (localBuffer) {
-      return localBuffer.toString('base64');
-    }
-
-    // 3. Remote Fetch Fallback
-    if (pathOrUrl.startsWith('http')) {
+      buffer = localBuffer;
+    } else if (pathOrUrl.startsWith('http')) {
       const response = await fetch(pathOrUrl, {
         headers: { 'User-Agent': 'ThumbnailCreator/2.0' },
-        signal: AbortSignal.timeout(10000) // 10s timeout
+        signal: AbortSignal.timeout(10000)
       });
-
-      if (!response.ok) {
-        throw new Error(`Remote fetch failed: ${response.status} ${response.statusText}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer).toString('base64');
+      if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+      buffer = Buffer.from(await response.arrayBuffer());
+    } else {
+      throw new Error(`Could not resolve: ${pathOrUrl}`);
     }
 
-    throw new Error(`Could not resolve image locally or as a valid URL: ${pathOrUrl}`);
+    const mimeType = detectMimeType(buffer);
+    const base64Data = buffer.toString('base64');
+
+    const sizeKB = buffer.length / 1024;
+    console.log(`[ENCODER] Success: ${pathOrUrl} -> ${mimeType} (${sizeKB.toFixed(1)}KB)`);
+
+    if (sizeKB > 4096) {
+      console.warn(`[ENCODER WARNING] Image ${pathOrUrl} is very large (${sizeKB.toFixed(1)}KB). AI might reject it.`);
+    }
+
+    return { data: base64Data, mimeType };
 
   } catch (error: any) {
-    console.error(`[ENCODER ERROR] Failed for ${pathOrUrl}:`, error.message);
+    console.error(`[ENCODER ERROR] ${pathOrUrl}:`, error.message);
     throw new Error(`Failed to encode image: ${error.message}`);
+  }
+}
+
+function detectMimeType(buffer: Buffer): string {
+  if (buffer.length < 4) return 'image/jpeg';
+
+  // PNG: 89 50 4E 47
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+    return 'image/png';
+  }
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+    return 'image/jpeg';
+  }
+  // WEBP: RIFF .... WEBP
+  if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46) {
+    return 'image/webp';
+  }
+  // GIF: GIF8
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
+    return 'image/gif';
+  }
+
+  return 'image/jpeg';
+}
+
+function detectMimeTypeFromBase64(base64: string): string {
+  try {
+    // Strip prefix if it exists
+    const cleanBase64 = base64.includes(';base64,') ? base64.split(';base64,').pop()! : base64;
+    const binary = Buffer.from(cleanBase64.substring(0, 32), 'base64');
+    return detectMimeType(binary);
+  } catch (e) {
+    return 'image/jpeg';
   }
 }
 
@@ -239,24 +280,24 @@ export async function assemblePayload(
   const logoPath = channel.logoAssetPath || channel.logoPath;
   const archetypeUrl = archetype.imageUrl || archetype.referencePath;
 
-  const encodingTasks: Promise<string | undefined>[] = [
+  const encodingTasks: Promise<{ data: string; mimeType: string } | undefined>[] = [
     encodeImageToBase64(archetypeUrl.startsWith('http') ? archetypeUrl : `${baseUrl}${archetypeUrl}`),
     personaPath ? encodeImageToBase64(personaPath.startsWith('http') ? personaPath : `${baseUrl}${personaPath}`) : Promise.resolve(undefined),
     logoPath ? encodeImageToBase64(logoPath.startsWith('http') ? logoPath : `${baseUrl}${logoPath}`) : Promise.resolve(undefined),
   ];
 
-  const [archetypeBase64, personaBase64, logoBase64] = await Promise.all(encodingTasks);
+  const [archetypeResult, personaResult, logoResult] = await Promise.all(encodingTasks);
 
-  if (!archetypeBase64) throw new Error("Archetype image is required");
-  if (!personaBase64) throw new Error("Persona image is required");
+  if (!archetypeResult || !archetypeResult.data) throw new Error("Archetype image is required");
+  if (!personaResult || !personaResult.data) throw new Error("Persona image is required");
 
   return {
     systemPrompt,
     userPrompt,
     base64Images: {
-      archetype: archetypeBase64,
-      persona: personaBase64,
-      ...(logoBase64 ? { logo: logoBase64 } : {}),
+      archetype: archetypeResult,
+      persona: personaResult,
+      ...(logoResult && logoResult.data ? { logo: logoResult } : {}),
     },
   };
 }

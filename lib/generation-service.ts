@@ -43,28 +43,25 @@ export async function callNanoBanana(
     const ai = initializeClient(apiKey);
 
     // Format reference images: archetype, persona, and optional logo
-    const imageParts: any[] = [
-      {
-        inlineData: {
-          data: payload.base64Images.archetype,
-          mimeType: 'image/jpeg'
-        }
-      },
-      {
-        inlineData: {
-          data: payload.base64Images.persona,
-          mimeType: 'image/jpeg'
-        }
-      }
-    ];
+    const imageParts: any[] = [];
 
-    if (payload.base64Images.logo) {
+    const addImagePart = (image?: { data: string; mimeType: string }) => {
+      if (!image || !image.data || image.data.trim() === '') return;
+
       imageParts.push({
         inlineData: {
-          data: payload.base64Images.logo,
-          mimeType: 'image/png'
+          data: image.data,
+          mimeType: image.mimeType
         }
       });
+    };
+
+    addImagePart(payload.base64Images.archetype);
+    addImagePart(payload.base64Images.persona);
+    addImagePart(payload.base64Images.logo);
+
+    if (imageParts.length === 0) {
+      throw new Error('At least one reference image (archetype) is required for Nano Banana.');
     }
 
     // Merge system and user prompts
@@ -129,10 +126,10 @@ export async function callNanoBanana(
     }
 
     const base64Data = firstPart.inlineData.data;
-    console.log(`   ✓ Received image data: ${base64Data.length} characters (base64)`);
+    const buffer = Buffer.from(base64Data, 'base64');
+    console.log(`   ✓ Received image data: ${base64Data.length} chars (${(buffer.length / 1024).toFixed(1)}KB)`);
 
-    // Convert base64 to Buffer
-    return Buffer.from(base64Data, 'base64');
+    return buffer;
 
   } catch (error) {
     const apiError = handleAPIError(error);

@@ -60,14 +60,18 @@ export async function POST(request: NextRequest) {
     if (!channel) channel = EMERGENCY_CHANNELS.find(c => c.id === channelId) || EMERGENCY_CHANNELS[0];
     if (!archetype) archetype = EMERGENCY_ARCHETYPES.find(a => a.id === archetypeId) || EMERGENCY_ARCHETYPES[0];
 
-    // Build base payload
+    // Build base payload using the engine's data-driven approach
     const payload: payloadEngine.AIRequestPayload = {
       systemPrompt: customPrompt || `${channel.personaDescription} ${archetype.layoutInstructions}`,
       userPrompt: `Create a professional YouTube thumbnail.\n\nTopic: ${videoTopic}\nText to display: "${thumbnailText}"\n\nUse the reference image for style inspiration.`,
       base64Images: {
         archetype: await payloadEngine.encodeImageToBase64(archetype.imageUrl),
-        persona: (channel as any).personaAssetPath ? await payloadEngine.encodeImageToBase64((channel as any).personaAssetPath) : '',
-        logo: (channel as any).logoAssetPath ? await payloadEngine.encodeImageToBase64((channel as any).logoAssetPath) : '',
+        persona: (channel as any).personaAssetPath
+          ? await payloadEngine.encodeImageToBase64((channel as any).personaAssetPath)
+          : { data: '', mimeType: 'image/jpeg' },
+        logo: (channel as any).logoAssetPath
+          ? await payloadEngine.encodeImageToBase64((channel as any).logoAssetPath)
+          : { data: '', mimeType: 'image/png' },
       },
     };
 
