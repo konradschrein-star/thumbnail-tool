@@ -43,10 +43,10 @@ export default function ArchetypeForm({
 
   useEffect(() => {
     if (initialData) {
-      setName(initialData.name);
-      setChannelId(initialData.channelId);
-      setImageUrl(initialData.imageUrl);
-      setLayoutInstructions(initialData.layoutInstructions);
+      setName(initialData.name ?? '');
+      setChannelId(initialData.channelId ?? '');
+      setImageUrl(initialData.imageUrl ?? '');
+      setLayoutInstructions(initialData.layoutInstructions ?? '');
     }
   }, [initialData]);
 
