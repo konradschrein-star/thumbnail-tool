@@ -8,8 +8,7 @@ import {
   Environment,
   Float,
   Line,
-  PerspectiveCamera,
-  Bloom
+  PerspectiveCamera
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { motion as motionDom } from 'framer-motion';
