@@ -11,13 +11,19 @@ interface ErrorMessageProps {
 export default function ErrorMessage({ message, onDismiss }: ErrorMessageProps) {
   if (!message) return null;
 
+  const isConnectionError = message.toLowerCase().includes('reach database server') ||
+    message.toLowerCase().includes('invocation');
+
   return (
-    <div className="error-box">
+    <div className={`error-container glass ${isConnectionError ? 'connection-error' : ''}`}>
+      <div className="error-icon">⚠️</div>
       <div className="error-content">
-        <span className="error-icon"><AlertTriangle size={18} /></span>
-        <div className="error-text">
-          <strong>Error:</strong> {message}
-        </div>
+        <p className="error-message">{message}</p>
+        {isConnectionError && (
+          <p className="error-tip">
+            Tip: Check your database status in Supabase or update your connection string to use the pooler (port 6543).
+          </p>
+        )}
       </div>
       {onDismiss && (
         <button onClick={onDismiss} className="dismiss-btn" aria-label="Dismiss error">
