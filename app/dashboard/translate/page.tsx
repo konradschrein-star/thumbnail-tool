@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { BlurFade } from '../ui/blur-fade';
+import { BlurFade } from '../components/ui/blur-fade';
 import { Languages, Globe, ArrowRight, CheckCircle2, Loader2, Play } from 'lucide-react';
-import Button from '../shared/Button';
-import ErrorMessage from '../shared/ErrorMessage';
-import useJobs from '../../hooks/useJobs';
-import { ShimmerButton } from '../ui/shimmer-button';
+import Button from '../components/shared/Button';
+import ErrorMessage from '../components/shared/ErrorMessage';
+import useJobs from '../hooks/useJobs';
+import { ShimmerButton } from '../components/ui/shimmer-button';
 
 const LANGUAGES = [
     { code: 'German', label: 'German' },
@@ -26,7 +26,7 @@ export default function TranslatePage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
-    const completedJobs = jobs.filter(j => j.status === 'completed');
+    const completedJobs = jobs.filter((j: any) => j.status === 'completed');
 
     const toggleLang = (code: string) => {
         setSelectedLangs(prev =>
@@ -93,7 +93,7 @@ export default function TranslatePage() {
                                 ) : completedJobs.length === 0 ? (
                                     <p className="empty-msg">No completed jobs found to translate.</p>
                                 ) : (
-                                    completedJobs.map(job => (
+                                    completedJobs.map((job: any) => (
                                         <div
                                             key={job.id}
                                             className={`job-item ${selectedJobId === job.id ? 'active' : ''}`}

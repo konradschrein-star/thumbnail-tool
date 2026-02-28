@@ -1,6 +1,6 @@
 'use client';
 
-import { BlurFade } from '../ui/blur-fade';
+import { BlurFade } from '../components/ui/blur-fade';
 import { BookOpen, Code, Terminal, Zap } from 'lucide-react';
 
 export default function APIDocsPage() {
