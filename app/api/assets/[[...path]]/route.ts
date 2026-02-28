@@ -4,11 +4,11 @@ import { getObjectFromR2 } from '@/lib/r2-service';
 // GET /api/assets/[...path] - Proxy images from R2 to avoid public bucket exposure
 export async function GET(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path?: string[] }> }
 ) {
     try {
         // Reconstruct the R2 key from path segments
-        const pathSegments = await params.path;
+        const { path: pathSegments } = await params;
         if (!pathSegments || pathSegments.length === 0) {
             return new NextResponse('Asset path required', { status: 400 });
         }
