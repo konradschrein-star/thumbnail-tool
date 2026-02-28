@@ -42,5 +42,7 @@ async function simulateLogin(email, password) {
 
 // Test with exactly how they should be
 simulateLogin('dualaryan@gmail.com', 'password');
+// Test with mixed case and spaces
+simulateLogin(' DualAryan@gmail.com ', 'password');
 // Test admin too
 simulateLogin('admin@example.com', 'admin123');
