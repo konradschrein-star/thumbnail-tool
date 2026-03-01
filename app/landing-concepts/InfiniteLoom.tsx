@@ -40,7 +40,7 @@ function LoomParticles() {
       <PointMaterial
         transparent
         color="#8b5cf6"
-        size={0.05}
+        size={0.06}
         sizeAttenuation={true}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
@@ -68,8 +68,8 @@ function LoomConnections() {
         <Line
           key={i}
           points={points}
-          color="#3b82f6"
-          lineWidth={0.5}
+          color="#8b5cf6"
+          lineWidth={0.8}
           transparent
           opacity={0.3}
         />
@@ -103,17 +103,15 @@ export default function InfiniteLoom() {
 
       <div className="content">
         <motionDom.header
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.5, ease: "easeOut" }}
           className="hero"
         >
-          <div className="premium-label">Architectural Weave</div>
-          <h1 className="title">Infinite <br />Loom.</h1>
-          <p className="subtitle">Synthesizing raw data into cinematic visual narratives.</p>
+          <h1 className="title">Thumbnail <br />Tool.</h1>
         </motionDom.header>
 
-        <LoginForm variant="glass" className="loom-login" />
+        <LoginForm variant="liquid" className="loom-login" />
       </div>
 
       <style jsx>{`
@@ -160,20 +158,15 @@ export default function InfiniteLoom() {
         }
 
         .title {
-          font-size: clamp(3rem, 10vw, 7rem);
-          font-weight: 800;
-          line-height: 0.9;
-          letter-spacing: -0.04em;
+          font-size: clamp(4rem, 12vw, 8rem);
+          font-weight: 900;
+          line-height: 0.85;
+          letter-spacing: -0.05em;
           color: #fff;
-          background: linear-gradient(to bottom, #fff, #3b82f6);
+          background: linear-gradient(to bottom, #fff 30%, #a78bfa 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-        }
-
-        .subtitle {
-          font-size: 1.1rem;
-          color: rgba(255, 255, 255, 0.4);
-          max-width: 600px;
+          filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.3));
         }
 
         .loom-login {

@@ -238,10 +238,30 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
 
         /* Liquid Variant */
         .liquid .login-card {
-          background: rgba(10, 10, 10, 0.8);
-          backdrop-filter: blur(40px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 40px;
+          background: rgba(255, 255, 255, 0.02);
+          backdrop-filter: blur(40px) saturate(200%);
+          -webkit-backdrop-filter: blur(40px) saturate(200%);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 48px;
+          box-shadow: 
+            0 0 0 1px rgba(255, 255, 255, 0.05),
+            0 20px 50px rgba(0, 0, 0, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.02);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .liquid .login-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            135deg, 
+            transparent 0%, 
+            rgba(139, 92, 246, 0.05) 50%, 
+            transparent 100%
+          );
+          pointer-events: none;
         }
 
         .card-header {
@@ -342,9 +362,17 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
           transition: all 0.2s;
         }
 
-        .submit-action:hover {
-          transform: translateY(-2px);
-          background: #f4f4f5;
+        .liquid .submit-action {
+          background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+          color: #fff;
+          border: none;
+          box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
+        }
+
+        .liquid .submit-action:hover {
+          background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+          box-shadow: 0 15px 30px rgba(139, 92, 246, 0.4);
+          transform: translateY(-3px);
         }
 
         .submit-action:disabled {
