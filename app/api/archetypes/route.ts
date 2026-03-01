@@ -36,7 +36,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ archetypes: archetypes.length > 0 ? archetypes : EMERGENCY_ARCHETYPES });
   } catch (error: any) {
     console.error('Database error in GET /api/archetypes:', error);
-    return NextResponse.json({ archetypes: EMERGENCY_ARCHETYPES, isOffline: true });
+    return NextResponse.json(
+      { archetypes: EMERGENCY_ARCHETYPES, isOffline: true },
+      { status: 500 } // Send 500 so SWR doesn't permanently cache this
+    );
   }
 }
 
@@ -70,8 +73,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ archetype }, { status: 201 });
   } catch (error: any) {
+    console.error('Archetype creation error:', error);
+
+    const errorMessage = error instanceof Error
+      ? error.message
+      : 'An unexpected error occurred creating archetype';
+
     return NextResponse.json(
-      { error: error.message || 'Failed to create archetype' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

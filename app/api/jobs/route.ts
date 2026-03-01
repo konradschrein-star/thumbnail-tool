@@ -40,6 +40,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ jobs });
   } catch (error: any) {
     console.error('Jobs fetch error:', error);
-    return NextResponse.json({ jobs: [], isOffline: true });
+
+    // Sanitize Prisma connection errors for the frontend
+    if (error.message?.includes("Can't reach database server")) {
+      return NextResponse.json(
+        { error: 'Database connection timeout. Please verify your Vercel Connection Pooler.' },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: error.message || 'Failed to fetch jobs' },
+      { status: 500 }
+    );
   }
 }

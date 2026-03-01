@@ -146,7 +146,16 @@ export async function POST(request: NextRequest) {
       job: results[0],
     });
   } catch (error: any) {
-    console.error('Generation Error:', error);
-    return NextResponse.json({ error: error.message || 'Generation failed' }, { status: 500 });
+    console.error('Generation Error (Top Level):', error);
+
+    // Ensure we do not leak full stack traces in the 500 response
+    const errorMessage = error instanceof Error
+      ? error.message
+      : 'An unexpected error occurred during generation';
+
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
   }
 }

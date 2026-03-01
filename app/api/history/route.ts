@@ -28,8 +28,12 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(history);
     } catch (error: any) {
         console.error('History fetch error:', error);
+        const errorMessage = error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred fetching history';
+
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch history' },
+            { error: errorMessage },
             { status: 500 }
         );
     }

@@ -57,8 +57,21 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Upload error:', error);
+
+    // Check if the stream or parsing failed due to unexpected multi-part data
+    if (error instanceof TypeError && error.message.includes('stream')) {
+      return NextResponse.json(
+        { error: 'Invalid or corrupt file upload stream.' },
+        { status: 400 }
+      );
+    }
+
+    const errorMessage = error instanceof Error
+      ? error.message
+      : 'An unexpected error occurred during upload';
+
     return NextResponse.json(
-      { error: error.message || 'Upload failed' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

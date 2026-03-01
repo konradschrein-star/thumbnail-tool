@@ -71,10 +71,17 @@ export async function GET(
     } catch (error: any) {
         console.error(`Asset Proxy Error (${request.url}):`, error.message);
 
-        if (error.message.includes('NoSuchKey') || error.message.includes('404')) {
+        if (error.message?.includes('NoSuchKey') || error.message?.includes('404')) {
             return new NextResponse('Asset not found', { status: 404 });
         }
 
-        return new NextResponse('Internal Server Error', { status: 500 });
+        const errorMessage = error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred during asset proxying';
+
+        return NextResponse.json(
+            { error: errorMessage },
+            { status: 500 }
+        );
     }
 }

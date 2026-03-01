@@ -20,24 +20,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const inputPassword = credentials.password as string;
 
         console.log(`Bypass check for: ${normalizedEmail}`);
+        // Standard logic for all users
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: normalizedEmail },
+          });
 
-        const user = await prisma.user.findUnique({
-          where: { email: normalizedEmail },
-        });
+          if (!user || !user.password) {
+            return null;
+          }
 
-        if (!user || !user.password) {
-          return null;
+          const isValid = await bcrypt.compare(inputPassword, user.password);
+          if (!isValid) return null;
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: (user as any).role,
+          } as any;
+        } catch (dbError) {
+          console.error("Database connection failure during authorization:", dbError);
+          return null; // Force graceful "Invalid Credentials" rejection securely
         }
-
-        const isValid = await bcrypt.compare(inputPassword, user.password);
-        if (!isValid) return null;
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: (user as any).role,
-        } as any;
       },
     }),
   ],

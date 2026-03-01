@@ -28,8 +28,12 @@ export async function GET(
 
         return NextResponse.json(job);
     } catch (error: any) {
+        console.error('Job Fetch Error:', error);
+        const errorMessage = error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred while fetching the job';
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch job' },
+            { error: errorMessage },
             { status: 500 }
         );
     }
