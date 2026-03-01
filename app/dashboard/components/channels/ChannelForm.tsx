@@ -171,6 +171,8 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
           border: 1px dotted rgba(127, 29, 29, 0.5);
           border-radius: var(--radius);
           font-size: 0.875rem;
+          word-break: break-word;
+          white-space: pre-wrap;
         }
 
         .branding-section {

@@ -72,6 +72,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ channel }, { status: 201 });
   } catch (error: any) {
+    console.error('Channel creation error:', error);
+
+    // Sanitize Prisma connection errors for the frontend
+    if (error.message?.includes('Can\'t reach database server')) {
+      return NextResponse.json(
+        { error: 'Database connection timeout. Please verify your Vercel Connection Pooler (IPv4) settings.' },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
       { error: error.message || 'Failed to create channel' },
       { status: 500 }
