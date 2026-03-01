@@ -108,7 +108,7 @@ export default function InfiniteLoom() {
           transition={{ duration: 1.5, ease: "easeOut" }}
           className="hero"
         >
-          <h1 className="title">Thumbnail <br />Tool.</h1>
+          <h1 className="title">Thumbnail Tool.</h1>
         </motionDom.header>
 
         <LoginForm variant="liquid" className="loom-login" />
@@ -121,7 +121,7 @@ export default function InfiniteLoom() {
           background: #020205;
           position: relative;
           overflow: hidden;
-          font-family: var(--font-inter), sans-serif;
+          font-family: 'Times New Roman', Times, serif;
         }
 
         .canvas-wrapper {
@@ -138,12 +138,13 @@ export default function InfiniteLoom() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 4rem;
+          gap: 5rem;
           pointer-events: none;
           text-align: center;
         }
 
         .hero {
+          pointer-events: auto;
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
@@ -158,15 +159,18 @@ export default function InfiniteLoom() {
         }
 
         .title {
-          font-size: clamp(4rem, 12vw, 8rem);
-          font-weight: 900;
-          line-height: 0.85;
-          letter-spacing: -0.05em;
+          font-size: clamp(2.5rem, 8vw, 5.5rem);
+          font-weight: 400;
+          font-style: italic;
+          line-height: 1;
+          letter-spacing: -0.01em;
           color: #fff;
-          background: linear-gradient(to bottom, #fff 30%, #a78bfa 100%);
+          white-space: nowrap;
+          background: linear-gradient(to bottom, #fff 40%, #c084fc 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.3));
+          filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.4));
+          margin-bottom: 1rem;
         }
 
         .loom-login {

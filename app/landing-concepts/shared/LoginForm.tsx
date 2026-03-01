@@ -7,209 +7,211 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react';
 
 interface LoginFormProps {
-    className?: string;
-    variant?: 'glass' | 'minimal' | 'liquid';
+  className?: string;
+  variant?: 'glass' | 'minimal' | 'liquid';
 }
 
 export default function LoginForm({ className = '', variant = 'glass' }: LoginFormProps) {
-    const router = useRouter();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    const [showRequest, setShowRequest] = useState(false);
-    const [requestName, setRequestName] = useState('');
-    const [requestEmail, setRequestEmail] = useState('');
-    const [requestReason, setRequestReason] = useState('');
-    const [requestSuccess, setRequestSuccess] = useState('');
-    const [requestLoading, setRequestLoading] = useState(false);
+  const [showRequest, setShowRequest] = useState(false);
+  const [requestName, setRequestName] = useState('');
+  const [requestEmail, setRequestEmail] = useState('');
+  const [requestReason, setRequestReason] = useState('');
+  const [requestSuccess, setRequestSuccess] = useState('');
+  const [requestLoading, setRequestLoading] = useState(false);
 
-    const handleRequestAccess = async (e: FormEvent) => {
-        e.preventDefault();
-        setRequestLoading(true);
-        setRequestSuccess('');
+  const handleRequestAccess = async (e: FormEvent) => {
+    e.preventDefault();
+    setRequestLoading(true);
+    setRequestSuccess('');
 
-        try {
-            const resp = await fetch('/api/auth/request-access', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: requestName,
-                    email: requestEmail,
-                    reason: requestReason
-                })
-            });
+    try {
+      const resp = await fetch('/api/auth/request-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: requestName,
+          email: requestEmail,
+          reason: requestReason
+        })
+      });
 
-            const data = await resp.json();
-            if (data.success) {
-                setRequestSuccess(data.message);
-                setRequestName('');
-                setRequestEmail('');
-                setRequestReason('');
-            } else {
-                setError(data.error || 'Failed to send request');
-            }
-        } catch (err) {
-            setError('Connection error. Please try again.');
-        } finally {
-            setRequestLoading(false);
-        }
-    };
+      const data = await resp.json();
+      if (data.success) {
+        setRequestSuccess(data.message);
+        setRequestName('');
+        setRequestEmail('');
+        setRequestReason('');
+      } else {
+        setError(data.error || 'Failed to send request');
+      }
+    } catch (err) {
+      setError('Connection error. Please try again.');
+    } finally {
+      setRequestLoading(false);
+    }
+  };
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-        try {
-            const result = await signIn('credentials', {
-                email,
-                password,
-                redirect: false,
-            });
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
 
-            if (result?.error) {
-                setError('Invalid email or password');
-            } else if (result?.ok) {
-                router.push('/dashboard');
-            }
-        } catch (err) {
-            setError('An error occurred. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (result?.error) {
+        setError('Invalid email or password');
+      } else if (result?.ok) {
+        router.push('/dashboard');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className={`login-form-wrapper ${variant} ${className}`}>
-            <div className="login-card">
-                <div className="card-header">
-                    <h2 className="title">
-                        <Sparkles size={20} className="icon" />
-                        {showRequest ? "Apply for Access" : "Command Center"}
-                    </h2>
-                    <p className="subtitle">
-                        {showRequest
-                            ? "Join the elite creator network."
-                            : "Synthesis begins with authentication."}
-                    </p>
-                </div>
+  return (
+    <div className={`login-form-wrapper ${variant} ${className}`}>
+      <div className="login-card">
+        <div className="card-header">
+          <h2 className="title">
+            <Sparkles size={20} className="icon" />
+            {showRequest ? "Apply for Access" : "Command Center"}
+          </h2>
+          <p className="subtitle">
+            {showRequest
+              ? "Join the elite creator network."
+              : "Synthesis begins with authentication."}
+          </p>
+        </div>
 
-                {!showRequest ? (
-                    <form onSubmit={handleSubmit} className="form-content">
-                        <div className="input-group">
-                            <label>Email</label>
-                            <input
-                                type="email"
-                                placeholder="admin@titan.ai"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Secret</label>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <AnimatePresence mode="wait">
-                            {error && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="status-message error"
-                                >
-                                    <AlertTriangle size={14} />
-                                    {error}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <button type="submit" disabled={loading} className="submit-action">
-                            {loading ? "Authenticating..." : (
-                                <>Authorize <ArrowRight size={18} /></>
-                            )}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setShowRequest(true)}
-                            className="secondary-toggle"
-                        >
-                            Request Access
-                        </button>
-                    </form>
-                ) : (
-                    <form onSubmit={handleRequestAccess} className="form-content">
-                        <div className="input-group">
-                            <label>Name</label>
-                            <input
-                                type="text"
-                                value={requestName}
-                                onChange={(e) => setRequestName(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Email</label>
-                            <input
-                                type="email"
-                                value={requestEmail}
-                                onChange={(e) => setRequestEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Purpose</label>
-                            <textarea
-                                value={requestReason}
-                                onChange={(e) => setRequestReason(e.target.value)}
-                                rows={2}
-                                required
-                            />
-                        </div>
-
-                        <AnimatePresence mode="wait">
-                            {requestSuccess && (
-                                <motion.div className="status-message success">
-                                    <ShieldCheck size={14} />
-                                    {requestSuccess}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <button type="submit" disabled={requestLoading || !!requestSuccess} className="submit-action">
-                            {requestLoading ? "Sending..." : "Submit Application"}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setShowRequest(false)}
-                            className="secondary-toggle"
-                        >
-                            Back to Login
-                        </button>
-                    </form>
-                )}
-
-                <div className="card-footer">
-                    <p>Demo: test@titan.ai / test</p>
-                </div>
+        {!showRequest ? (
+          <form onSubmit={handleSubmit} className="form-content">
+            <div className="input-group">
+              <label>Email</label>
+              <input
+                type="email"
+                placeholder="admin@titan.ai"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="input-group">
+              <label>Secret</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
 
-            <style jsx>{`
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="status-message error"
+                >
+                  <AlertTriangle size={14} />
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <button type="submit" disabled={loading} className="submit-action">
+              {loading ? "Authenticating..." : (
+                <>Authorize <ArrowRight size={18} /></>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowRequest(true)}
+              className="secondary-toggle"
+            >
+              Request Access
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleRequestAccess} className="form-content">
+            <div className="input-group">
+              <label>Name</label>
+              <input
+                type="text"
+                value={requestName}
+                onChange={(e) => setRequestName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="input-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={requestEmail}
+                onChange={(e) => setRequestEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="input-group">
+              <label>Purpose</label>
+              <textarea
+                value={requestReason}
+                onChange={(e) => setRequestReason(e.target.value)}
+                rows={2}
+                required
+              />
+            </div>
+
+            <AnimatePresence mode="wait">
+              {requestSuccess && (
+                <motion.div className="status-message success">
+                  <ShieldCheck size={14} />
+                  {requestSuccess}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <button type="submit" disabled={requestLoading || !!requestSuccess} className="submit-action">
+              {requestLoading ? "Sending..." : "Submit Application"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowRequest(false)}
+              className="secondary-toggle"
+            >
+              Back to Login
+            </button>
+          </form>
+        )}
+
+        <div className="card-footer">
+          <p>Demo: test@titan.ai / test</p>
+        </div>
+      </div>
+
+      <style jsx>{`
         .login-form-wrapper {
           width: 100%;
           max-width: 400px;
           position: relative;
+          font-family: 'Times New Roman', Times, serif;
+          pointer-events: auto;
         }
 
         .login-card {
@@ -269,14 +271,15 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
         }
 
         .title {
-          font-size: 1.5rem;
-          font-weight: 700;
+          font-size: 1.25rem;
+          font-weight: 400;
+          font-style: italic;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          color: #fff;
-          margin-bottom: 0.5rem;
+          color: rgba(255, 255, 255, 0.9);
+          margin-bottom: 0.25rem;
         }
 
         .icon {
@@ -363,16 +366,20 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
         }
 
         .liquid .submit-action {
-          background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+          background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
           color: #fff;
           border: none;
-          box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
+          box-shadow: 0 0 20px rgba(168, 85, 247, 0.4),
+                      0 0 40px rgba(168, 85, 247, 0.2);
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+          letter-spacing: 0.05em;
         }
 
         .liquid .submit-action:hover {
-          background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
-          box-shadow: 0 15px 30px rgba(139, 92, 246, 0.4);
-          transform: translateY(-3px);
+          background: linear-gradient(135deg, #c084fc 0%, #9333ea 100%);
+          box-shadow: 0 0 30px rgba(168, 85, 247, 0.6),
+                      0 0 60px rgba(168, 85, 247, 0.3);
+          transform: translateY(-3px) scale(1.02);
         }
 
         .submit-action:disabled {
@@ -404,6 +411,6 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
           padding-top: 1rem;
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
