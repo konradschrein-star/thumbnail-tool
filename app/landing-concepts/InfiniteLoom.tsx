@@ -138,7 +138,7 @@ export default function InfiniteLoom() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 5rem;
+          gap: clamp(2rem, 10vh, 5rem);
           pointer-events: none;
           text-align: center;
         }
@@ -159,15 +159,28 @@ export default function InfiniteLoom() {
         }
 
         .title {
-          font-size: clamp(2.5rem, 8vw, 5.5rem);
+          font-size: clamp(2rem, 7vw, 4.5rem);
           font-weight: 400;
           font-style: italic;
-          line-height: 1;
+          line-height: 1.1;
           letter-spacing: -0.01em;
           color: #fff;
           white-space: nowrap;
           filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.4));
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
+          font-family: 'Times New Roman', Times, serif;
+        }
+
+        @media (max-width: 768px) {
+          .title {
+            font-size: clamp(1.8rem, 10vw, 3rem);
+            white-space: normal;
+            line-height: 1.2;
+            padding: 0 1rem;
+          }
+          .hero {
+            gap: 1rem;
+          }
         }
 
         .loom-login {

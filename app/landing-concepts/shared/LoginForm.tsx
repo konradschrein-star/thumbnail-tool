@@ -86,8 +86,7 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
       <div className="login-card">
         <div className="card-header">
           <h2 className="title">
-            <Sparkles size={20} className="icon" />
-            {showRequest ? "Apply for Access" : "Type your credentials in here"}
+            {showRequest ? "Apply for Access" : "Type your credentials here"}
           </h2>
           <p className="subtitle">
             {showRequest
