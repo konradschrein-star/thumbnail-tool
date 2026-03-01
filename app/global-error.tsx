@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 
 export default function GlobalError({
@@ -28,14 +27,13 @@ export default function GlobalError({
                         A critical error occurred. Our team has been notified.
                     </p>
                     <div className="flex justify-center gap-4">
-                        <Button
+                        <button
                             onClick={() => reset()}
-                            className="bg-titan-primary hover:bg-titan-primary/90 text-white"
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                         >
                             Try again
-                        </Button>
-                        <Button
-                            variant="outline"
+                        </button>
+                        <button
                             onClick={() => window.location.href = '/'}
                             className="border-white/10 text-white hover:bg-white/5"
                         >

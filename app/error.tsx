@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 
 export default function Error({
@@ -37,9 +36,9 @@ export default function Error({
             </div>
 
             <div className="flex gap-4 pt-4">
-                <Button
+                <button
                     onClick={() => reset()}
-                    className="bg-titan-primary hover:bg-titan-primary/90"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 >
                     Try Again
                 </Button>
