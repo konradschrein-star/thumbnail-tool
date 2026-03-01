@@ -10,6 +10,7 @@
     "test:generate": "tsx scripts/test-generate.ts",
     "batch:generate": "tsx scripts/batch-generate.ts",
     "typecheck": "tsc --noEmit",
+    "lint": "next lint",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "npx prisma studio",
     "db:backup": "tsx scripts/backup-database.ts",

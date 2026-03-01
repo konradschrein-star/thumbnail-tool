@@ -98,8 +98,9 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
         {!showRequest ? (
           <form onSubmit={handleSubmit} className="form-content">
             <div className="input-group">
-              <label>Email</label>
+              <label htmlFor="login-email">Email</label>
               <input
+                id="login-email"
                 type="email"
                 placeholder="admin@titan.ai"
                 value={email}
@@ -108,8 +109,9 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
               />
             </div>
             <div className="input-group">
-              <label>Secret</label>
+              <label htmlFor="login-password">Secret</label>
               <input
+                id="login-password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -149,8 +151,9 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
         ) : (
           <form onSubmit={handleRequestAccess} className="form-content">
             <div className="input-group">
-              <label>Name</label>
+              <label htmlFor="req-name">Name</label>
               <input
+                id="req-name"
                 type="text"
                 value={requestName}
                 onChange={(e) => setRequestName(e.target.value)}
@@ -158,8 +161,9 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
               />
             </div>
             <div className="input-group">
-              <label>Email</label>
+              <label htmlFor="req-email">Email</label>
               <input
+                id="req-email"
                 type="email"
                 value={requestEmail}
                 onChange={(e) => setRequestEmail(e.target.value)}
@@ -167,8 +171,9 @@ export default function LoginForm({ className = '', variant = 'glass' }: LoginFo
               />
             </div>
             <div className="input-group">
-              <label>Purpose</label>
+              <label htmlFor="req-purpose">Purpose</label>
               <textarea
+                id="req-purpose"
                 value={requestReason}
                 onChange={(e) => setRequestReason(e.target.value)}
                 rows={2}
