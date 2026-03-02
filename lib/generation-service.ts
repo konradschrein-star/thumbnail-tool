@@ -76,9 +76,9 @@ export async function callNanoBanana(
       ]
     };
 
-    const callWithPayload = async (content: any, modelName: string = 'nano-banana-pro-preview') => {
+    const callWithPayload = async (content: any) => {
       return await ai.models.generateContent({
-        model: modelName,
+        model: 'nano-banana-pro-preview',
         contents: [content],
         config: {
           responseModalities: ["IMAGE"],
@@ -92,16 +92,10 @@ export async function callNanoBanana(
     let response;
     try {
       console.log('   Calling Nano Banana (Unified Payload)...');
-      response = await callWithPayload(primaryContent, 'nano-banana-pro-preview');
+      response = await callWithPayload(primaryContent);
     } catch (error: any) {
       const msg = error.message || "";
-      const status = error.status || error.statusCode || error.code;
-      const isUnavailable = msg.includes("503") || msg.includes("UNAVAILABLE") || status === 503 || msg.includes("high demand");
-
-      if (isUnavailable) {
-        console.warn('   ⚠️ Nano Banana is unavailable due to high demand. Passing error up to UI...');
-        throw error;
-      } else if (msg.includes("Unable to process input image") && imageParts.length > 1) {
+      if (msg.includes("Unable to process input image") && imageParts.length > 1) {
         console.warn('   ⚠️ Multi-image payload failed. Retrying with Archetype ONLY...');
         const fallbackContent = {
           role: 'user',
@@ -110,7 +104,7 @@ export async function callNanoBanana(
             { inlineData: imageParts[0].inlineData }
           ]
         };
-        response = await callWithPayload(fallbackContent, 'nano-banana-pro-preview');
+        response = await callWithPayload(fallbackContent);
       } else {
         throw error;
       }
