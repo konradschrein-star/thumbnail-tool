@@ -40,7 +40,12 @@ export function validateEnv(): EnvValidationResult {
  */
 export function ensureEnvOrThrow() {
     // Skip critical checks during static optimization/build
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
+    // Next.js uses various phase flags, Vercel also explicitly runs with CI=1
+    if (
+        process.env.NEXT_PHASE === 'phase-production-build' ||
+        process.env.npm_lifecycle_event === 'build' ||
+        process.env.CI === '1' || process.env.VERCEL === '1'
+    ) {
         return;
     }
     const result = validateEnv();
