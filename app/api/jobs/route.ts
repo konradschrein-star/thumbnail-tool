@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
-
+import { getApiAuth } from '@/lib/api-auth';
 // GET /api/jobs?channelId=xxx&status=xxx - List generation jobs for the current user
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await getApiAuth(request as any);
+    if (authResult.error || !authResult.user?.id) {
+      return NextResponse.json({ error: authResult.error || 'Unauthorized' }, { status: authResult.status || 401 });
     }
 
+    const userId = authResult.user.id;
     const { searchParams } = new URL(request.url);
     const channelId = searchParams.get('channelId');
     const status = searchParams.get('status');
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {
-      userId: session.user.id,
+      userId: userId,
     };
     if (channelId) where.channelId = channelId;
     if (status) where.status = status;

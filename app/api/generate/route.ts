@@ -4,26 +4,26 @@ import * as payloadEngine from '@/lib/payload-engine';
 import * as generationService from '@/lib/generation-service';
 import * as r2Service from '@/lib/r2-service';
 import { checkManualRateLimit } from '@/lib/rate-limit';
-import { auth } from '@/lib/auth';
+import { getApiAuth } from '@/lib/api-auth';
 import { EMERGENCY_CHANNELS, EMERGENCY_ARCHETYPES } from '@/lib/emergency-data';
 
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
+  const authResult = await getApiAuth(request);
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (authResult.error || !authResult.user?.id) {
+    return NextResponse.json({ error: authResult.error || 'Unauthorized' }, { status: authResult.status || 401 });
   }
 
-  const userId = session.user.id;
-  const userEmail = session.user?.email || 'test@titan.ai';
-  const userRole = (session.user as any)?.role || 'USER';
-  const isSuperuser = (session.user as any)?.isSuperuser || false;
-  const isTestUser = (session.user as any)?.isTestUser || false;
+  const userId = authResult.user.id;
+  const userEmail = authResult.user.email || 'test@titan.ai';
+  const userRole = authResult.user.role || 'USER';
+  const isSuperuser = authResult.user.isSuperuser || false;
+  const isTestUser = authResult.user.isTestUser || false;
 
   // Enforce manual generation limit (10/day for USER role, shared for Test User)
-  const rateLimitResponse = await checkManualRateLimit(userId, userRole, isSuperuser, isTestUser);
+  const rateLimitResponse = await checkManualRateLimit(userId, userRole, isSuperuser);
   if (rateLimitResponse) {
     return rateLimitResponse;
   }

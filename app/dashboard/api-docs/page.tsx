@@ -20,7 +20,7 @@ export default function APIDocsPage() {
                             <Zap size={18} />
                             <h3>Authentication</h3>
                         </div>
-                        <p>All API requests must be authenticated using the session cookie or a Bearer token. For local scripts, ensure you handle the NextAuth session properly.</p>
+                        <p>All API requests must be authenticated using an active session <b>or</b> via standard HTTP Basic Auth providing your account email and password. Note: Test accounts do not have headless API access.</p>
                     </section>
 
                     <section className="docs-section">
@@ -72,7 +72,7 @@ payload = {
     "videoTopic": "Modern AI Tools",
     "thumbnailText": "TITAN V4"
 }
-response = requests.post(url, json=payload)`}</code></pre>
+response = requests.post(url, json=payload, auth=("email@example.com", "your_password"))`}</code></pre>
                     </div>
                 </aside>
             </div>
