@@ -67,13 +67,13 @@ async function main() {
     console.log('');
 
     // Call API
-    const imageBuffer = await generationService.callNanoBanana(
+    const { buffer: imageBuffer, fallbackUsed } = await generationService.callNanoBanana(
       payload,
       process.env.GOOGLE_API_KEY
     );
 
     console.log('✓ API call successful');
-    console.log(`   Received buffer size: ${imageBuffer.length} bytes`);
+    console.log(`   Received buffer size: ${imageBuffer.length} bytes${fallbackUsed ? ' (Fallback used)' : ''}`);
     console.log('');
 
     // Save output
