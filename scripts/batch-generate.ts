@@ -19,13 +19,6 @@ interface ThumbnailJob {
 
 const jobs: ThumbnailJob[] = [
   {
-    name: '01-babbel-signup',
-    archetypeNumber: 1,
-    topic: 'How to sign up to Babbel',
-    text: 'SIGN UP',
-    customPrompt: `${CONSISTENT_PERSONA} He is pointing enthusiastically at the Babbel logo. A vibrant YouTube tutorial thumbnail with large bold text "SIGN UP" prominently displayed. Bright, engaging colors. 16:9 aspect ratio.`
-  },
-  {
     name: '02-delete-gmail',
     archetypeNumber: 2,
     topic: 'How to delete Gmail',
@@ -85,9 +78,7 @@ async function generateThumbnail(job: ThumbnailJob): Promise<void> {
 
   // Handle different archetype file naming
   let archetypePath: string;
-  if (job.archetypeNumber === 1) {
-    archetypePath = path.resolve('assets/test/archetype.jpeg');
-  } else if (job.archetypeNumber === 2) {
+  if (job.archetypeNumber === 2) {
     archetypePath = path.resolve('assets/test/archetype2.jpg');
   } else {
     archetypePath = path.resolve(`assets/test/archetype${job.archetypeNumber}.jpeg`);

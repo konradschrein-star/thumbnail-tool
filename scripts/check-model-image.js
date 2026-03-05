@@ -15,7 +15,7 @@ async function checkModelAndImage() {
         console.log('Model Data:', JSON.stringify(modelData, null, 2));
 
         // 2. Check Image Magic Bytes
-        const buffer = fs.readFileSync('assets/test/archetype.jpeg');
+        const buffer = fs.readFileSync('assets/test/archetype2.jpg');
         console.log('Image Bytes (first 16):', buffer.slice(0, 16).toString('hex'));
 
         // 3. Simple Test Call with JUST one image if possible

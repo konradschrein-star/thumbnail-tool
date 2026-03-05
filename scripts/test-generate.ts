@@ -31,7 +31,7 @@ async function main() {
 
     const testArchetype: payloadEngine.HardcodedArchetype = {
       name: 'Tutorial Style',
-      referencePath: path.resolve('assets/test/archetype.jpeg'),
+      referencePath: path.resolve('assets/test/archetype2.jpg'),
       layoutInstructions: `Professional tutorial layout with clear subject and prominent text.`,
     };
 

@@ -21,11 +21,6 @@ async function main() {
   // Create 7 archetypes from Phase 1 testing
   const archetypes = [
     {
-      name: 'Vibrant Tutorial Style',
-      imageUrl: '/archetypes/archetype.jpeg',
-      layoutInstructions: 'Bright, engaging tutorial layout with clear focus on educational content',
-    },
-    {
       name: 'Striking Warning Style',
       imageUrl: '/archetypes/archetype2.jpg',
       layoutInstructions: 'Bold warning colors with strong visual impact for attention-grabbing content',
@@ -67,7 +62,7 @@ async function main() {
     console.log(`✓ Created archetype: ${created.name}`);
   }
 
-  console.log(`\n✅ Seeded 1 channel with 7 archetypes`);
+  console.log(`\n✅ Seeded 1 channel with 6 archetypes`);
 }
 
 main()

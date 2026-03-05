@@ -42,7 +42,7 @@ Use the provided persona.jpeg image and logo.png to maintain brand consistency.`
 
     const testArchetype = {
       name: 'Bold Text Overlay',
-      referencePath: path.resolve('assets/test/archetype.jpeg'),
+      referencePath: path.resolve('assets/test/archetype2.jpg'),
       layoutInstructions: `Layout Style: Bold text overlay with dynamic composition
 - Main text: Large, bold, centered or slightly offset
 - Persona: Positioned prominently (left, right, or center depending on composition)

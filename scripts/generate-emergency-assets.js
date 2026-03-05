@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const files = [
-    'archetype.jpeg', 'archetype2.jpg', 'archetype3.jpeg',
+    'archetype2.jpg', 'archetype3.jpeg',
     'archetype4.jpeg', 'archetype5.jpeg', 'archetype6.jpeg',
     'archetype7.jpeg'
 ];
