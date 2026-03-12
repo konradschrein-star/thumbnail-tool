@@ -81,38 +81,60 @@ export async function callNanoBanana(
     let fallbackUsed = false;
     let fallbackMessage = "";
 
-    try {
-      console.log('   Calling Nano Banana Pro (Unified Payload)...');
-      // "Nano Banana Pro" = gemini-3-pro-image-preview
-      response = await callWithPayload(primaryContent, 'gemini-3-pro-image-preview');
-    } catch (error: any) {
+    // Fallback chain: Nano Banana Pro → Nano Banana 2 → Nano Banana OG (GA)
+    const models = [
+      { id: 'gemini-3-pro-image-preview', name: 'Nano Banana Pro' },
+      { id: 'gemini-3.1-flash-image-preview', name: 'Nano Banana 2 (Flash)' },
+      { id: 'gemini-2.5-flash-image', name: 'Nano Banana OG (Stable)' },
+    ];
+
+    const isServerError = (error: any): boolean => {
       const msg = error.message || "";
       const status = error.status || error.statusCode || error.code;
-      const isServerError = msg.includes("503") || msg.includes("UNAVAILABLE") || status === 503 || msg.includes("high demand")
+      return msg.includes("503") || msg.includes("UNAVAILABLE") || status === 503 || msg.includes("high demand")
         || msg.includes("500") || msg.includes("INTERNAL") || status === 500
         || msg.includes("502") || status === 502;
+    };
 
-      if (isServerError) {
-        console.warn(`   ⚠️ Nano Banana Pro returned server error (${status || msg.slice(0, 80)}). Falling back to Nano Banana 2 (gemini-3.1-flash-image-preview)...`);
-        // "Nano Banana 2" = gemini-3.1-flash-image-preview
-        try {
-          response = await callWithPayload(primaryContent, 'gemini-3.1-flash-image-preview');
+    for (let i = 0; i < models.length; i++) {
+      const model = models[i];
+      try {
+        console.log(`   Calling ${model.name} (${model.id})...`);
+        response = await callWithPayload(primaryContent, model.id);
+        if (i > 0) {
           fallbackUsed = true;
-          fallbackMessage = "Nano Banana Pro returned a server error. We successfully fell back to Nano Banana 2 (Flash Image).";
-        } catch (backupError: any) {
-          throw backupError;
+          fallbackMessage = `${models[0].name} was unavailable. Generated successfully with ${model.name}.`;
         }
-      } else if (msg.includes("Unable to process input image") && imageParts.length > 1) {
-        console.warn('   ⚠️ Multi-image payload failed. Retrying with Archetype ONLY on Nano Banana Pro...');
-        const fallbackContent = {
-          role: 'user',
-          parts: [
-            { text: fullPrompt },
-            { inlineData: imageParts[0].inlineData }
-          ]
-        };
-        response = await callWithPayload(fallbackContent, 'gemini-3-pro-image-preview');
-      } else {
+        break; // Success — exit the loop
+      } catch (error: any) {
+        const msg = error.message || "";
+
+        // On image processing errors with multi-image payload, retry same model with archetype only
+        if (msg.includes("Unable to process input image") && imageParts.length > 1 && i === 0) {
+          console.warn(`   ⚠️ Multi-image payload failed on ${model.name}. Retrying with Archetype ONLY...`);
+          const fallbackContent = {
+            role: 'user',
+            parts: [
+              { text: fullPrompt },
+              { inlineData: imageParts[0].inlineData }
+            ]
+          };
+          try {
+            response = await callWithPayload(fallbackContent, model.id);
+            break; // Success
+          } catch (retryError: any) {
+            if (!isServerError(retryError)) throw retryError;
+            // If still a server error, continue to next model
+          }
+        }
+
+        // If server error and there's a next model to try, continue the loop
+        if (isServerError(error) && i < models.length - 1) {
+          console.warn(`   ⚠️ ${model.name} returned server error. Trying next fallback...`);
+          continue;
+        }
+
+        // Last model or non-server error — throw
         throw error;
       }
     }

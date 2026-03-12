@@ -86,21 +86,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Build base payload using the engine's data-driven approach
-    // Respect the user's manual preference toggles for Brand Colors and Persona Integration
-    const brand = payloadEngine.getBrandingContext(videoTopic, channel as any);
-    const systemPrompt = payloadEngine.buildSystemPrompt(channel as any, archetype as any, includeBrandColors ? brand : undefined);
-    const userPrompt = payloadEngine.buildUserPrompt({ videoTopic, thumbnailText }, !!(channel as any).logoAssetPath);
+    // If the user modified the draft in the UI, we just use that directly!
+    const fullUserPrompt = customPrompt || payloadEngine.buildFullPrompt(channel as any, archetype as any, { videoTopic, thumbnailText }, includeBrandColors, includePersona);
 
     const payload: payloadEngine.AIRequestPayload = {
-      systemPrompt: customPrompt || systemPrompt || 'Create a professional YouTube thumbnail.',
-      userPrompt: `Create a professional YouTube thumbnail.\n\nTopic: ${videoTopic}\nText to display: "${thumbnailText}"\n\nUse the reference image for style inspiration.`,
+      systemPrompt: "You are an expert AI image generator fine-tuned for high-CTR YouTube thumbnails.",
+      userPrompt: fullUserPrompt,
       base64Images: {
         archetype: await payloadEngine.encodeImageToBase64(archetype.imageUrl),
         persona: (includePersona && (channel as any).personaAssetPath)
           ? await payloadEngine.encodeImageToBase64((channel as any).personaAssetPath)
-          : undefined,
-        logo: (channel as any).logoAssetPath
-          ? await payloadEngine.encodeImageToBase64((channel as any).logoAssetPath)
           : undefined,
       },
     };

@@ -52,6 +52,7 @@ model Archetype {
   channelId          String?  // Made optional for global archetypes
   imageUrl           String   // Path to archetype image
   layoutInstructions String   // Additional style/layout guidance
+  basePrompt         String?  @db.Text // Optional archetype-specific prompt container
   category           String?  @default("General")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

@@ -9,6 +9,7 @@ import { getObjectFromR2 } from './r2-service';
 export interface JobConfig {
   videoTopic: string;
   thumbnailText: string;
+  customPrompt?: string;
 }
 
 export interface HardcodedProfile {
@@ -219,8 +220,8 @@ function detectMimeTypeFromBase64(base64: string): string {
  */
 export function getBrandingContext(topic: string, channel: { primaryColor?: string | null, secondaryColor?: string | null, tags?: string | null }): BrandContext {
   const p = topic.toLowerCase();
-  const channelTags = channel.tags?.toLowerCase().split(',').map(t => t.trim()) || [];
 
+  // We heavily favor topic-based color theory now
   let primary = channel.primaryColor || "#ffffff";
   let secondary = channel.secondaryColor || "#000000";
 
@@ -233,59 +234,69 @@ export function getBrandingContext(topic: string, channel: { primaryColor?: stri
     'facebook': { p: "#1877F2", s: "#FFFFFF" },
     'twitter': { p: "#1DA1F2", s: "#FFFFFF" },
     'x.com': { p: "#000000", s: "#FFFFFF" },
-    'linkedin': { p: "#0077B5", s: "#FFFFFF" }
+    'linkedin': { p: "#0077B5", s: "#FFFFFF" },
+    'github': { p: "#24292e", s: "#ffffff" },
+    'notion': { p: "#000000", s: "#ffffff" }
   };
 
   for (const [platform, colors] of Object.entries(platforms)) {
-    if (p.includes(platform) || channelTags.includes(platform)) {
+    if (p.includes(platform)) {
       primary = colors.p;
       secondary = colors.s;
       break;
     }
   }
 
-  return { primaryColor: primary, secondaryColor: secondary, tags: channelTags };
+  return { primaryColor: primary, secondaryColor: secondary, tags: [] };
 }
 
 /**
- * Merges profile system prompt with archetype layout instructions and branding context
+ * Builds the comprehensive text prompt that will be sent to the generation engine.
+ * Fully visible and editable by the user.
  */
-export function buildSystemPrompt(
-  profile: { personaDescription: string; systemPrompt?: string },
-  archetype: { layoutInstructions: string },
-  brand?: BrandContext
+export function buildFullPrompt(
+  channel: any,
+  archetype: any,
+  job: JobConfig,
+  includeBrandColors: boolean,
+  includePersona: boolean
 ): string {
-  const personaDesc = sanitizePrompt(profile.personaDescription, 1000);
-  const layoutInstr = sanitizePrompt(archetype.layoutInstructions, 1000);
-
-  let prompt = `${personaDesc}\n\n## Layout Instructions\n${layoutInstr}`;
-
-  if (brand) {
-    prompt += `\n\n## Visual Branding & Color Harmony
-Apply the following color palette to ensure brand consistency:
-- **Primary Color**: ${brand.primaryColor}
-- **Secondary Color**: ${brand.secondaryColor}
-
-Strategy: Use these for accents and overlays while maintaining professional legibility.`;
+  const topic = sanitizePrompt(job.videoTopic, 150);
+  const text = sanitizePrompt(job.thumbnailText, 80);
+  
+  // Use the archetype's dedicated basePrompt if it exists, otherwise use its layoutInstructions
+  const archetypeStyle = sanitizePrompt(archetype.basePrompt || archetype.layoutInstructions || '', 2000);
+  
+  let prompt = `You are an expert YouTube thumbnail designer with 6 years of experience. Your task is to adapt the thumbnail style, typography, and stylistic devices to perfectly match the target audience of the video topic provided.\n\n`;
+  
+  prompt += `TOPIC: [${topic}]\n`;
+  if (text) {
+    prompt += `TEXT TO RENDER: "[${text}]"\n`;
+  } else {
+    prompt += `TEXT TO RENDER: DO NOT RENDER ANY TEXT ON THE THUMBNAIL. (Text on logos is allowed.)\n`;
+  }
+  prompt += `\nTECHNICAL INSTRUCTIONS:\n`;
+  prompt += `- REFERENCE USAGE: The reference image dictates the core layout, composition, and general style. Any text on the reference image is merely a placeholder to define the text area/layout and should be ignored or replaced. Any person on the reference image must be entirely erased and replaced with the Persona described below.\n`;
+  
+  if (archetypeStyle) {
+    prompt += `- ARCHETYPE STYLE: [${archetypeStyle}]\n`;
+  }
+  
+  if (includeBrandColors) {
+    const brand = getBrandingContext(topic, channel);
+    prompt += `- COLOR THEORY: Maximally utilize the topic's identity colors (e.g., Snapchat = Yellow, WhatsApp = Green) to dominate the scene. Delicately and harmonically integrate the brand colors ([${brand.primaryColor}], [${brand.secondaryColor}]) as subtle accents only, ensuring they do not clash with or overpower the topic's main colors.\n`;
+  } else {
+    prompt += `- COLOR THEORY: Maximally utilize the topic's identity colors (e.g., Snapchat = Yellow, WhatsApp = Green) to dominate the scene.\n`;
+  }
+  
+  prompt += `- LOGOS: Integrate official topic-related logos where appropriate. Do not hallucinate random watermarks.\n`;
+  
+  if (includePersona && channel.personaDescription) {
+    const personaDesc = sanitizePrompt(channel.personaDescription, 1000);
+    prompt += `- PERSONA: You must strictly follow this character description to generate the new person: [${personaDesc}]\n`;
   }
 
   return prompt;
-}
-
-/**
- * Formats video topic and thumbnail text into user prompt with image references
- */
-export function buildUserPrompt(job: JobConfig, hasLogo: boolean): string {
-  const topic = sanitizePrompt(job.videoTopic, 150);
-  const text = sanitizePrompt(job.thumbnailText, 80);
-
-  return `Create a professional YouTube thumbnail.
-
-Topic: ${topic}
-Text to display: "${text}"
-
-Use the provided reference image for style inspiration. ${hasLogo ? 'Integrate the channel logo cleanly.' : 'Focus on the persona and topic assets.'}
-Ensure the text is high-contrast and legible.`;
 }
 
 /**
@@ -297,32 +308,27 @@ export async function assemblePayload(
   job: JobConfig,
   baseUrl: string = ''
 ): Promise<AIRequestPayload> {
-  const brand = getBrandingContext(job.videoTopic, channel);
-  const systemPrompt = buildSystemPrompt(channel, archetype, brand);
-  const userPrompt = buildUserPrompt(job, !!(channel.logoAssetPath || channel.logoPath));
+  // If the prompt hasn't been manually overridden in the DB job yet, generate it
+  const userPrompt = job.customPrompt || buildFullPrompt(channel, archetype, job, true, !!channel.personaAssetPath);
 
   const personaPath = channel.personaAssetPath || channel.personaPath;
-  const logoPath = channel.logoAssetPath || channel.logoPath;
   const archetypeUrl = archetype.imageUrl || archetype.referencePath;
 
   const encodingTasks: Promise<{ data: string; mimeType: string } | undefined>[] = [
     encodeImageToBase64(archetypeUrl.startsWith('http') ? archetypeUrl : `${baseUrl}${archetypeUrl}`),
     personaPath ? encodeImageToBase64(personaPath.startsWith('http') ? personaPath : `${baseUrl}${personaPath}`) : Promise.resolve(undefined),
-    logoPath ? encodeImageToBase64(logoPath.startsWith('http') ? logoPath : `${baseUrl}${logoPath}`) : Promise.resolve(undefined),
   ];
 
-  const [archetypeResult, personaResult, logoResult] = await Promise.all(encodingTasks);
+  const [archetypeResult, personaResult] = await Promise.all(encodingTasks);
 
   if (!archetypeResult || !archetypeResult.data) throw new Error("Archetype image is required");
-  // Persona is now optional for Nano Banana
 
   return {
-    systemPrompt,
+    systemPrompt: "You are an expert AI image generator fine-tuned for high-CTR YouTube thumbnails.",
     userPrompt,
     base64Images: {
       archetype: archetypeResult,
       ...(personaResult && personaResult.data ? { persona: personaResult } : {}),
-      ...(logoResult && logoResult.data ? { logo: logoResult } : {}),
     },
   };
 }

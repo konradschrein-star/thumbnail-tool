@@ -46,7 +46,7 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
   const [showDraftPrompt, setShowDraftPrompt] = useState(!!initialData?.promptUsed);
   const [archetypeSearch, setArchetypeSearch] = useState('');
   const [versionCount, setVersionCount] = useState(1);
-  const [includeBrandColors, setIncludeBrandColors] = useState(true);
+  const [includeBrandColors, setIncludeBrandColors] = useState(false);
   const [includePersona, setIncludePersona] = useState(true);
   const [validationErrors, setValidationErrors] = useState<{
     channelId?: string;
@@ -90,22 +90,38 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
     }
   }, [redoJobId, channels.length]);
 
-  // Auto-populate draft prompt when selections change
+  // Auto-populate exact prompt via API when selections change
   useEffect(() => {
-    if (selectedChannelId && archetypeId && videoTopic) {
-      const channel = channels.find((c: any) => c.id === selectedChannelId);
-      const archetype = archetypes.find((a: any) => a.id === archetypeId);
-
-      if (channel && archetype) {
-        // This is a rough estimation of what the system will generate
-        const preview = `A high-impact thumbnail for "${videoTopic}" featuring ${channel.name}.\n` +
-          `Text: "${thumbnailText}"\n` +
-          `Style: ${archetype.name}\n` +
-          `Instructions: ${archetype.layoutInstructions}`;
-        setDraftPrompt(preview);
+    if (!selectedChannelId || !archetypeId || !videoTopic) return;
+    
+    const fetchPreview = async () => {
+      try {
+        const response = await fetch('/api/preview-prompt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channelId: selectedChannelId,
+            archetypeId,
+            videoTopic,
+            thumbnailText,
+            includeBrandColors,
+            includePersona
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.prompt) setDraftPrompt(data.prompt);
+        }
+      } catch (err) {
+        console.error('Failed to preview prompt', err);
       }
-    }
-  }, [selectedChannelId, archetypeId, videoTopic, thumbnailText, channels, archetypes]);
+    };
+    
+    // Debounce to prevent spamming the fast API
+    const timer = setTimeout(() => fetchPreview(), 500);
+    return () => clearTimeout(timer);
+  }, [selectedChannelId, archetypeId, videoTopic, thumbnailText, includeBrandColors, includePersona]);
 
   // Reset archetype when channel changes
   useEffect(() => {
