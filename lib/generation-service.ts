@@ -139,6 +139,10 @@ export async function callNanoBanana(
       }
     }
 
+    if (!response) {
+      throw new Error("No response received from Gemini API.");
+    }
+
     // Check for content blocking/safety filters
     if (response.promptFeedback && response.promptFeedback.blockReason) {
       const blockReason = response.promptFeedback.blockReason;
