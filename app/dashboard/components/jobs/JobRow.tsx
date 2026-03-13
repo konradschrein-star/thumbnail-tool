@@ -14,35 +14,12 @@ import {
   RotateCcw,
   Image as ImageIcon
 } from 'lucide-react';
+import { HistoryJob } from '@/app/dashboard/hooks/useHistory';
 import { generateProfessionalFilename, downloadRemoteImage } from '@/lib/download-utils';
 
-interface JobData {
-  id: string;
-  channelId: string;
-  archetypeId: string;
-  videoTopic: string;
-  thumbnailText: string;
-  customPrompt: string | null;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  outputUrl: string | null;
-  errorMessage: string | null;
-  createdAt: string;
-  completedAt: string | null;
-  channel: {
-    id: string;
-    name: string;
-  };
-  archetype: {
-    id: string;
-    name: string;
-    category?: string | null;
-    imageUrl: string;
-  };
-}
-
 interface JobRowProps {
-  job: JobData;
-  onRedo?: (job: JobData) => void;
+  job: HistoryJob;
+  onRedo?: (job: HistoryJob) => void;
 }
 
 export default function JobRow({ job, onRedo }: JobRowProps) {
@@ -60,8 +37,8 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
     });
   };
 
-  const getStatusBadge = (status: JobData['status']) => {
-    const config: Record<JobData['status'], { label: string; icon: React.ReactNode }> = {
+  const getStatusBadge = (status: HistoryJob['status']) => {
+    const config: Record<HistoryJob['status'], { label: string; icon: React.ReactNode }> = {
       pending: { label: 'Pending', icon: <Clock size={12} /> },
       processing: { label: 'Processing', icon: <Loader2 size={12} className="animate-spin" /> },
       completed: { label: 'Completed', icon: <CheckCircle2 size={12} /> },

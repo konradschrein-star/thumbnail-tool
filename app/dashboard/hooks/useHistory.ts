@@ -22,6 +22,7 @@ export interface HistoryJob {
   archetype: {
     id: string;
     name: string;
+    category?: string | null;
     imageUrl: string;
   };
 }
