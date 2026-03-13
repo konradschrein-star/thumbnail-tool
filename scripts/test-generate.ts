@@ -25,6 +25,7 @@ async function main() {
     const testProfile: payloadEngine.HardcodedProfile = {
       name: 'Test Channel',
       systemPrompt: `Create a vibrant YouTube thumbnail in 16:9 aspect ratio. Include a handsome brown-haired man in sharp focus, pointing directly at the logo with enthusiasm.`,
+      personaDescription: `A handsome brown-haired man in sharp focus, pointing directly at the logo with enthusiasm.`,
       personaPath: path.resolve('assets/test/persona.jpg'),
       logoPath: path.resolve('assets/test/logo.png'),
     };

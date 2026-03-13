@@ -72,6 +72,7 @@ async function generateThumbnail(job: ThumbnailJob): Promise<void> {
   const profile: payloadEngine.HardcodedProfile = {
     name: 'Batch Test',
     systemPrompt: job.customPrompt,
+    personaDescription: CONSISTENT_PERSONA,
     personaPath: path.resolve('assets/test/persona.jpg'),
     logoPath: path.resolve('assets/test/logo.png'),
   };
