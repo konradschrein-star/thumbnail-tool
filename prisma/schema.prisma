@@ -16,6 +16,7 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   role           String          @default("USER")
+  preferences    Json?           // Store custom languages and other user settings
   channels       Channel[]       @relation("UserChannels")
   archetypes     Archetype[]
   generationJobs GenerationJob[]
@@ -106,16 +107,19 @@ model GenerationJob {
 }
 
 model VariantJob {
-  id             String        @id @default(cuid())
-  masterJobId    String
-  language       String
-  translatedText String
-  outputUrl      String?
-  status         String        @default("pending")
-  errorMessage   String?
-  createdAt      DateTime      @default(now())
-  completedAt    DateTime?
-  masterJob      GenerationJob @relation(fields: [masterJobId], references: [id], onDelete: Cascade)
+  id              String         @id @default(cuid())
+  masterJobId     String?        // Optional - null for uploaded images
+  language        String
+  translatedText  String
+  originalText    String?        // Original text before translation
+  outputUrl       String?
+  status          String         @default("pending")
+  errorMessage    String?
+  sourceImageUrl  String?        // For uploaded images (not from master job)
+  translationMode String         @default("MASTER_JOB") // "MASTER_JOB" or "UPLOADED_IMAGE"
+  createdAt       DateTime       @default(now())
+  completedAt     DateTime?
+  masterJob       GenerationJob? @relation(fields: [masterJobId], references: [id], onDelete: Cascade)
 
   @@index([masterJobId])
   @@map("variant_jobs")

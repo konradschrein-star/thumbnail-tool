@@ -32,13 +32,11 @@ async function main() {
     });
   }
 
-  // Identify all valid folders
-  const items = fs.readdirSync(researchDir);
-  const folders = items.filter(f => fs.statSync(path.join(researchDir, f)).isDirectory());
-
-  console.log(`Found ${folders.length} research folders.`);
+  const allChannels = await prisma.channel.findMany();
+  console.log(`Associating with ${allChannels.length} channels.`);
 
   for (const folder of folders) {
+    // ... existing analysis logic ...
     const mdPath = path.join(researchDir, folder, 'thumbnail_analysis.md');
     let category = 'Research';
     let instructions = '';
@@ -66,9 +64,10 @@ async function main() {
       where: { name: folder }
     });
 
+    let archetype;
     if (existing) {
       console.log(`- Updating archetype: ${folder}`);
-      await prisma.archetype.update({
+      archetype = await prisma.archetype.update({
         where: { id: existing.id },
         data: {
           name: folder,
@@ -79,56 +78,51 @@ async function main() {
           userId: user.id,
         },
       });
-
-      // Ensure channel assignment exists
-      const assignment = await prisma.channelArchetype.findUnique({
-        where: {
-          channelId_archetypeId: {
-            channelId: channel.id,
-            archetypeId: existing.id
-          }
-        }
-      });
-
-      if (!assignment) {
-        await prisma.channelArchetype.create({
-          data: {
-            channelId: channel.id,
-            archetypeId: existing.id
-          }
-        });
-      }
     } else {
       console.log(`- Creating archetype: ${folder}`);
-      await prisma.archetype.create({
+      archetype = await prisma.archetype.create({
         data: {
           name: folder,
           category: category,
           layoutInstructions: instructions || 'Follow the visual cues and layout from the reference image.',
           imageUrl: imageUrl,
           isAdminOnly: true,
-          userId: user.id,
-          channels: {
-            create: {
-              channelId: channel.id
-            }
+          userId: user.id
+        },
+      });
+    }
+
+    // Link to ALL channels
+    for (const c of allChannels) {
+      await prisma.channelArchetype.upsert({
+        where: {
+          channelId_archetypeId: {
+            channelId: c.id,
+            archetypeId: archetype.id
           }
         },
+        update: {},
+        create: {
+          channelId: c.id,
+          archetypeId: archetype.id
+        }
       });
     }
   }
 
-  // Cleanup old generic archetypes
+  // Cleanup old generic archetypes (specific ones only)
   const genericNames = ['Software Spotlight', 'Persona Authority', 'High-Contrast Split', 'Narrative Minimalist'];
   for (const name of genericNames) {
     const genericArch = await prisma.archetype.findFirst({ where: { name } });
     if (genericArch) {
       console.log(`- Removing generic template: ${name}`);
+      // Junction table records will be deleted by cascade or manually if not defined
+      await prisma.channelArchetype.deleteMany({ where: { archetypeId: genericArch.id } });
       await prisma.archetype.delete({ where: { id: genericArch.id } });
     }
   }
 
-  console.log('\n✅ 17 Granular Research Archetypes seeded successfully!');
+  console.log('\n✅ 17 Granular Research Archetypes seeded and linked to all channels!');
 }
 
 main()

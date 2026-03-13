@@ -71,7 +71,8 @@ export async function callNanoBanana(
         config: {
           responseModalities: ["IMAGE"],
           imageGenerationConfig: {
-            aspectRatio: "16:9"
+            aspectRatio: "16:9",
+            resolution: "1K" // Options: "512", "1K", "2K", "4K"
           }
         } as any
       });
@@ -81,10 +82,11 @@ export async function callNanoBanana(
     let fallbackUsed = false;
     let fallbackMessage = "";
 
-    // Fallback chain: Nano Banana Pro → Nano Banana 2 → Nano Banana OG (GA)
+    // Fallback chain: Nano Banana 2 → Nano Banana Pro → Nano Banana OG (GA)
+    // NB2 is PRIMARY for 50% cost savings ($0.0672 vs $0.134 per image)
     const models = [
-      { id: 'gemini-3-pro-image-preview', name: 'Nano Banana Pro' },
       { id: 'gemini-3.1-flash-image-preview', name: 'Nano Banana 2 (Flash)' },
+      { id: 'gemini-3-pro-image-preview', name: 'Nano Banana Pro' },
       { id: 'gemini-2.5-flash-image', name: 'Nano Banana OG (Stable)' },
     ];
 
