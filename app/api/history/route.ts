@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
         });
 
         // 3. Map variants to a standardized format that matches HistoryJob
-        const mappedVariants = variantJobs.map(v => ({
+        const currentUserId = session.user.id;
+        const mappedVariants = (variantJobs as any[]).map(v => ({
             id: v.id,
             channelId: v.masterJob?.channelId || '',
             archetypeId: v.masterJob?.archetypeId || '',
@@ -62,12 +63,12 @@ export async function GET(request: NextRequest) {
             createdAt: v.createdAt.toISOString(),
             completedAt: v.completedAt?.toISOString() || null,
             isManual: true,
-            userId: session.user.id,
+            userId: currentUserId,
             metadata: {
                 isVariant: true,
                 language: v.language,
-                translationMode: v.translationMode,
-                originalText: v.originalText
+                translationMode: v.translationMode as string,
+                originalText: v.originalText as string
             },
             channel: v.masterJob?.channel,
             archetype: v.masterJob?.archetype
