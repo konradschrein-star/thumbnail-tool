@@ -17,7 +17,13 @@ export interface HistoryJob {
   completedAt: string | null;
   isManual: boolean;
   userId: string | null;
-  metadata: any;
+  metadata?: {
+    isVariant?: boolean;
+    language?: string;
+    translationMode?: string;
+    originalText?: string;
+    [key: string]: any;
+  };
   channel: {
     id: string;
     name: string;

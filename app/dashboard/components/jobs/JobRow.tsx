@@ -12,7 +12,8 @@ import {
   Eye,
   Download,
   RotateCcw,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Globe
 } from 'lucide-react';
 import { HistoryJob } from '@/app/dashboard/hooks/useHistory';
 import { generateProfessionalFilename, downloadRemoteImage } from '@/lib/download-utils';
@@ -48,10 +49,18 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
     const { label, icon } = config[status];
 
     return (
-      <span className={`status-badge ${status}`}>
-        {icon}
-        {label}
-      </span>
+      <div className="status-badges-wrapper">
+        <span className={`status-badge ${status}`}>
+          {icon}
+          {label}
+        </span>
+        {job.metadata?.isVariant && (
+          <span className="status-badge variant">
+            <Globe size={12} />
+            {job.metadata.language}
+          </span>
+        )}
+      </div>
     );
   };
 
@@ -99,7 +108,7 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
                   const filename = generateProfessionalFilename(
                     job.channel.name,
                     job.archetype.category || 'General',
-                    job.videoTopic,
+                    job.metadata?.isVariant ? `${job.videoTopic}_${job.metadata.language}` : job.videoTopic,
                     1
                   );
                   downloadRemoteImage(job.outputUrl!, filename);
@@ -165,6 +174,18 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
                 <span className="info-label">Archetype</span>
                 <span className="info-value">{job.archetype.name}</span>
               </div>
+              {job.metadata?.isVariant && (
+                <>
+                  <div className="info-item">
+                    <span className="info-label">Language</span>
+                    <span className="info-value">{job.metadata.language}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Original Text</span>
+                    <span className="info-value">{job.metadata.originalText}</span>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="preview-image-wrapper glass">
@@ -180,7 +201,7 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
                     const filename = generateProfessionalFilename(
                       job.channel.name,
                       job.archetype.category || 'General',
-                      job.videoTopic,
+                      job.metadata?.isVariant ? `${job.videoTopic}_${job.metadata.language}` : job.videoTopic,
                       1
                     );
                     downloadRemoteImage(job.outputUrl!, filename);
@@ -330,6 +351,18 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .status-badges-wrapper {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+
+        .status-badge.variant {
+          background: rgba(59, 130, 246, 0.1);
+          color: #60a5fa;
+          border-color: rgba(59, 130, 246, 0.2);
+        }
+
         /* Status Colors - Monochrome Grayscale */
         .status-badge.pending {
           background: rgba(255, 255, 255, 0.03);
@@ -401,7 +434,8 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
 
         .preview-image {
           width: 100%;
-          height: auto;
+          aspect-ratio: 16 / 9;
+          object-fit: contain;
           display: block;
         }
 
