@@ -217,19 +217,19 @@ export function buildFullPrompt(
 
   return `You are an expert YouTube thumbnail designer with 10 years of experience. Your task is to adapt the thumbnail style, typography, and stylistic devices to perfectly match the target audience.
 
-## Topic & Text
-- **TOPIC**: ${topic}
-- **TEXT TO RENDER**: ${text || 'DO NOT RENDER ANY TEXT'}
+## Text Instructions
+**Step 1**: Analyze the reference image for the presence of text or typography.
+- **IF YES**: Render this text clearly: ${text || 'DO NOT RENDER ANY TEXT'}. Ensure it is highly legible, matches modern YouTube aesthetics, and uses ALL CAPS or Title Case consistently. Apply thick outer strokes or heavy drop shadows to create 3D depth and maximum contrast.
+- **IF NO**: Do not render any text, characters, or letters. Maintain the text-free composition of the reference.
 
 ## Technical Instructions
-- **TEXT STYLING**: Ensure text is highly legible and matches modern YouTube aesthetics. Use ALL CAPS or Title Case consistently. **Apply thick outer strokes or heavy drop shadows to create 3D depth and maximum contrast against the background.** Render in 2D or match the reference image style.
 - **REFERENCE USAGE**: Use the provided reference image as the core style and layout inspiration. Maintain the general composition, object placement, and background style of the reference. Maintain vibrant high-contrast lighting and dramatic rim lighting on the subject.
 - **ARCHETYPE STYLE**: ${archetypeStyle}
-- **COLOR THEORY**: Utilize the topic's identity colors (e.g., PowerPoint = Orange/Red) to dominate the scene. **Ensure extreme visual contrast between the subject, text, and background.** ${includeBrandColors ? `Harmonically integrate ${brand.primaryColor} and ${brand.secondaryColor} as high-contrast accents.` : ''}
+- **COLOR THEORY**: Utilize the topic's identity colors (e.g., PowerPoint = Orange/Red) to dominate the scene. **Ensure there is strong visual contrast and depth to keep elements separated and professional. Do not allow similar colors to blend together into a flat mess.** ${includeBrandColors ? `Harmonically integrate ${brand.primaryColor} and ${brand.secondaryColor} as high-contrast accents.` : ''}
 - **LOGOS**: Integrate official topic-related logos where appropriate. Ensure they are vibrant and clearly visible.
 
 ## Persona Instructions
-**Step 1**: Analyze the reference image for the presence of a person or character.
+**Step 2**: Analyze the reference image for the presence of a person or character.
 - **IF YES**: ${includePersona && channel.personaDescription ? `Entirely replace that person with this Persona: [${sanitizePrompt(channel.personaDescription, 1000)}]` : 'Render a high-quality human subject matching the reference pose.'}
 - **IF NO**: Maintain the person-free composition of the reference image. Do not add any people, faces, or silhouettes.`;
 }
