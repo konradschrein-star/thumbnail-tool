@@ -9,21 +9,39 @@ export interface HistoryJob {
   videoTopic: string;
   thumbnailText: string;
   customPrompt: string | null;
+  promptUsed: string | null;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   outputUrl: string | null;
   errorMessage: string | null;
   createdAt: string;
   completedAt: string | null;
   isManual: boolean;
+  userId: string | null;
+  metadata: any;
   channel: {
     id: string;
     name: string;
+    personaDescription: string;
+    personaAssetPath: string | null;
+    logoAssetPath: string | null;
+    primaryColor: string | null;
+    secondaryColor: string | null;
+    tags: string | null;
+    createdAt: string;
+    updatedAt: string;
+    userId: string | null;
   };
   archetype: {
     id: string;
     name: string;
-    category?: string | null;
+    category: string | null;
     imageUrl: string;
+    layoutInstructions: string;
+    basePrompt: string | null;
+    isAdminOnly: boolean;
+    createdAt: string;
+    updatedAt: string;
+    userId: string | null;
   };
 }
 
