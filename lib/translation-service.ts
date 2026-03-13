@@ -55,11 +55,14 @@ Translated text:`;
       }]
     });
 
-    if (!response.candidates || response.candidates.length === 0) {
-      throw new Error('No translation candidates returned from Gemini');
+    const candidate = response.candidates?.[0];
+    const textPart = candidate?.content?.parts?.[0]?.text;
+
+    if (!textPart) {
+      throw new Error('Missing or empty translation content from Gemini');
     }
 
-    const translatedText = response.candidates[0].content.parts[0].text.trim();
+    const translatedText = textPart.trim();
 
     // Remove any quotation marks that Gemini might add
     return translatedText.replace(/^["']|["']$/g, '');
