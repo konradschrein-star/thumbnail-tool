@@ -17,12 +17,12 @@ export async function GET(request: NextRequest) {
     const role = (session.user as any)?.role;
     const isAdmin = role === 'ADMIN';
     const userEmail = session.user?.email || '';
-    const isTestAccount = userEmail === 'test@test.ai';
+    // const isTestAccount = userEmail === 'test@test.ai'; // Temporarily disabled
 
     // Build where clause with user isolation
     let where: any = {};
 
-    if (isAdmin && !isTestAccount) {
+    if (isAdmin) {
       // Admin sees all archetypes
       if (channelId) {
         where = {
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // Filter out admin-only archetypes for non-admins
     const filteredArchetypes = archetypes.filter((arch: any) => {
-      if (arch.isAdminOnly && (role !== 'ADMIN' || isTestAccount)) {
+      if (arch.isAdminOnly && role !== 'ADMIN') {
         return false;
       }
       return true;
