@@ -309,7 +309,7 @@ git commit -m "feat(db): migrate to PostgreSQL with batch processing schema
 - Add GoogleSheetsConnection for OAuth tokens
 - Extend GenerationJob with AI provider tracking
 
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+"
 ```
 
 ---
@@ -547,7 +547,7 @@ export async function generateImageAI33(
   formData.append('generations_count', '1');
   formData.append('model_parameters', JSON.stringify({
     aspect_ratio: '16:9',
-    resolution: '2K',
+    resolution: '1K',
   }));
 
   // Attach reference images

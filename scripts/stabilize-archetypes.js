@@ -17,7 +17,7 @@ function slugify(text) {
 
 async function main() {
   const sourceDir = path.join(process.cwd(), 'research', 'video_analysis');
-  const publicDir = path.join(process.cwd(), 'public', 'research', 'video_analysis');
+  const publicDir = path.join(process.cwd(), 'frontend', 'public', 'research', 'video_analysis');
   
   if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });

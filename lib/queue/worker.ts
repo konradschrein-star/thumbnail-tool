@@ -292,7 +292,7 @@ async function generateBatchZip(batchJobId: string) {
 export function createWorker() {
   const worker = new Worker<ThumbnailJobData, void, 'thumbnail-generation'>(
     'thumbnail-generation',
-    async (job) => {
+    async (job: Job<ThumbnailJobData, void, 'thumbnail-generation'>) => {
       await processThumbnailJob(job);
     },
     {
@@ -302,15 +302,15 @@ export function createWorker() {
   );
 
   // Event handlers
-  worker.on('completed', (job) => {
+  worker.on('completed', (job: Job<ThumbnailJobData>) => {
     console.log(`✓ Job completed: ${job.id}`);
   });
 
-  worker.on('failed', (job, err) => {
+  worker.on('failed', (job: Job<ThumbnailJobData> | undefined, err: Error) => {
     console.error(`✗ Job failed: ${job?.id} - ${err.message}`);
   });
 
-  worker.on('error', (err) => {
+  worker.on('error', (err: Error) => {
     console.error('Worker error:', err);
   });
 
