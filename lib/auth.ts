@@ -46,17 +46,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Standard logic for all users
         try {
+          console.error(`[AUTH DEBUG] Looking up user: ${normalizedEmail}`);
           const user = await prisma.users.findUnique({
             where: { email: normalizedEmail },
           });
 
+          console.error(`[AUTH DEBUG] User found: ${!!user}, has password: ${!!user?.password}`);
+
           if (!user || !user.password) {
+            console.error(`[AUTH DEBUG] User not found or no password`);
             return null;
           }
 
+          console.error(`[AUTH DEBUG] Comparing password...`);
           const isValid = await bcrypt.compare(inputPassword, user.password);
-          if (!isValid) return null;
+          console.error(`[AUTH DEBUG] Password valid: ${isValid}`);
 
+          if (!isValid) {
+            console.error(`[AUTH DEBUG] Password comparison failed`);
+            return null;
+          }
+
+          console.error(`[AUTH DEBUG] Authentication successful!`);
           return {
             id: user.id,
             email: user.email,
@@ -64,7 +75,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             role: (user as any).role,
           } as any;
         } catch (dbError) {
-          console.error("Database connection failure during authorization:", dbError);
+          console.error("[AUTH DEBUG] Database error:", dbError);
           return null; // Force graceful "Invalid Credentials" rejection securely
         }
       },
