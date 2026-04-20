@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 
     for (const row of rows) {
       // Create generation job
-      const generationJob = await prisma.generationJob.create({
+      const generationJob = await prisma.generation_jobs.create({
         data: {
           channelId: row.channelId,
           archetypeId: row.archetypeId,
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
         console.error(`Failed to queue job ${generationJob.id}: ${queueError instanceof Error ? queueError.message : String(queueError)}`);
 
         // Mark job as failed
-        await prisma.generationJob.update({
+        await prisma.generation_jobs.update({
           where: { id: generationJob.id },
           data: {
             status: 'failed',

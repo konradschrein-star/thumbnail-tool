@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch the generation job
-    const job = await prisma.generationJob.findUnique({
+    const job = await prisma.generation_jobs.findUnique({
       where: { id: jobId },
       include: {
         channel: {

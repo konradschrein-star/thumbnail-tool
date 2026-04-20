@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     if (channelId) where.channelId = channelId;
     if (status) where.status = status;
 
-    const jobs = await prisma.generationJob.findMany({
+    const jobs = await prisma.generation_jobs.findMany({
       where,
       include: {
         channel: {

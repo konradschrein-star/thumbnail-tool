@@ -14,7 +14,7 @@ export async function GET(
 
         const { id } = await params;
 
-        const job = await prisma.generationJob.findUnique({
+        const job = await prisma.generation_jobs.findUnique({
             where: { id, userId: session.user.id } as any,
             include: {
                 channel: true,

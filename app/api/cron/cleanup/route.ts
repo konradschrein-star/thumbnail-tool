@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
         for (const user of nonAdmins) {
             // Find jobs for this user beyond the top 30
-            const jobsToKeep = await (prisma.generationJob as any).findMany({
+            const jobsToKeep = await (prisma.generation_jobs as any).findMany({
                 where: { userId: user.id, isManual: true },
                 orderBy: { createdAt: 'desc' },
                 take: 30,
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
             const keepIds = jobsToKeep.map((j: any) => j.id);
 
-            const jobsToDelete = await (prisma.generationJob as any).findMany({
+            const jobsToDelete = await (prisma.generation_jobs as any).findMany({
                 where: {
                     userId: user.id,
                     isManual: true,
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
                     });
 
                     // Delete from DB
-                    await prisma.generationJob.delete({
+                    await prisma.generation_jobs.delete({
                         where: { id: job.id },
                     });
 

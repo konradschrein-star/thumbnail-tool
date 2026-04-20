@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
       // Create initial job record - fail fast if database is unavailable
       let job;
       try {
-        job = await prisma.generationJob.create({
+        job = await prisma.generation_jobs.create({
           data: {
             channelId,
             archetypeId,
@@ -298,7 +298,7 @@ export async function POST(request: NextRequest) {
 
         while (retryCount <= maxRetries && !updatedJob) {
           try {
-            updatedJob = await prisma.generationJob.update({
+            updatedJob = await prisma.generation_jobs.update({
               where: { id: job.id },
               data: {
                 status: 'completed',
@@ -335,7 +335,7 @@ export async function POST(request: NextRequest) {
         failedGenerations++;
 
         try {
-          await prisma.generationJob.update({
+          await prisma.generation_jobs.update({
             where: { id: job.id },
             data: { status: 'failed', errorMessage: error.message },
           } as any);

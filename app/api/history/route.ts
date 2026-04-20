@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 1. Fetch last 30 manual jobs
-        const masterJobs = await prisma.generationJob.findMany({
+        const masterJobs = await prisma.generation_jobs.findMany({
             where: {
                 userId: session.user.id,
                 isManual: true,

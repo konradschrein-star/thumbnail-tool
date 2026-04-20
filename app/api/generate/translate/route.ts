@@ -114,7 +114,7 @@ async function handleMasterJobTranslation(
   console.log(`\n📝 Master Job Translation: ${masterJobId} → ${targetLanguages.length} languages`);
 
   // 1. Fetch master job
-  const masterJob = await prisma.generationJob.findUnique({
+  const masterJob = await prisma.generation_jobs.findUnique({
     where: { id: masterJobId },
     include: { channel: true, archetype: true }
   });

@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       let job;
       const mockId = `mock_${Date.now()}_${i}`;
       try {
-        job = await prisma.generationJob.create({
+        job = await prisma.generation_jobs.create({
           data: {
             channelId,
             archetypeId,
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       } catch (error: any) {
         console.error(`Failed to queue job ${job.id}:`, error);
         try {
-          await prisma.generationJob.update({
+          await prisma.generation_jobs.update({
             where: { id: job.id },
             data: { status: 'failed', errorMessage: `Queue error: ${error.message}` },
           } as any);

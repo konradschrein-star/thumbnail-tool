@@ -20,14 +20,14 @@ export async function GET(request: NextRequest) {
     const delayedJobs = await thumbnailQueue.getDelayedCount();
 
     // Get database stats
-    const totalGenerationJobs = await prisma.generationJob.count();
-    const completedGenerationJobs = await prisma.generationJob.count({
+    const totalGenerationJobs = await prisma.generation_jobs.count();
+    const completedGenerationJobs = await prisma.generation_jobs.count({
       where: { status: 'completed' },
     });
-    const failedGenerationJobs = await prisma.generationJob.count({
+    const failedGenerationJobs = await prisma.generation_jobs.count({
       where: { status: 'failed' },
     });
-    const processingGenerationJobs = await prisma.generationJob.count({
+    const processingGenerationJobs = await prisma.generation_jobs.count({
       where: { status: 'processing' },
     });
 

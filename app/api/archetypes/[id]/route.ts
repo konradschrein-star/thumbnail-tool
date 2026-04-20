@@ -130,12 +130,12 @@ export async function PATCH(
       }
 
       // Delete existing channel assignments and create new ones
-      await prisma.channelArchetype.deleteMany({
+      await prisma.channel_archetypes.deleteMany({
         where: { archetypeId: id },
       });
 
       if (channelIdsArray.length > 0) {
-        await prisma.channelArchetype.createMany({
+        await prisma.channel_archetypes.createMany({
           data: channelIdsArray.map(channelId => ({
             archetypeId: id,
             channelId,
