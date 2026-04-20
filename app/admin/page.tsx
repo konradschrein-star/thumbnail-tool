@@ -764,56 +764,56 @@ export default function EnhancedAdminPage() {
         )}
 
         {activeTab === 'users' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Create User Form */}
-            <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-6">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <UserPlus className="w-6 h-6 text-blue-400" />
+            <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-xl p-8">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <UserPlus className="w-7 h-7 text-blue-400" />
                 Create New User
               </h2>
 
-              <form onSubmit={handleCreateUser} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <form onSubmit={handleCreateUser} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Email *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Email *</label>
                     <input
                       type="email"
                       value={createEmail}
                       onChange={(e) => setCreateEmail(e.target.value)}
                       required
-                      className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                       placeholder="user@example.com"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Name</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
                     <input
                       type="text"
                       value={createName}
                       onChange={(e) => setCreateName(e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                       placeholder="John Doe"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Password (auto-gen if empty)</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Password (auto-gen if empty)</label>
                     <input
                       type="text"
                       value={createPassword}
                       onChange={(e) => setCreatePassword(e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                       placeholder="Auto-generate"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Role</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Role</label>
                     <select
                       value={createRole}
                       onChange={(e) => setCreateRole(e.target.value as 'USER' | 'ADMIN')}
-                      className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     >
                       <option value="USER">USER</option>
                       <option value="ADMIN">ADMIN</option>
@@ -821,13 +821,13 @@ export default function EnhancedAdminPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Initial Credits</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Initial Credits</label>
                     <input
                       type="number"
                       value={createCredits}
                       onChange={(e) => setCreateCredits(e.target.value)}
                       min="0"
-                      className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                       placeholder="0"
                     />
                   </div>
@@ -836,9 +836,9 @@ export default function EnhancedAdminPage() {
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors flex items-center gap-2"
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-semibold text-base transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 flex items-center gap-2"
                 >
-                  <UserPlus className="w-4 h-4" />
+                  <UserPlus className="w-5 h-5" />
                   {createLoading ? 'Creating...' : 'Create User'}
                 </button>
               </form>
@@ -856,28 +856,28 @@ export default function EnhancedAdminPage() {
             </div>
 
             {/* Grant/Deduct Credits Form */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Gift className="w-6 h-6 text-purple-400" />
+            <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl p-8">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <Gift className="w-7 h-7 text-purple-400" />
                 Grant or Deduct Credits
               </h2>
 
-              <form onSubmit={handleGrantCredits} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <form onSubmit={handleGrantCredits} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">User Email</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">User Email</label>
                     <input
                       type="email"
                       value={grantEmail}
                       onChange={(e) => setGrantEmail(e.target.value)}
                       required
-                      className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                       placeholder="user@example.com"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Amount (positive to grant, negative to deduct)
                     </label>
                     <input
@@ -887,47 +887,47 @@ export default function EnhancedAdminPage() {
                       required
                       min="-10000"
                       max="10000"
-                      className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                       placeholder="50 or -20"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Reason</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Reason</label>
                     <input
                       type="text"
                       value={grantReason}
                       onChange={(e) => setGrantReason(e.target.value)}
                       required
-                      className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                       placeholder="Welcome credits / Refund / etc."
                     />
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-3">
                   <button
                     type="submit"
                     disabled={grantLoading}
-                    className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors flex items-center gap-2"
+                    className="px-8 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-semibold text-base transition-all shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 flex items-center gap-2"
                   >
-                    <Coins className="w-4 h-4" />
+                    <Coins className="w-5 h-5" />
                     {grantLoading ? 'Processing...' : 'Modify Credits'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setGrantAmount('100')}
-                    className="px-4 py-2 bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 rounded-lg text-sm transition-colors flex items-center gap-1"
+                    className="px-5 py-3 bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-4 h-4" />
                     +100
                   </button>
                   <button
                     type="button"
                     onClick={() => setGrantAmount('-50')}
-                    className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-lg text-sm transition-colors flex items-center gap-1"
+                    className="px-5 py-3 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
                   >
-                    <Minus className="w-3 h-3" />
+                    <Minus className="w-4 h-4" />
                     -50
                   </button>
                 </div>
@@ -946,19 +946,19 @@ export default function EnhancedAdminPage() {
             </div>
 
             {/* User Search */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <Search className="w-5 h-5 text-gray-400" />
+            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+              <div className="flex items-center gap-4">
+                <Search className="w-6 h-6 text-gray-400" />
                 <input
                   type="text"
                   value={userSearchEmail}
                   onChange={(e) => setUserSearchEmail(e.target.value)}
                   placeholder="Search users by email..."
-                  className="flex-1 bg-transparent border-none focus:outline-none text-white"
+                  className="flex-1 bg-transparent border-none focus:outline-none text-white text-base py-2"
                 />
                 <button
                   onClick={loadData}
-                  className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg transition-colors"
+                  className="px-6 py-2.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg font-medium transition-all"
                 >
                   Search
                 </button>
@@ -966,27 +966,27 @@ export default function EnhancedAdminPage() {
             </div>
 
             {/* Users Table */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+            <div className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-900/50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         User
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Role
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Credits
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Total Granted
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Total Consumed
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -994,8 +994,8 @@ export default function EnhancedAdminPage() {
                   <tbody className="divide-y divide-gray-700">
                     {users.map((user) => (
                       <React.Fragment key={user.id}>
-                        <tr className="hover:bg-gray-900/30">
-                          <td className="px-6 py-4">
+                        <tr className="hover:bg-gray-900/30 transition-colors">
+                          <td className="px-6 py-5">
                             {editingUserId === user.id ? (
                               <div className="space-y-2">
                                 <input
@@ -1029,7 +1029,7 @@ export default function EnhancedAdminPage() {
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-5 whitespace-nowrap">
                             {editingUserId === user.id ? (
                               <select
                                 value={editRole}
@@ -1051,16 +1051,16 @@ export default function EnhancedAdminPage() {
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-medium">
+                          <td className="px-6 py-5 whitespace-nowrap text-sm text-white font-medium">
                             {user.credits}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                          <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
                             {user.totalCreditsGranted}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                          <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
                             {user.totalCreditsConsumed}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <td className="px-6 py-5 whitespace-nowrap text-sm">
                             {editingUserId === user.id ? (
                               <div className="flex items-center gap-2">
                                 <button
@@ -1082,7 +1082,7 @@ export default function EnhancedAdminPage() {
                                 </button>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-3">
                                 <button
                                   onClick={() => {
                                     setEditingUserId(user.id);
@@ -1091,21 +1091,21 @@ export default function EnhancedAdminPage() {
                                     setEditRole(user.role as 'USER' | 'ADMIN');
                                     setResetPassword('');
                                   }}
-                                  className="text-blue-400 hover:text-blue-300"
+                                  className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all"
                                   title="Edit user"
                                 >
                                   <Edit3 className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleResetPassword(user.id, user.email)}
-                                  className="text-yellow-400 hover:text-yellow-300"
+                                  className="p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10 rounded-lg transition-all"
                                   title="Reset password"
                                 >
                                   <Key className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => toggleUserExpand(user.id)}
-                                  className="text-purple-400 hover:text-purple-300"
+                                  className="p-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg transition-all"
                                   title="View transactions"
                                 >
                                   {expandedUsers.has(user.id) ? (
@@ -1116,7 +1116,7 @@ export default function EnhancedAdminPage() {
                                 </button>
                                 <button
                                   onClick={() => handleDeleteUser(user.id, user.email)}
-                                  className="text-red-400 hover:text-red-300"
+                                  className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
                                   title="Delete user"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -1280,22 +1280,22 @@ export default function EnhancedAdminPage() {
                   <tbody className="divide-y divide-gray-700">
                     {filteredChannels.map((channel) => (
                       <tr key={channel.id} className="hover:bg-gray-900/30">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-5 whitespace-nowrap">
                           <div className="text-sm font-medium text-white">{channel.name}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-5 whitespace-nowrap">
                           <div className="text-sm text-white">{channel.user.email}</div>
                           {channel.user.name && (
                             <div className="text-xs text-gray-400">{channel.user.name}</div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
                           {channel._count.archetypes}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
                           {channel._count.generationJobs}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
                           {formatDate(channel.createdAt)}
                         </td>
                       </tr>
@@ -1373,7 +1373,7 @@ export default function EnhancedAdminPage() {
                   <tbody className="divide-y divide-gray-700">
                     {filteredJobs.map((job) => (
                       <tr key={job.id} className="hover:bg-gray-900/30">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-5 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             {getStatusIcon(job.status)}
                             <span
@@ -1385,7 +1385,7 @@ export default function EnhancedAdminPage() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-5 whitespace-nowrap">
                           <div className="text-sm text-white">{job.user.email}</div>
                           <span
                             className={`text-xs ${
@@ -1397,7 +1397,7 @@ export default function EnhancedAdminPage() {
                             {job.user.role}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-5">
                           <div className="text-sm text-white max-w-xs truncate">
                             {job.videoTopic}
                           </div>
@@ -1407,16 +1407,16 @@ export default function EnhancedAdminPage() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
                           {job.channel?.name || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
                           {job.archetype?.name || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
                           {formatDate(job.createdAt)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <td className="px-6 py-5 whitespace-nowrap text-sm">
                           {job.outputUrl && (
                             <a
                               href={job.outputUrl}
