@@ -6,6 +6,7 @@ import * as r2Service from '@/lib/r2-service';
 import { checkManualRateLimit } from '@/lib/rate-limit';
 import { getApiAuth } from '@/lib/api-auth';
 import { EMERGENCY_CHANNELS, EMERGENCY_ARCHETYPES } from '@/lib/emergency-data';
+import { thumbnailQueue } from '@/lib/queue/thumbnail-queue';
 
 export async function POST(request: NextRequest) {
   const authResult = await getApiAuth(request);
@@ -121,70 +122,54 @@ export async function POST(request: NextRequest) {
             thumbnailText,
             customPrompt,
             isManual: true, // Manual UI route
-            status: 'processing'
+            status: 'pending'
           },
         } as any);
       } catch (dbError) {
         console.error('DB job creation failed, using mock ID:', dbError);
-        job = { id: mockId, status: 'processing' };
+        job = { id: mockId, status: 'pending' };
       }
 
+      // Queue the job for processing using BullMQ
       try {
-        const { buffer: imageBuffer, fallbackUsed, fallbackMessage } = await generationService.callNanoBanana(payload, process.env.GOOGLE_API_KEY!);
-
-        // Upload to R2 (Mandatory for Vercel)
-        const filename = `gen_${job.id}.png`;
-        const outputUrl = await r2Service.uploadToR2(imageBuffer, filename, 'image/png', userEmail);
-
-        // Retry logic for job status update
-        let updatedJob = null;
-        let retryCount = 0;
-        const maxRetries = 2;
-
-        while (retryCount <= maxRetries && !updatedJob) {
-          try {
-            updatedJob = await prisma.generationJob.update({
-              where: { id: job.id },
-              data: {
-                status: 'completed',
-                outputUrl,
-                promptUsed: `${payload.systemPrompt}\n\n${payload.userPrompt}${fallbackUsed ? `\n\n[FALLBACK TRIGGERED: ${fallbackMessage}]` : ''}`,
-                completedAt: new Date()
-              },
-            } as any);
-          } catch (dbError) {
-            retryCount++;
-            console.error(`DB job update (complete) failed (attempt ${retryCount}/${maxRetries + 1}):`, dbError);
-
-            if (retryCount <= maxRetries) {
-              // Wait 1 second before retry
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            } else {
-              // All retries exhausted - log for manual recovery
-              console.error(`CRITICAL: Job ${job.id} completed but failed to update DB after ${maxRetries + 1} attempts. Image exists at ${outputUrl}`);
-            }
+        await thumbnailQueue.add(
+          'thumbnail-generation',
+          {
+            jobId: job.id,
+            channelId,
+            archetypeId,
+            videoTopic,
+            thumbnailText,
+            customPrompt,
+          },
+          {
+            jobId: job.id,
+            priority: 10, // Manual jobs get higher priority
           }
-        }
+        );
 
-        if (updatedJob) {
-          results.push({ ...updatedJob, fallbackUsed, fallbackMessage });
-        } else {
-          // Fallback: return job data even though DB update failed
-          results.push({ ...job, status: 'completed', outputUrl, fallbackUsed, fallbackMessage });
-        }
+        results.push({
+          id: job.id,
+          status: 'pending',
+          message: 'Job queued for processing',
+        });
       } catch (error: any) {
-        console.error(`Version ${i} failed:`, error);
+        console.error(`Failed to queue job ${job.id}:`, error);
         try {
           await prisma.generationJob.update({
             where: { id: job.id },
-            data: { status: 'failed', errorMessage: error.message },
+            data: { status: 'failed', errorMessage: `Queue error: ${error.message}` },
           } as any);
         } catch (dbError) {
           console.error('DB job update (failed) failed:', dbError);
         }
 
         if (count === 1) throw error;
-        results.push({ id: job.id, status: 'failed', errorMessage: error.message });
+        results.push({
+          id: job.id,
+          status: 'failed',
+          errorMessage: `Queue error: ${error.message}`,
+        });
       }
     }
 
