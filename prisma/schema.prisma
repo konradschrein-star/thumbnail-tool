@@ -157,7 +157,7 @@ model users {
 }
 
 model credit_transactions {
-  id               String           @id
+  id               String           @id @default(cuid())
   userId           String
   adminId          String?
   transaction_type String
