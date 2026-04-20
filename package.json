@@ -38,7 +38,7 @@
     "limiter": "^3.0.0",
     "lucide-react": "^0.575.0",
     "motion": "^12.34.3",
-    "next": "^15.5.12",
+    "next": "^16.2.4",
     "next-auth": "^5.0.0-beta.30",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
