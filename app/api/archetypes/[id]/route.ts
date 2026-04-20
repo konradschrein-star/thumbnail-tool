@@ -19,7 +19,7 @@ export async function GET(
     const userRole = (session.user as any)?.role || 'USER';
     const isAdmin = userRole === 'ADMIN';
 
-    const archetype = await prisma.archetype.findUnique({
+    const archetype = await prisma.archetypes.findUnique({
       where: { id },
       include: {
         channels: {
@@ -90,7 +90,7 @@ export async function PATCH(
     }
 
     // Verify ownership before updating
-    const existingArchetype = await prisma.archetype.findUnique({
+    const existingArchetype = await prisma.archetypes.findUnique({
       where: { id },
       select: { userId: true },
     });
@@ -144,7 +144,7 @@ export async function PATCH(
       }
     }
 
-    const archetype = await prisma.archetype.update({
+    const archetype = await prisma.archetypes.update({
       where: { id },
       data: updateData,
       include: {
@@ -191,7 +191,7 @@ export async function DELETE(
     const isAdmin = userRole === 'ADMIN';
 
     // Verify ownership before deleting
-    const existingArchetype = await prisma.archetype.findUnique({
+    const existingArchetype = await prisma.archetypes.findUnique({
       where: { id },
       select: { userId: true },
     });
@@ -211,7 +211,7 @@ export async function DELETE(
       );
     }
 
-    await prisma.archetype.delete({
+    await prisma.archetypes.delete({
       where: { id },
     });
 
