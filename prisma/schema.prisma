@@ -136,17 +136,40 @@ model google_sheets_connections {
 }
 
 model users {
-  id              String            @id
-  email           String            @unique
-  password        String
-  name            String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime
-  role            String            @default("USER")
-  preferences     Json?
-  archetypes      archetypes[]
-  channels        channels[]
-  generation_jobs generation_jobs[]
+  id                      String                @id
+  email                   String                @unique
+  password                String
+  passwordHashAlgorithm   String?               @default("bcrypt")
+  name                    String?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime
+  role                    String                @default("USER")
+  preferences             Json?
+  credits                 Int                   @default(0)
+  totalCreditsGranted     Int                   @default(0)
+  totalCreditsConsumed    Int                   @default(0)
+  archetypes              archetypes[]
+  channels                channels[]
+  generation_jobs         generation_jobs[]
+  credit_transactions     credit_transactions[] @relation("UserCredits")
+  admin_transactions      credit_transactions[] @relation("AdminGrants")
+}
+
+model credit_transactions {
+  id               String   @id
+  userId           String
+  adminId          String?
+  transaction_type String
+  amount           Int
+  balanceAfter     Int
+  reason           String?
+  createdAt        DateTime @default(now())
+  users            users    @relation("UserCredits", fields: [userId], references: [id])
+  admin            users?   @relation("AdminGrants", fields: [adminId], references: [id])
+
+  @@index([userId])
+  @@index([adminId])
+  @@index([createdAt])
 }
 
 model variant_jobs {
