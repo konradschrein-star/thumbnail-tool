@@ -137,13 +137,13 @@ model google_sheets_connections {
 }
 
 model users {
-  id                      String                @id
+  id                      String                @id @default(cuid())
   email                   String                @unique
   password                String
   passwordHashAlgorithm   String?               @default("bcrypt")
   name                    String?
   createdAt               DateTime              @default(now())
-  updatedAt               DateTime
+  updatedAt               DateTime              @updatedAt
   role                    String                @default("USER")
   preferences             Json?
   credits                 Int                   @default(0)

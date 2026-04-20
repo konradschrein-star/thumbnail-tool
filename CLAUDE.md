@@ -6,6 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 YouTube Thumbnail Generation Engine designed to service 50+ channels with automated, branded thumbnails using Google's Nano Banana API (gemini-3-pro-image-preview). The system generates consistent, persona-driven thumbnails using layout archetypes and detailed character descriptions.
 
+## IMPORTANT: Deployment Strategy
+
+**We are NOT using Vercel anymore. DO NOT deploy to Vercel.**
+
+- **Production Server:** Self-hosted at 65.108.6.149
+- **Deployment Method:** Manual git pull + build on production server
+- **NO automatic Vercel deployments** - the project has migrated from Vercel to our own infrastructure
+- All git pushes should go to GitHub only, NOT trigger Vercel builds
+
 ## Critical Technical Knowledge
 
 ### Nano Banana API Integration
