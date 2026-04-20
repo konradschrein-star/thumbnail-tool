@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch users with pagination
     const [users, totalCount] = await Promise.all([
-      prisma.user.findMany({
+      prisma.users.findMany({
         where,
         select: {
           id: true,
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: offset,
       }),
-      prisma.user.count({ where }),
+      prisma.users.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { email: email.toLowerCase().trim() },
     });
 
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password);
 
     // Create user
-    const newUser = await prisma.user.create({
+    const newUser = await prisma.users.create({
       data: {
         email: email.toLowerCase().trim(),
         name: name || null,
@@ -234,7 +234,7 @@ export async function PATCH(request: NextRequest) {
 
     if (email !== undefined) {
       // Check if new email is already taken
-      const existingUser = await prisma.user.findFirst({
+      const existingUser = await prisma.users.findFirst({
         where: {
           email: email.toLowerCase().trim(),
           NOT: { id: userId },
@@ -259,7 +259,7 @@ export async function PATCH(request: NextRequest) {
       updateData.passwordHashAlgorithm = 'bcrypt';
     }
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id: userId },
       data: updateData,
       select: {
@@ -328,7 +328,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.user.delete({
+    await prisma.users.delete({
       where: { id: userId },
     });
 

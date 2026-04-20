@@ -85,7 +85,7 @@ export async function upgradePasswordHash(
     const newHash = await hashPassword(plainPassword);
 
     // Update database
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: userId },
       data: {
         password: newHash,

@@ -56,15 +56,15 @@ export async function GET(request: NextRequest) {
       recentTransactions,
     ] = await Promise.all([
       // Total user count
-      prisma.user.count(),
+      prisma.users.count(),
 
       // Admin user count
-      prisma.user.count({
+      prisma.users.count({
         where: { role: 'ADMIN' },
       }),
 
       // Credit aggregates
-      prisma.user.aggregate({
+      prisma.users.aggregate({
         _sum: {
           credits: true,
           totalCreditsGranted: true,
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Calculate users with credits
-    const usersWithCredits = await prisma.user.count({
+    const usersWithCredits = await prisma.users.count({
       where: { credits: { gt: 0 } },
     });
 
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Calculate active users (users who have generated at least one thumbnail)
-    const activeUsers = await prisma.user.count({
+    const activeUsers = await prisma.users.count({
       where: {
         generationJobs: {
           some: {},

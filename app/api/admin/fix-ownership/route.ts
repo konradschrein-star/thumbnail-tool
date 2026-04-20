@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get admin user
-    const adminUser = await prisma.user.findUnique({
+    const adminUser = await prisma.users.findUnique({
       where: { email: adminEmail },
       select: { id: true, email: true, role: true },
     });
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get test user
-    const testUser = await prisma.user.findUnique({
+    const testUser = await prisma.users.findUnique({
       where: { email: 'test@test.ai' },
       select: { id: true, email: true },
     });

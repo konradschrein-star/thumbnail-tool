@@ -1,4 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 /**
  * Structured error information from Google API calls
@@ -14,9 +16,9 @@ export interface GoogleAPIError {
  */
 export interface GoogleImageGenerationRequest {
   prompt: string;
-  referenceImageUrl?: string; // URL to archetype reference image
-  personaImageUrl?: string;   // URL to persona reference (optional)
-  logoImageUrl?: string;      // URL to logo (optional)
+  referenceImageUrl?: string; // URL or local path to archetype reference image
+  personaImageUrl?: string;   // URL or local path to persona reference (optional)
+  logoImageUrl?: string;      // URL or local path to logo (optional)
 }
 
 /**
@@ -29,6 +31,63 @@ export function initializeClient(apiKey: string): GoogleGenAI {
     throw new Error('Google API key is required');
   }
   return new GoogleGenAI({ apiKey: apiKey });
+}
+
+/**
+ * Converts a local file path or URL to inline base64 data
+ * @param pathOrUrl - Local file path (e.g., /archetypes/image.jpg, public/archetypes/image.jpg) or HTTPS URL
+ * @returns Inline data object for Google API or fileData object for URLs
+ */
+function convertToImagePart(pathOrUrl: string): { inlineData?: { mimeType: string; data: string }; fileData?: { mimeType: string; fileUri: string } } {
+  // If it's an HTTPS URL or Google File API URL, return as fileData
+  if (pathOrUrl.startsWith('https://') || pathOrUrl.startsWith('http://')) {
+    const ext = pathOrUrl.split('.').pop()?.toLowerCase() || 'jpg';
+    let mimeType = 'image/jpeg';
+    if (ext === 'png') mimeType = 'image/png';
+    else if (ext === 'webp') mimeType = 'image/webp';
+
+    return {
+      fileData: {
+        mimeType,
+        fileUri: pathOrUrl
+      }
+    };
+  }
+
+  // Otherwise, treat as local path and convert to inline base64
+  let filePath = pathOrUrl;
+
+  // Handle both absolute and relative paths
+  if (!existsSync(filePath)) {
+    // Try relative to process.cwd()/public
+    const publicPath = join(process.cwd(), 'public', filePath.startsWith('/') ? filePath.substring(1) : filePath);
+    if (existsSync(publicPath)) {
+      filePath = publicPath;
+    } else {
+      // Try relative to process.cwd()
+      const cwdPath = join(process.cwd(), filePath.startsWith('/') ? filePath.substring(1) : filePath);
+      if (existsSync(cwdPath)) {
+        filePath = cwdPath;
+      } else {
+        throw new Error(`File not found: ${pathOrUrl} (tried ${publicPath} and ${cwdPath})`);
+      }
+    }
+  }
+
+  const fileBuffer = readFileSync(filePath);
+  const base64Data = fileBuffer.toString('base64');
+
+  const ext = filePath.split('.').pop()?.toLowerCase() || 'jpg';
+  let mimeType = 'image/jpeg';
+  if (ext === 'png') mimeType = 'image/png';
+  else if (ext === 'webp') mimeType = 'image/webp';
+
+  return {
+    inlineData: {
+      mimeType,
+      data: base64Data
+    }
+  };
 }
 
 /**
@@ -51,32 +110,17 @@ export async function callNanoBanana(
   try {
     const ai = new GoogleGenAI({ apiKey });
 
-    const imageParts: { fileData?: { mimeType: string; fileUri: string } } [] = [];
+    const imageParts: Array<{ inlineData?: { mimeType: string; data: string }; fileData?: { mimeType: string; fileUri: string } }> = [];
 
-    // Add reference images as URLs instead of base64
+    // Convert reference images (URLs or local paths) to appropriate format
     if (request.referenceImageUrl) {
-      imageParts.push({
-        fileData: {
-          mimeType: 'image/png',
-          fileUri: request.referenceImageUrl,
-        },
-      });
+      imageParts.push(convertToImagePart(request.referenceImageUrl));
     }
     if (request.personaImageUrl) {
-      imageParts.push({
-        fileData: {
-          mimeType: 'image/png',
-          fileUri: request.personaImageUrl,
-        },
-      });
+      imageParts.push(convertToImagePart(request.personaImageUrl));
     }
     if (request.logoImageUrl) {
-      imageParts.push({
-        fileData: {
-          mimeType: 'image/png',
-          fileUri: request.logoImageUrl,
-        },
-      });
+      imageParts.push(convertToImagePart(request.logoImageUrl));
     }
 
     // Unified multi-part content (RELEVANT: Gemini preview models often fail if parts are split across messages)
@@ -84,7 +128,7 @@ export async function callNanoBanana(
       role: 'user',
       parts: [
         { text: request.prompt },
-        ...imageParts.map(p => ({ fileData: p.fileData }))
+        ...imageParts.map(p => p.inlineData ? { inlineData: p.inlineData } : { fileData: p.fileData! })
       ]
     };
 
@@ -138,11 +182,14 @@ export async function callNanoBanana(
         // On image processing errors with multi-image payload, retry same model with archetype only
         if (msg.includes("Unable to process input image") && imageParts.length > 1 && i === 0) {
           console.warn(`   ⚠️ Multi-image payload failed on ${model.name}. Retrying with Archetype ONLY...`);
+          const firstImagePart = imageParts[0].inlineData
+            ? { inlineData: imageParts[0].inlineData }
+            : { fileData: imageParts[0].fileData! };
           const fallbackContent = {
             role: 'user',
             parts: [
               { text: request.prompt },
-              imageParts[0]
+              firstImagePart
             ]
           };
           try {

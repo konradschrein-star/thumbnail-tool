@@ -308,7 +308,7 @@ export async function grantCredits(
  */
 export async function getUserCredits(userId: string): Promise<number> {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: { credits: true },
     });
@@ -377,7 +377,7 @@ export async function getTransactionHistory(
  */
 export async function getUserCreditStats(userId: string) {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: {
         credits: true,

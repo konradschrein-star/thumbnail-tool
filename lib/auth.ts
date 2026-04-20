@@ -25,10 +25,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Ensure the test@test.ai account exists so demo logins work reliably
         if (normalizedEmail === 'test@test.ai') {
           try {
-            const demoUser = await prisma.user.findUnique({ where: { email: 'test@test.ai' } });
+            const demoUser = await prisma.users.findUnique({ where: { email: 'test@test.ai' } });
             if (!demoUser) {
               const hashedPassword = await bcrypt.hash('test', 10);
-              await prisma.user.create({
+              await prisma.users.create({
                 data: {
                   email: 'test@test.ai',
                   password: hashedPassword,
@@ -46,7 +46,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Standard logic for all users
         try {
-          const user = await prisma.user.findUnique({
+          const user = await prisma.users.findUnique({
             where: { email: normalizedEmail },
           });
 

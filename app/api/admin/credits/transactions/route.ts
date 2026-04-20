@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       ),
     ];
 
-    const adminUsers = await prisma.user.findMany({
+    const adminUsers = await prisma.users.findMany({
       where: { id: { in: adminUserIds } },
       select: { id: true, email: true, name: true },
     });
