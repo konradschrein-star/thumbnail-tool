@@ -8,163 +8,174 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id                      String              @id @default(cuid())
-  email                   String              @unique
-  password                String
-  name                    String?
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime            @updatedAt
-  role                    String              @default("USER")
-  preferences             Json?
-  credits                 Int                 @default(0)
-  password_hash_algorithm String              @default("bcrypt")
-  totalCreditsConsumed    Int                 @default(0) @map("total_credits_consumed")
-  totalCreditsGranted     Int                 @default(0) @map("total_credits_granted")
-  archetypes              Archetype[]
-  channels                Channel[]           @relation("UserChannels")
-  credit_transactions     CreditTransaction[]
-  generationJobs          GenerationJob[]
-
-  @@map("users")
-}
-
-model Channel {
-  id                 String             @id @default(cuid())
-  name               String
-  personaDescription String
-  personaAssetPath   String?
-  logoAssetPath      String?
-  primaryColor       String?            @default("#ffffff")
-  secondaryColor     String?            @default("#000000")
-  tags               String?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  userId             String?
-  archetypes         ChannelArchetype[]
-  user               User?              @relation("UserChannels", fields: [userId], references: [id])
-  generationJobs     GenerationJob[]
-
-  @@unique([userId, name])
-  @@index([userId])
-  @@map("channels")
-}
-
-model Archetype {
-  id                 String             @id @default(cuid())
-  name               String
-  imageUrl           String
-  layoutInstructions String
-  isAdminOnly        Boolean            @default(false)
-  category           String?            @default("General")
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  basePrompt         String?
-  userId             String?
-  user               User?              @relation(fields: [userId], references: [id])
-  channels           ChannelArchetype[]
-  generationJobs     GenerationJob[]
-
-  @@unique([userId, name])
-  @@index([userId])
-  @@map("archetypes")
-}
-
-model ChannelArchetype {
-  id          String    @id @default(cuid())
-  channelId   String
-  archetypeId String
-  createdAt   DateTime  @default(now())
-  archetype   Archetype @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
-  channel     Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
-
-  @@unique([channelId, archetypeId])
-  @@index([channelId])
-  @@index([archetypeId])
-  @@map("channel_archetypes")
-}
-
-model GenerationJob {
-  id               String       @id @default(cuid())
-  channelId        String
-  archetypeId      String
-  userId           String?
-  videoTopic       String
-  thumbnailText    String
-  customPrompt     String?
-  promptUsed       String?
-  outputUrl        String?
-  status           String       @default("pending")
-  errorMessage     String?
-  isManual         Boolean      @default(true)
-  metadata         Json?
-  createdAt        DateTime     @default(now())
-  completedAt      DateTime?
-  credits_deducted Int?
-  archetype        Archetype    @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
-  channel          Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  user             User?        @relation(fields: [userId], references: [id])
-  variants         VariantJob[]
-
-  @@index([channelId])
-  @@index([archetypeId])
-  @@index([userId])
-  @@index([status])
-  @@index([channelId, status])
-  @@index([createdAt])
-  @@index([userId, isManual])
-  @@map("generation_jobs")
-}
-
-model VariantJob {
-  id              String         @id @default(cuid())
-  masterJobId     String?
-  language        String
-  translatedText  String
-  outputUrl       String?
-  status          String         @default("pending")
-  errorMessage    String?
-  createdAt       DateTime       @default(now())
-  completedAt     DateTime?
-  originalText    String?
-  sourceImageUrl  String?
-  translationMode String         @default("MASTER_JOB")
-  masterJob       GenerationJob? @relation(fields: [masterJobId], references: [id], onDelete: Cascade)
-
-  @@index([masterJobId])
-  @@map("variant_jobs")
-}
-
-model AccessRequest {
-  id        String   @id @default(cuid())
+model access_requests {
+  id        String   @id
   name      String?
   email     String
   reason    String?
   status    String   @default("pending")
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime
 
-  @@map("access_requests")
+  @@index([status])
 }
 
-model CreditTransaction {
-  id               String   @id @default(cuid())
-  user_id          String
-  transaction_type String
-  amount           Int
-  balance_before   Int
-  balance_after    Int
-  reason           String
-  related_job_id   String?
-  related_batch_id String?
-  admin_user_id    String?
-  metadata         Json?
-  created_at       DateTime @default(now())
-  users            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+model archetypes {
+  id                 String               @id
+  name               String
+  imageUrl           String
+  layoutInstructions String
+  isAdminOnly        Boolean              @default(false)
+  category           String?              @default("General")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  basePrompt         String?
+  userId             String?
+  users              users?               @relation(fields: [userId], references: [id])
+  channel_archetypes channel_archetypes[]
+  generation_jobs    generation_jobs[]
 
-  @@index([created_at])
-  @@index([transaction_type])
-  @@index([user_id, created_at])
-  @@index([user_id])
-  @@map("credit_transactions")
+  @@index([userId])
+}
+
+model batch_jobs {
+  id              String            @id
+  userId          String?
+  name            String
+  status          BatchStatus       @default(PENDING)
+  totalJobs       Int
+  completedJobs   Int               @default(0)
+  failedJobs      Int               @default(0)
+  outputZipUrl    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  generation_jobs generation_jobs[]
+
+  @@index([status])
+  @@index([userId])
+}
+
+model channel_archetypes {
+  id          String     @id
+  channelId   String
+  archetypeId String
+  createdAt   DateTime   @default(now())
+  archetypes  archetypes @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+  channels    channels   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, archetypeId])
+  @@index([archetypeId])
+  @@index([channelId])
+}
+
+model channels {
+  id                 String               @id
+  name               String
+  personaDescription String
+  personaAssetPath   String?
+  logoAssetPath      String?
+  primaryColor       String?              @default("#ffffff")
+  secondaryColor     String?              @default("#000000")
+  tags               String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  userId             String?
+  channel_archetypes channel_archetypes[]
+  users              users?               @relation(fields: [userId], references: [id])
+  generation_jobs    generation_jobs[]
+
+  @@index([userId])
+}
+
+model generation_jobs {
+  id             String         @id
+  channelId      String
+  archetypeId    String
+  userId         String?
+  videoTopic     String
+  thumbnailText  String
+  customPrompt   String?
+  promptUsed     String?
+  outputUrl      String?
+  status         String         @default("pending")
+  errorMessage   String?
+  isManual       Boolean        @default(true)
+  metadata       Json?
+  createdAt      DateTime       @default(now())
+  completedAt    DateTime?
+  batchJobId     String?
+  aiProvider     AIProvider     @default(AI33)
+  fallbackUsed   Boolean        @default(false)
+  fallbackReason String?
+  archetypes     archetypes     @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+  batch_jobs     batch_jobs?    @relation(fields: [batchJobId], references: [id])
+  channels       channels       @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  users          users?         @relation(fields: [userId], references: [id])
+  variant_jobs   variant_jobs[]
+
+  @@index([archetypeId])
+  @@index([batchJobId])
+  @@index([channelId])
+  @@index([channelId, status])
+  @@index([status])
+  @@index([userId])
+}
+
+model google_sheets_connections {
+  id           String   @id
+  userId       String   @unique
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  sheetId      String?
+  sheetName    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+
+  @@index([userId])
+}
+
+model users {
+  id              String            @id
+  email           String            @unique
+  password        String
+  name            String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  role            String            @default("USER")
+  preferences     Json?
+  archetypes      archetypes[]
+  channels        channels[]
+  generation_jobs generation_jobs[]
+}
+
+model variant_jobs {
+  id              String           @id
+  masterJobId     String?
+  language        String
+  translatedText  String
+  originalText    String?
+  outputUrl       String?
+  status          String           @default("pending")
+  errorMessage    String?
+  sourceImageUrl  String?
+  translationMode String           @default("MASTER_JOB")
+  createdAt       DateTime         @default(now())
+  completedAt     DateTime?
+  generation_jobs generation_jobs? @relation(fields: [masterJobId], references: [id], onDelete: Cascade)
+
+  @@index([masterJobId])
+}
+
+enum AIProvider {
+  AI33
+  GOOGLE
+}
+
+enum BatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  PARTIAL
 }
