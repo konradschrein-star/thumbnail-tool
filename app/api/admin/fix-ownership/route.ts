@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
         } else {
           await prisma.channels.update({
             where: { id: channel.id },
-            data: { userId: adminUser.id },
+            data: { user_id: adminUser.id },
           });
 
           results.transferred.push({
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
         } else {
           await prisma.channels.update({
             where: { id: channel.id },
-            data: { userId: testUser.id },
+            data: { user_id: testUser.id },
           });
 
           results.transferred.push({

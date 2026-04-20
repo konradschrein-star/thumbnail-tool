@@ -39,7 +39,7 @@ export class CreditServiceError extends Error {
  * @throws InsufficientCreditsError if user doesn't have enough credits
  */
 export async function deductCreditsAndCreateJob(
-  userId: string,
+  user_id: string,
   creditsRequired: number,
   jobData: {
     channelId: string;
@@ -97,10 +97,10 @@ export async function deductCreditsAndCreateJob(
         });
 
         // Log the transaction
-        await tx.creditTransaction.create({
+        await tx.credit_transactions.create({
           data: {
             userId,
-            transactionType: 'deduct',
+            transaction_type: 'deduct',
             amount: -creditsRequired,
             balanceBefore,
             balanceAfter,
@@ -147,7 +147,7 @@ export async function deductCreditsAndCreateJob(
  * @throws InsufficientCreditsError if user doesn't have enough credits
  */
 export async function deductCreditsForJob(
-  userId: string,
+  user_id: string,
   count: number,
   reason: string,
   relatedJobId?: string | null
@@ -193,10 +193,10 @@ export async function deductCreditsForJob(
         });
 
         // Log the transaction
-        await tx.creditTransaction.create({
+        await tx.credit_transactions.create({
           data: {
             userId,
-            transactionType: 'deduct',
+            transaction_type: 'deduct',
             amount: -count,
             balanceBefore,
             balanceAfter,
@@ -237,9 +237,9 @@ export async function deductCreditsForJob(
  * @returns Updated credit balance
  */
 export async function grantCredits(
-  userId: string,
+  user_id: string,
   amount: number,
-  adminUserId: string,
+  admin_user_id: string,
   reason: string
 ) {
   if (amount <= 0) {
@@ -273,10 +273,10 @@ export async function grantCredits(
         });
 
         // Log the grant transaction
-        await tx.creditTransaction.create({
+        await tx.credit_transactions.create({
           data: {
             userId,
-            transactionType: 'grant',
+            transaction_type: 'grant',
             amount,
             balanceBefore,
             balanceAfter,
@@ -306,7 +306,7 @@ export async function grantCredits(
  * @param userId - User ID
  * @returns Current credit balance
  */
-export async function getUserCredits(userId: string): Promise<number> {
+export async function getUserCredits(user_id: string): Promise<number> {
   try {
     const user = await prisma.users.findUnique({
       where: { id: userId },
@@ -334,7 +334,7 @@ export async function getUserCredits(userId: string): Promise<number> {
  * @returns Array of credit transactions
  */
 export async function getTransactionHistory(
-  userId: string,
+  user_id: string,
   limit: number = 50,
   offset: number = 0
 ) {
@@ -346,14 +346,14 @@ export async function getTransactionHistory(
       skip: offset,
       select: {
         id: true,
-        transactionType: true,
+        transaction_type: true,
         amount: true,
-        balanceBefore: true,
-        balanceAfter: true,
+        balance_before: true,
+        balance_after: true,
         reason: true,
         relatedJobId: true,
         relatedBatchId: true,
-        adminUserId: true,
+        admin_user_id: true,
         metadata: true,
         createdAt: true,
       },
@@ -375,7 +375,7 @@ export async function getTransactionHistory(
  * @param userId - User ID
  * @returns Statistics object with total granted, consumed, and current balance
  */
-export async function getUserCreditStats(userId: string) {
+export async function getUserCreditStats(user_id: string) {
   try {
     const user = await prisma.users.findUnique({
       where: { id: userId },

@@ -115,13 +115,13 @@ export async function POST(request: NextRequest) {
       // Use a manual transaction to deduct credits
       const result = await prisma.$transaction(async (tx) => {
         // Create deduction transaction
-        await tx.creditTransaction.create({
+        await tx.credit_transactions.create({
           data: {
-            userId: user.id,
-            transactionType: 'deduct',
+            user_id: user.id,
+            transaction_type: 'deduct',
             amount: deductAmount,
-            balanceBefore: user.credits,
-            balanceAfter: user.credits - deductAmount,
+            balance_before: user.credits,
+            balance_after: user.credits - deductAmount,
             reason,
             adminUserId,
           },

@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
-          transactionType: true,
+          transaction_type: true,
           amount: true,
           reason: true,
           createdAt: true,

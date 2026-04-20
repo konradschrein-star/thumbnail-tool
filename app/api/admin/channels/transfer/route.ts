@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     // Find channel
     const channel = await prisma.channels.findUnique({
       where: { id: channelId },
-      select: { id: true, name: true, userId: true },
+      select: { id: true, name: true, user_id: true },
     });
 
     if (!channel) {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     // Transfer ownership
     const updatedChannel = await prisma.channels.update({
       where: { id: channelId },
-      data: { userId: targetUser.id },
+      data: { user_id: targetUser.id },
       include: {
         _count: {
           select: { channel_archetypes: true, generation_jobs: true },

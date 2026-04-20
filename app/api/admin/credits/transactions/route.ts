@@ -4,7 +4,7 @@
  * GET /api/admin/credits/transactions - View credit transaction audit log
  *
  * Query params:
- * - userId: string (optional - filter by specific user)
+ * - user_id: string (optional - filter by specific user)
  * - limit: number (default: 50, max: 200)
  * - offset: number (default: 0)
  * - type: string (optional - filter by transaction type: grant, deduct, refund)
@@ -74,15 +74,15 @@ export async function GET(request: NextRequest) {
         where,
         select: {
           id: true,
-          userId: true,
-          transactionType: true,
+          user_id: true,
+          transaction_type: true,
           amount: true,
-          balanceBefore: true,
-          balanceAfter: true,
+          balance_before: true,
+          balance_after: true,
           reason: true,
           relatedJobId: true,
           relatedBatchId: true,
-          adminUserId: true,
+          admin_user_id: true,
           metadata: true,
           createdAt: true,
           users: {

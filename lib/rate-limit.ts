@@ -17,7 +17,7 @@ export interface RateLimitConfig {
  * @returns Response or null if allowed
  */
 export async function checkManualRateLimit(
-  userId: string,
+  user_id: string,
   userRole: string = 'USER',
   isSuperuser: boolean = false,
   config: RateLimitConfig = { tokensPerInterval: 10, interval: 'day' }
@@ -30,7 +30,7 @@ export async function checkManualRateLimit(
   try {
     const whereClause: any = {
       isManual: true,
-      userId: userId,
+      user_id: userId,
       createdAt: {
         gte: yesterday,
       },

@@ -7,7 +7,7 @@
  * - limit: number (default: 50, max: 200)
  * - offset: number (default: 0)
  * - status: string (filter by status: completed, failed, processing)
- * - userId: string (filter by specific user)
+ * - user_id: string (filter by specific user)
  * - channelId: string (filter by specific channel)
  */
 
