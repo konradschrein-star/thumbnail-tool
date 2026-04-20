@@ -339,7 +339,7 @@ export async function getTransactionHistory(
   offset: number = 0
 ) {
   try {
-    const transactions = await prisma.creditTransaction.findMany({
+    const transactions = await prisma.credit_transactions.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: limit,

@@ -36,7 +36,7 @@ export async function checkManualRateLimit(
       },
     };
 
-    const manualJobsCount = await prisma.generationJob.count({
+    const manualJobsCount = await prisma.generation_jobs.count({
       where: whereClause,
     });
 

@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       }),
 
       // Job statistics by status
-      prisma.generationJob.groupBy({
+      prisma.generation_jobs.groupBy({
         by: ['status'],
         _count: {
           id: true,
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       }),
 
       // Recent transactions (last 10)
-      prisma.creditTransaction.findMany({
+      prisma.credit_transactions.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
         select: {

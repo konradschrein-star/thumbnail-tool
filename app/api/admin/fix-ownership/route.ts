@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all channels to see current state
-    const allChannels = await prisma.channel.findMany({
+    const allChannels = await prisma.channels.findMany({
       include: {
         user: {
           select: { email: true },
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
             reason: `Already owned by ${adminUser.email}`,
           });
         } else {
-          await prisma.channel.update({
+          await prisma.channels.update({
             where: { id: channel.id },
             data: { userId: adminUser.id },
           });
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
             reason: `Already owned by ${testUser.email}`,
           });
         } else {
-          await prisma.channel.update({
+          await prisma.channels.update({
             where: { id: channel.id },
             data: { userId: testUser.id },
           });
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get updated state
-    const updatedChannels = await prisma.channel.findMany({
+    const updatedChannels = await prisma.channels.findMany({
       include: {
         user: {
           select: { email: true },

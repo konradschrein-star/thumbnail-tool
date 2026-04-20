@@ -52,11 +52,11 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
     const { localStorage, generator } = initializeServices();
 
     // Fetch channel and archetype from database
-    const channel = await prisma.channel.findUnique({
+    const channel = await prisma.channels.findUnique({
       where: { id: channelId },
     });
 
-    const archetype = await prisma.archetype.findUnique({
+    const archetype = await prisma.archetypes.findUnique({
       where: { id: archetypeId },
     });
 
@@ -69,7 +69,7 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
     }
 
     // Mark job as processing
-    await prisma.generationJob.update({
+    await prisma.generation_jobs.update({
       where: { id: jobId },
       data: { status: 'processing' },
     });
@@ -92,7 +92,7 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
     const outputUrl = await localStorage.saveThumbnail(generationResult.buffer, filename);
 
     // Update job with success
-    const completedJob = await prisma.generationJob.update({
+    const completedJob = await prisma.generation_jobs.update({
       where: { id: jobId },
       data: {
         status: 'completed',
@@ -122,7 +122,7 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
     console.error(`✗ Job failed: ${errorMessage}`);
 
     // Update job with failure
-    await prisma.generationJob.update({
+    await prisma.generation_jobs.update({
       where: { id: jobId },
       data: {
         status: 'failed',

@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch transactions with user info
     const [transactions, totalCount] = await Promise.all([
-      prisma.creditTransaction.findMany({
+      prisma.credit_transactions.findMany({
         where,
         select: {
           id: true,
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: offset,
       }),
-      prisma.creditTransaction.count({ where }),
+      prisma.credit_transactions.count({ where }),
     ]);
 
     // Fetch admin user info for grant transactions

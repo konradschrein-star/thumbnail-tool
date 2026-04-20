@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch jobs with user, channel, and archetype info
     const [jobs, totalCount] = await Promise.all([
-      prisma.generationJob.findMany({
+      prisma.generation_jobs.findMany({
         where,
         include: {
           user: {
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: offset,
       }),
-      prisma.generationJob.count({ where }),
+      prisma.generation_jobs.count({ where }),
     ]);
 
     return NextResponse.json({
