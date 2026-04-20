@@ -32,10 +32,60 @@ YouTube Thumbnail Generation Engine designed to service 50+ channels with automa
 
 ### Architecture
 - **Database:** Prisma 5 + PostgreSQL 16 (production), SQLite (development: `prisma/dev.db`)
-- **Framework:** Next.js 15 with App Router
+- **Framework:** Next.js 16 with App Router and Turbopack
+- **CSS Framework:** Tailwind CSS v4.2.2 (CSS-based configuration, NOT v3 JS config)
 - **Queue System:** BullMQ with Redis 7
 - **Image Generation:** Stored locally at `/opt/thumbnail-generator/storage/thumbnails/` on production
 - **Test Assets:** Archetype references in `assets/test/`
+
+### Tailwind v4 CSS Configuration
+
+**CRITICAL:** This project uses Tailwind CSS v4, which has fundamentally different configuration than v3.
+
+**Key Differences from v3:**
+- Uses `@import "tailwindcss"` instead of `@tailwind` directives
+- Configuration is CSS-based using `@theme` blocks, NOT JavaScript `tailwind.config.js`
+- Works with `@tailwindcss/postcss` plugin for Next.js 16
+- `tailwind.config.js` is optional and minimal (only content paths)
+
+**Configuration Files:**
+```css
+/* app/globals.css */
+@import "tailwindcss";
+
+@theme {
+  --color-gray-950: #09090b;
+  --color-gray-900: #18181b;
+  /* ... more colors ... */
+}
+```
+
+```javascript
+// postcss.config.js
+module.exports = {
+  plugins: {
+    '@tailwindcss/postcss': {},  // NOT 'tailwindcss'
+  },
+}
+```
+
+```javascript
+// tailwind.config.js (minimal, v4 style)
+export default {
+  content: ['./app/**/*.{js,ts,jsx,tsx,mdx}'],
+}
+```
+
+**DO NOT:**
+- ❌ Use v3 syntax with `module.exports` and `theme.extend` in tailwind.config.js
+- ❌ Use `@tailwind base/components/utilities` directives
+- ❌ Use `tailwindcss` directly in postcss.config.js
+
+**DO:**
+- ✅ Use `@import "tailwindcss"` in CSS files
+- ✅ Define custom colors in `@theme` blocks in CSS
+- ✅ Use `@tailwindcss/postcss` in postcss.config.js
+- ✅ Keep tailwind.config.js minimal with just content paths
 
 ### Production Server Access
 
