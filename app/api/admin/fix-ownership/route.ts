@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     });
 
     const results = {
-      before: allChannels.map(c => ({ name: c.name, owner: c.user?.email || 'no owner' })),
+      before: allChannels.map(c => ({ name: c.name, owner: c.users?.email || 'no owner' })),
       transferred: [] as Array<{ name: string; from: string; to: string }>,
       skipped: [] as Array<{ name: string; reason: string }>,
       after: [] as Array<{ name: string; owner: string }>,
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       const nameLower = channel.name.toLowerCase();
 
       if (adminChannelNames.includes(nameLower)) {
-        if (channel.userId === adminUser.id) {
+        if (channel.usersId === adminUser.id) {
           results.skipped.push({
             name: channel.name,
             reason: `Already owned by ${adminUser.email}`,
@@ -129,12 +129,12 @@ export async function POST(request: NextRequest) {
 
           results.transferred.push({
             name: channel.name,
-            from: channel.user?.email || 'no owner',
+            from: channel.users?.email || 'no owner',
             to: adminUser.email,
           });
         }
       } else if (testChannelNames.includes(nameLower)) {
-        if (channel.userId === testUser.id) {
+        if (channel.usersId === testUser.id) {
           results.skipped.push({
             name: channel.name,
             reason: `Already owned by ${testUser.email}`,
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 
           results.transferred.push({
             name: channel.name,
-            from: channel.user?.email || 'no owner',
+            from: channel.users?.email || 'no owner',
             to: testUser.email,
           });
         }
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
       orderBy: { name: 'asc' },
     });
 
-    results.after = updatedChannels.map(c => ({ name: c.name, owner: c.user?.email || 'no owner' }));
+    results.after = updatedChannels.map(c => ({ name: c.name, owner: c.users?.email || 'no owner' }));
 
     return NextResponse.json({
       success: true,
