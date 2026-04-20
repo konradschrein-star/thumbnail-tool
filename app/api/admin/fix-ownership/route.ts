@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       const nameLower = channel.name.toLowerCase();
 
       if (adminChannelNames.includes(nameLower)) {
-        if (channel.usersId === adminUser.id) {
+        if (channel.userId === adminUser.id) {
           results.skipped.push({
             name: channel.name,
             reason: `Already owned by ${adminUser.email}`,
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
           });
         }
       } else if (testChannelNames.includes(nameLower)) {
-        if (channel.usersId === testUser.id) {
+        if (channel.userId === testUser.id) {
           results.skipped.push({
             name: channel.name,
             reason: `Already owned by ${testUser.email}`,
