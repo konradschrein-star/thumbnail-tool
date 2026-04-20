@@ -101,8 +101,8 @@ export async function GET(request: NextRequest) {
     const adminUserIds = [
       ...new Set(
         transactions
-          .filter((t) => t.adminUserId)
-          .map((t) => t.adminUserId as string)
+          .filter((t) => t.adminId)
+          .map((t) => t.adminId as string)
       ),
     ];
 
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     // Enrich transactions with admin user info
     const enrichedTransactions = transactions.map((t) => ({
       ...t,
-      adminUser: t.adminUserId ? adminUserMap.get(t.adminUserId) : null,
+      adminUser: t.adminId ? adminUserMap.get(t.adminId) : null,
     }));
 
     return NextResponse.json({
