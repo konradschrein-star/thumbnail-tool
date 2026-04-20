@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
     // Calculate active users (users who have generated at least one thumbnail)
     const activeUsers = await prisma.users.count({
       where: {
-        generationJobs: {
+        generation_jobs: {
           some: {},
         },
       },
