@@ -632,10 +632,10 @@ export default function EnhancedAdminPage() {
                 <div className="flex items-center justify-between mb-2">
                   <Users className="w-8 h-8 text-blue-400" />
                 </div>
-                <h3 className="text-2xl font-bold">{stats.users.total}</h3>
+                <h3 className="text-2xl font-bold">{stats?.users?.total ?? 0}</h3>
                 <p className="text-gray-400 text-sm">Total Users</p>
                 <p className="text-xs text-gray-500 mt-2">
-                  {stats.users.active} active • {stats.users.admins} admins
+                  {stats?.users?.active ?? 0} active • {stats?.users?.admins ?? 0} admins
                 </p>
               </div>
 
@@ -643,10 +643,10 @@ export default function EnhancedAdminPage() {
                 <div className="flex items-center justify-between mb-2">
                   <Coins className="w-8 h-8 text-green-400" />
                 </div>
-                <h3 className="text-2xl font-bold">{stats.credits.totalAvailable.toLocaleString()}</h3>
+                <h3 className="text-2xl font-bold">{(stats?.credits?.totalAvailable ?? 0).toLocaleString()}</h3>
                 <p className="text-gray-400 text-sm">Credits Available</p>
                 <p className="text-xs text-gray-500 mt-2">
-                  {stats.users.withCredits} users with credits
+                  {stats?.users?.withCredits ?? 0} users with credits
                 </p>
               </div>
 
@@ -654,7 +654,7 @@ export default function EnhancedAdminPage() {
                 <div className="flex items-center justify-between mb-2">
                   <Gift className="w-8 h-8 text-purple-400" />
                 </div>
-                <h3 className="text-2xl font-bold">{stats.credits.totalGranted.toLocaleString()}</h3>
+                <h3 className="text-2xl font-bold">{(stats?.credits?.totalGranted ?? 0).toLocaleString()}</h3>
                 <p className="text-gray-400 text-sm">Credits Granted</p>
               </div>
 
@@ -662,7 +662,7 @@ export default function EnhancedAdminPage() {
                 <div className="flex items-center justify-between mb-2">
                   <TrendingUp className="w-8 h-8 text-orange-400" />
                 </div>
-                <h3 className="text-2xl font-bold">{stats.credits.totalConsumed.toLocaleString()}</h3>
+                <h3 className="text-2xl font-bold">{(stats?.credits?.totalConsumed ?? 0).toLocaleString()}</h3>
                 <p className="text-gray-400 text-sm">Credits Consumed</p>
               </div>
             </div>
@@ -671,7 +671,7 @@ export default function EnhancedAdminPage() {
             <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 mb-8">
               <h2 className="text-xl font-bold mb-4">Jobs Overview</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Object.entries(stats.jobs.byStatus).map(([status, count]) => (
+                {stats?.jobs?.byStatus && Object.entries(stats.jobs.byStatus).map(([status, count]) => (
                   <div key={status} className="bg-gray-900/50 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       {getStatusIcon(status)}
@@ -680,6 +680,11 @@ export default function EnhancedAdminPage() {
                     <p className="text-2xl font-bold">{count}</p>
                   </div>
                 ))}
+                {!stats?.jobs?.byStatus && (
+                  <div className="col-span-full text-center text-gray-400 py-4">
+                    No job statistics available
+                  </div>
+                )}
               </div>
             </div>
 

@@ -69,6 +69,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!Number.isInteger(amount)) {
+      return NextResponse.json(
+        { error: 'Amount must be an integer (no decimals allowed)' },
+        { status: 400 }
+      );
+    }
+
     if (Math.abs(amount) > 10000) {
       return NextResponse.json(
         { error: 'Amount too large. Maximum 10,000 credits per operation.' },
@@ -104,42 +111,61 @@ export async function POST(request: NextRequest) {
       // Deduct credits (amount is negative)
       const deductAmount = Math.abs(amount);
 
-      // Check if user has enough credits
-      if (user.credits < deductAmount) {
-        return NextResponse.json(
-          { error: `Insufficient credits. User has ${user.credits}, attempting to deduct ${deductAmount}` },
-          { status: 400 }
-        );
+      // Use a transaction to deduct credits with proper balance checking
+      try {
+        const result = await prisma.$transaction(async (tx) => {
+          // Re-fetch user inside transaction to get current balance
+          const currentUser = await tx.users.findUnique({
+            where: { id: user.id },
+            select: { credits: true },
+          });
+
+          if (!currentUser) {
+            throw new Error('User not found');
+          }
+
+          // Check if user has enough credits (inside transaction)
+          if (currentUser.credits < deductAmount) {
+            throw new Error(`Insufficient credits. User has ${currentUser.credits}, attempting to deduct ${deductAmount}`);
+          }
+
+          // Create deduction transaction
+          await tx.credit_transactions.create({
+            data: {
+              userId: user.id,
+              transaction_type: 'deduct',
+              amount: deductAmount,
+              balanceBefore: currentUser.credits,
+              balanceAfter: currentUser.credits - deductAmount,
+              reason,
+              adminId: adminUserId,
+            },
+          });
+
+          // Update user credits
+          const updated = await tx.users.update({
+            where: { id: user.id },
+            data: {
+              credits: { decrement: deductAmount },
+              totalCreditsConsumed: { increment: deductAmount },
+            },
+            select: { credits: true },
+          });
+
+          return updated.credits;
+        });
+
+        newBalance = result;
+      } catch (txError) {
+        const errorMessage = txError instanceof Error ? txError.message : 'Unknown error';
+        if (errorMessage.includes('Insufficient credits')) {
+          return NextResponse.json(
+            { error: errorMessage },
+            { status: 400 }
+          );
+        }
+        throw txError;
       }
-
-      // Use a manual transaction to deduct credits
-      const result = await prisma.$transaction(async (tx) => {
-        // Create deduction transaction
-        await tx.credit_transactions.create({
-          data: {
-            userId: user.id,
-            transaction_type: 'deduct',
-            amount: deductAmount,
-            balanceAfter: user.credits - deductAmount,
-            reason,
-            adminId: adminUserId,
-          },
-        });
-
-        // Update user credits
-        const updated = await tx.users.update({
-          where: { id: user.id },
-          data: {
-            credits: { decrement: deductAmount },
-            totalCreditsConsumed: { increment: deductAmount },
-          },
-          select: { credits: true },
-        });
-
-        return updated.credits;
-      });
-
-      newBalance = result;
     }
 
     const action = amount > 0 ? 'granted' : 'deducted';

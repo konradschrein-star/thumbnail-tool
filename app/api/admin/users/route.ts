@@ -147,6 +147,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate role if provided
+    const ALLOWED_ROLES = ['USER', 'ADMIN'];
+    if (role && !ALLOWED_ROLES.includes(role)) {
+      return NextResponse.json(
+        { error: 'Invalid role. Must be USER or ADMIN' },
+        { status: 400 }
+      );
+    }
+
     // Check if user already exists
     const existingUser = await prisma.users.findUnique({
       where: { email: email.toLowerCase().trim() },
@@ -326,6 +335,25 @@ export async function DELETE(request: NextRequest) {
         { error: 'Cannot delete your own admin account' },
         { status: 400 }
       );
+    }
+
+    // Check if this would delete the last admin
+    const targetUser = await prisma.users.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (targetUser?.role === 'ADMIN') {
+      const adminCount = await prisma.users.count({
+        where: { role: 'ADMIN' },
+      });
+
+      if (adminCount <= 1) {
+        return NextResponse.json(
+          { error: 'Cannot delete the last admin account. System must have at least one admin.' },
+          { status: 400 }
+        );
+      }
     }
 
     await prisma.users.delete({
