@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       data: { userId: targetUser.id },
       include: {
         _count: {
-          select: { archetypes: true, generationJobs: true },
+          select: { channel_archetypes: true, generation_jobs: true },
         },
       },
     });
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
           },
         },
         _count: {
-          select: { archetypes: true, generationJobs: true },
+          select: { channel_archetypes: true, generation_jobs: true },
         },
       },
       orderBy: { createdAt: 'desc' },
