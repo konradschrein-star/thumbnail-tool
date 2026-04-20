@@ -8,6 +8,19 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum AIProvider {
+  AI33
+  GOOGLE
+}
+
+enum BatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
 model User {
   id             String          @id @default(cuid())
   email          String          @unique
@@ -98,11 +111,19 @@ model GenerationJob {
   user          User?        @relation(fields: [userId], references: [id])
   variants      VariantJob[]
 
+  // NEW: Batch processing fields
+  batchJobId      String?
+  batchJob        BatchJob?       @relation(fields: [batchJobId], references: [id], onDelete: SetNull)
+  aiProvider      AIProvider      @default(AI33)
+  fallbackUsed    Boolean         @default(false)
+  fallbackReason  String?         @db.Text
+
   @@index([channelId])
   @@index([archetypeId])
   @@index([userId])
   @@index([status])
   @@index([channelId, status])
+  @@index([batchJobId])
   @@map("generation_jobs")
 }
 
@@ -123,6 +144,40 @@ model VariantJob {
 
   @@index([masterJobId])
   @@map("variant_jobs")
+}
+
+model BatchJob {
+  id              String          @id @default(cuid())
+  userId          String?
+  name            String
+  status          BatchStatus     @default(PENDING)
+  totalJobs       Int
+  completedJobs   Int             @default(0)
+  failedJobs      Int             @default(0)
+  outputZipUrl    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  jobs            GenerationJob[]
+
+  @@index([status])
+  @@index([userId])
+  @@map("batch_jobs")
+}
+
+model GoogleSheetsConnection {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  accessToken     String          @db.Text
+  refreshToken    String          @db.Text
+  expiresAt       DateTime
+  sheetId         String?
+  sheetName       String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([userId])
+  @@map("google_sheets_connections")
 }
 
 model AccessRequest {
