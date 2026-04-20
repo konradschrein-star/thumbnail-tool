@@ -42,6 +42,7 @@ next-env.d.ts
 
 # project specific
 /output
+/.worktrees
 
 # compiled lib files (generated from TypeScript)
 lib/**/*.js
