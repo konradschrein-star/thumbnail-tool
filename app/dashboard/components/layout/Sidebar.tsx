@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Tv,
@@ -11,7 +12,8 @@ import {
   ChevronLeft,
   LayoutDashboard,
   Languages,
-  BookOpen
+  BookOpen,
+  Shield
 } from 'lucide-react';
 
 export type TabType = 'channels' | 'archetypes' | 'generate' | 'history' | 'translate' | 'api-docs';
@@ -32,6 +34,8 @@ const navItems: { id: TabType; label: string; icon: React.ReactNode }[] = [
 
 export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isAdmin = session?.user && (session.user as any).role === 'ADMIN';
 
   return (
     <aside className="sidebar">
@@ -74,6 +78,19 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             </button>
           ))}
         </div>
+
+        {isAdmin && (
+          <div className="nav-group">
+            <div className="nav-group-label">Admin</div>
+            <button
+              onClick={() => router.push('/admin')}
+              className="nav-item admin-link"
+            >
+              <span className="nav-icon"><Shield size={18} /></span>
+              <span className="nav-label">Admin Panel</span>
+            </button>
+          </div>
+        )}
       </nav>
 
       <div className="sidebar-footer">
@@ -178,6 +195,18 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         .nav-item.active {
           color: #ffffff;
           font-weight: 600;
+        }
+
+        .nav-item.admin-link {
+          background: rgba(168, 85, 247, 0.1);
+          border: 1px solid rgba(168, 85, 247, 0.2);
+          color: #c084fc;
+        }
+
+        .nav-item.admin-link:hover {
+          background: rgba(168, 85, 247, 0.15);
+          border-color: rgba(168, 85, 247, 0.3);
+          color: #e9d5ff;
         }
 
         .nav-icon {
