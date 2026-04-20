@@ -619,16 +619,18 @@ console.log('Worker started, waiting for jobs...');
 
 ### Provider Hierarchy
 
-**Primary: AI33** (Cost-optimized)
+**Primary: AI33 with Nano Banana 2** (Cost-optimized)
 - Endpoint: `https://api.ai33.pro/v1i/task/generate-image`
-- Model: `bytedance-seedream-4.5`
-- Cost: ~$0.03-0.05 per image (estimated)
+- Model: `gemini-3.1-flash-image-preview` (Nano Banana 2 via AI33)
+- Cost: ~$0.03-0.05 per image via AI33 gateway (vs $0.07 direct Google)
 - Speed: 10-30 seconds per generation
 
-**Fallback: Google Gemini** (Reliability)
+**Fallback: Direct Google Gemini API** (Reliability)
 - Models: `gemini-3.1-flash-image-preview` → `gemini-3-pro-image-preview` → `gemini-2.5-flash-image`
-- Cost: $0.07-0.13 per image
+- Cost: $0.07-0.13 per image (direct Google pricing)
 - Speed: 15-45 seconds per generation
+
+**Note:** AI33 acts as gateway to Google's Nano Banana models at reduced cost. Fallback uses same models but via direct Google API for redundancy.
 
 ### Unified Generation Interface
 
@@ -699,7 +701,7 @@ export async function generateImageAI33(
   // Build multipart form data
   const formData = new FormData();
   formData.append('prompt', prompt);
-  formData.append('model_id', 'bytedance-seedream-4.5');
+  formData.append('model_id', 'gemini-3.1-flash-image-preview'); // Nano Banana 2 via AI33
   formData.append('generations_count', '1');
   formData.append('model_parameters', JSON.stringify({
     aspect_ratio: '16:9',
