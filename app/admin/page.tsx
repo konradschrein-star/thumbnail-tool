@@ -534,7 +534,7 @@ export default function EnhancedAdminPage() {
   // Filter data based on search/filter terms
   const filteredChannels = channels.filter(channel =>
     channel.name.toLowerCase().includes(channelSearchTerm.toLowerCase()) ||
-    channel.user.email.toLowerCase().includes(channelSearchTerm.toLowerCase())
+    (channel.user?.email?.toLowerCase().includes(channelSearchTerm.toLowerCase()) ?? false)
   );
 
   const filteredJobs = jobs.filter(job => {
@@ -1198,7 +1198,7 @@ export default function EnhancedAdminPage() {
                       <option value="">Select a channel...</option>
                       {channels.map((channel) => (
                         <option key={channel.id} value={channel.id}>
-                          {channel.name} (owned by {channel.user.email})
+                          {channel.name} (owned by {channel.user?.email ?? 'No owner'})
                         </option>
                       ))}
                     </select>
@@ -1284,8 +1284,8 @@ export default function EnhancedAdminPage() {
                           <div className="text-sm font-medium text-white">{channel.name}</div>
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="text-sm text-white">{channel.user.email}</div>
-                          {channel.user.name && (
+                          <div className="text-sm text-white">{channel.user?.email ?? 'No owner'}</div>
+                          {channel.user?.name && (
                             <div className="text-xs text-gray-400">{channel.user.name}</div>
                           )}
                         </td>
@@ -1386,10 +1386,10 @@ export default function EnhancedAdminPage() {
                           </div>
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="text-sm text-white">{job.user.email}</div>
+                          <div className="text-sm text-white">{job.user?.email ?? 'Unknown user'}</div>
                           <span
                             className={`text-xs ${
-                              job.user.role === 'ADMIN'
+                              job.user?.role === 'ADMIN'
                                 ? 'text-purple-400'
                                 : 'text-gray-500'
                             }`}
