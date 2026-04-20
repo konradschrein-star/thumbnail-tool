@@ -10,8 +10,8 @@ cd /opt/thumbnail-generator
 # Pull latest code
 git pull origin main
 
-# Install dependencies
-npm ci --production
+# Install ALL dependencies (Prisma CLI needed for build)
+npm ci
 
 # Regenerate Prisma client
 npx prisma generate
