@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `${amount > 0 ? 'Granted' : 'Deducted'} ${Math.abs(amount)} credits ${amount > 0 ? 'to' : 'from'} ${user.email}`,
-      user: {
+      users: {
         id: user.id,
         email: user.email,
         name: user.name,

@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
           amount: true,
           reason: true,
           createdAt: true,
-          user: {
+          users: {
             select: {
               email: true,
               name: true,

@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Get all channels to see current state
     const allChannels = await prisma.channels.findMany({
       include: {
-        user: {
+        users: {
           select: { email: true },
         },
       },
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
     // Get updated state
     const updatedChannels = await prisma.channels.findMany({
       include: {
-        user: {
+        users: {
           select: { email: true },
         },
       },

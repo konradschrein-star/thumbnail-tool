@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
   try {
     const channels = await prisma.channels.findMany({
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,

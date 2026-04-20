@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
           adminUserId: true,
           metadata: true,
           createdAt: true,
-          user: {
+          users: {
             select: {
               email: true,
               name: true,

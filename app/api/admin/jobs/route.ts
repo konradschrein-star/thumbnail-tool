@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       prisma.generation_jobs.findMany({
         where,
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               email: true,
@@ -75,13 +75,13 @@ export async function GET(request: NextRequest) {
               role: true,
             },
           },
-          channel: {
+          channels: {
             select: {
               id: true,
               name: true,
             },
           },
-          archetype: {
+          archetypes: {
             select: {
               id: true,
               name: true,
