@@ -8,16 +8,23 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
 import { thumbnailQueue } from '@/lib/queue/thumbnail-queue';
-import { authOptions } from '@/lib/auth';
-import type { ThumbnailRow } from './preview';
+import { auth } from '@/lib/auth';
+
+export interface ThumbnailRow {
+  rowIndex: number;
+  channelId: string;
+  archetypeId: string;
+  videoTopic: string;
+  thumbnailText: string;
+  customPrompt?: string;
+}
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user?.email) {
       return NextResponse.json(

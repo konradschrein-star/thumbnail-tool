@@ -6,16 +6,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import { google } from 'googleapis';
 import { prisma } from '@/lib/prisma';
 import { decrypt, decodeAndDecrypt, getEncryptionKeyFromEnv } from '@/lib/crypto';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user?.email) {
       return NextResponse.json(

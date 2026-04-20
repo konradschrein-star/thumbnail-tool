@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
     // Get queue counts
     const jobCounts = await thumbnailQueue.getJobCounts();
     const activeJobs = await thumbnailQueue.getActiveCount();
-    const pausedJobs = await thumbnailQueue.getPausedCount();
     const waitingJobs = await thumbnailQueue.getWaitingCount();
     const completedJobs = await thumbnailQueue.getCompletedCount();
     const failedJobs = await thumbnailQueue.getFailedCount();
@@ -48,7 +47,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
       queue: {
         active: activeJobs,
-        paused: pausedJobs,
+        paused: 0, // getPausedCount() not available in BullMQ
         waiting: waitingJobs,
         completed: completedJobs,
         failed: failedJobs,

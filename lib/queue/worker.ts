@@ -74,9 +74,6 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
       data: { status: 'processing' },
     });
 
-    // Encode archetype image
-    const archetypeImage = await encodeImageToBase64(archetype.imageUrl);
-
     // Build prompt
     const fullPrompt =
       customPrompt ||
@@ -84,12 +81,10 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
 
     console.log('   → Generating image...');
 
-    // Generate image
+    // Generate image with archetype reference URL
     const generationResult = await generator.generateImage({
       prompt: fullPrompt,
-      base64Images: {
-        archetype: archetypeImage,
-      },
+      referenceImageUrl: archetype.imageUrl,
     });
 
     // Save thumbnail to local storage
@@ -303,10 +298,6 @@ export function createWorker() {
     {
       connection: redisConnection,
       concurrency: parseInt(process.env.WORKER_CONCURRENCY || '2'),
-      settings: {
-        lockDuration: 300000, // 5 minutes
-        lockRenewTime: 150000, // 2.5 minutes
-      },
     }
   );
 
@@ -330,7 +321,7 @@ export function createWorker() {
 /**
  * Graceful shutdown helper
  */
-export async function shutdownWorker(worker: Worker) {
+export async function shutdownWorker(worker: Worker<ThumbnailJobData, void, 'thumbnail-generation'>) {
   console.log('\n🛑 Shutting down worker...');
   try {
     await worker.close();

@@ -7,11 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import { google } from 'googleapis';
 import { prisma } from '@/lib/prisma';
 import { decodeAndDecrypt, getEncryptionKeyFromEnv } from '@/lib/crypto';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 
 export interface ThumbnailRow {
   rowIndex: number;
@@ -25,7 +24,7 @@ export interface ThumbnailRow {
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -99,7 +98,7 @@ export async function GET(request: NextRequest) {
 
     // Map rows to ThumbnailRow format
     const thumbnailRows: ThumbnailRow[] = dataRows
-      .map((row, index) => {
+      .map((row, index): ThumbnailRow | null => {
         const actualIndex = isHeaderRow ? index + 2 : index + 1; // Row number in sheet
 
         // Skip empty rows
@@ -113,7 +112,7 @@ export async function GET(request: NextRequest) {
           archetypeId: row[1]?.trim() || '',
           videoTopic: row[2]?.trim() || '',
           thumbnailText: row[3]?.trim() || '',
-          customPrompt: row[4]?.trim() || undefined,
+          customPrompt: row[4]?.trim(),
         };
       })
       .filter((row): row is ThumbnailRow => row !== null);
