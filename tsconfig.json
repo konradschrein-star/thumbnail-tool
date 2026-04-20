@@ -36,6 +36,9 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "import-from-csv.ts",
+    "restore-archetype-urls.ts",
+    "scripts/upload-archetypes-to-google.ts"
   ]
 }
