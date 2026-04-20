@@ -1290,10 +1290,10 @@ export default function EnhancedAdminPage() {
                           )}
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
-                          {channel._count.archetypes}
+                          {channel._count?.archetypes ?? 0}
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
-                          {channel._count.generationJobs}
+                          {channel._count?.generationJobs ?? 0}
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
                           {formatDate(channel.createdAt)}
@@ -1387,15 +1387,17 @@ export default function EnhancedAdminPage() {
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap">
                           <div className="text-sm text-white">{job.user?.email ?? 'Unknown user'}</div>
-                          <span
-                            className={`text-xs ${
-                              job.user?.role === 'ADMIN'
-                                ? 'text-purple-400'
-                                : 'text-gray-500'
-                            }`}
-                          >
-                            {job.user.role}
-                          </span>
+                          {job.user?.role && (
+                            <span
+                              className={`text-xs ${
+                                job.user.role === 'ADMIN'
+                                  ? 'text-purple-400'
+                                  : 'text-gray-500'
+                              }`}
+                            >
+                              {job.user.role}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-5">
                           <div className="text-sm text-white max-w-xs truncate">
