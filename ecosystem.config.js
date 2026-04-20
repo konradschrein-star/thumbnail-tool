@@ -5,6 +5,7 @@ module.exports = {
       script: 'npm',
       args: 'start',
       cwd: '/opt/thumbnail-generator',
+      env_file: '.env',
       env: {
         NODE_ENV: 'production',
         PORT: 3072,
