@@ -56,7 +56,7 @@ model batch_jobs {
 }
 
 model channel_archetypes {
-  id          String     @id
+  id          String     @id @default(cuid())
   channelId   String
   archetypeId String
   createdAt   DateTime   @default(now())
