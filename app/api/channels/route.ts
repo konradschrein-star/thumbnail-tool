@@ -15,7 +15,7 @@ export async function GET() {
     const userRole = (session.user as any)?.role || 'USER';
     const isAdmin = userRole === 'ADMIN';
 
-    const channels = await prisma.channel.findMany({
+    const channels = await prisma.channels.findMany({
       where: isAdmin ? {} : { userId: session.user.id }, // Admin sees all, users see only their own
       include: {
         _count: {
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     // we are currently only persisting core fields. Branding tokens and assets
     // will be fully functional once the server is restarted and the client 
     // regenerates.
-    const channel = await prisma.channel.create({
+    const channel = await prisma.channels.create({
       data: {
         name,
         personaDescription,

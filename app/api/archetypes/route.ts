@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     const channelIdsArray = Array.isArray(channelIds) ? channelIds : (channelIds ? [channelIds] : []);
 
     if (channelIdsArray.length > 0 && !isAdmin) {
-      const channels = await prisma.channel.findMany({
+      const channels = await prisma.channels.findMany({
         where: {
           id: { in: channelIdsArray },
         },

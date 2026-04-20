@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // Fetch channel and archetype
     let channel, archetype;
     try {
-      channel = await prisma.channel.findUnique({ where: { id: channelId } });
+      channel = await prisma.channels.findUnique({ where: { id: channelId } });
       archetype = await prisma.archetype.findUnique({ where: { id: archetypeId } });
     } catch (dbError) {
       console.error('DB lookup failed in generate:', dbError);

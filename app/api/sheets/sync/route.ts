@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     const channelIds = [...new Set(rows.map((r) => r.channelId))];
     const archetypeIds = [...new Set(rows.map((r) => r.archetypeId))];
 
-    const channels = await prisma.channel.findMany({
+    const channels = await prisma.channels.findMany({
       where: { id: { in: channelIds } },
     });
 

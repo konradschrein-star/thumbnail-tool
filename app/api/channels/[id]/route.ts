@@ -14,7 +14,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const channel = await prisma.channel.findUnique({
+    const channel = await prisma.channels.findUnique({
       where: { id },
       include: {
         _count: {
@@ -78,7 +78,7 @@ export async function PATCH(
     }
 
     // Verify ownership before updating
-    const existingChannel = await prisma.channel.findUnique({
+    const existingChannel = await prisma.channels.findUnique({
       where: { id },
       select: { userId: true },
     });
@@ -97,7 +97,7 @@ export async function PATCH(
       );
     }
 
-    const channel = await prisma.channel.update({
+    const channel = await prisma.channels.update({
       where: { id },
       data: updateData,
     });
@@ -131,7 +131,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Verify ownership before deleting
-    const existingChannel = await prisma.channel.findUnique({
+    const existingChannel = await prisma.channels.findUnique({
       where: { id },
       select: { userId: true },
     });
@@ -150,7 +150,7 @@ export async function DELETE(
       );
     }
 
-    await prisma.channel.delete({
+    await prisma.channels.delete({
       where: { id },
     });
 

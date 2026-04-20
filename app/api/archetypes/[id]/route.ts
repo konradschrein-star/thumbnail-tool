@@ -115,7 +115,7 @@ export async function PATCH(
       const channelIdsArray = Array.isArray(channelIds) ? channelIds : [];
 
       if (channelIdsArray.length > 0 && !isAdmin) {
-        const channels = await prisma.channel.findMany({
+        const channels = await prisma.channels.findMany({
           where: { id: { in: channelIdsArray } },
           select: { id: true, userId: true },
         });
