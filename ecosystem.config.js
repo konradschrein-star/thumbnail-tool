@@ -2,10 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'thumbnail-tool',
-      script: 'npm',
-      args: 'start',
+      script: './start.sh',
       cwd: '/opt/thumbnail-generator',
-      env_file: '.env',
       env: {
         NODE_ENV: 'production',
         PORT: 3072,
