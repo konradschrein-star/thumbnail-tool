@@ -148,9 +148,9 @@ export async function PATCH(
       where: { id },
       data: updateData,
       include: {
-        channels: {
+        channel_archetypes: {
           include: {
-            channel: {
+            channels: {
               select: { id: true, name: true },
             },
           },
