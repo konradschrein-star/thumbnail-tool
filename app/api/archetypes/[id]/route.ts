@@ -22,9 +22,9 @@ export async function GET(
     const archetype = await prisma.archetypes.findUnique({
       where: { id },
       include: {
-        channels: {
+        channel_archetypes: {
           include: {
-            channel: {
+            channels: {
               select: { id: true, name: true },
             },
           },
