@@ -11,12 +11,12 @@ async function main() {
   console.log('🌱 Seeding database...\n');
 
   // Find or create admin user
-  let adminUser = await prisma.user.findUnique({
+  let adminUser = await prisma.users.findUnique({
     where: { email: 'admin@test.ai' }
   });
 
   if (!adminUser) {
-    adminUser = await prisma.user.create({
+    adminUser = await prisma.users.create({
       data: {
         email: 'admin@test.ai',
         name: 'Admin User',
@@ -30,12 +30,12 @@ async function main() {
   }
 
   // Find or create test user
-  let testUser = await prisma.user.findUnique({
+  let testUser = await prisma.users.findUnique({
     where: { email: 'test@test.ai' }
   });
 
   if (!testUser) {
-    testUser = await prisma.user.create({
+    testUser = await prisma.users.create({
       data: {
         email: 'test@test.ai',
         name: 'Test User',
@@ -49,7 +49,7 @@ async function main() {
   }
 
   // Create admin's channel "Test" with admin-only archetypes
-  const adminChannel = await prisma.channel.create({
+  const adminChannel = await prisma.channels.create({
     data: {
       name: 'Test',
       personaDescription: PROVEN_PERSONA,
@@ -100,7 +100,7 @@ async function main() {
   ];
 
   for (const archetype of adminArchetypes) {
-    const created = await prisma.archetype.create({
+    const created = await prisma.archetypes.create({
       data: {
         ...archetype,
         userId: adminUser.id,
@@ -115,7 +115,7 @@ async function main() {
   }
 
   // Create test user's channel "test 2"
-  const testChannel = await prisma.channel.create({
+  const testChannel = await prisma.channels.create({
     data: {
       name: 'test 2',
       personaDescription: TEST_PERSONA,
@@ -142,7 +142,7 @@ async function main() {
   ];
 
   for (const archetype of testArchetypes) {
-    const created = await prisma.archetype.create({
+    const created = await prisma.archetypes.create({
       data: {
         ...archetype,
         userId: testUser.id,

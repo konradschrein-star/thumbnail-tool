@@ -26,10 +26,10 @@ export async function GET(request: NextRequest) {
     const jobs = await prisma.generation_jobs.findMany({
       where,
       include: {
-        channel: {
+        channels: {
           select: { id: true, name: true },
         },
-        archetype: {
+        archetypes: {
           select: { id: true, name: true, imageUrl: true } as any,
         },
       },

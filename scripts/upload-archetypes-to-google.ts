@@ -55,7 +55,7 @@ async function main() {
   console.log('\n📤 Uploading archetype images to Google File API...\n');
 
   // Get all archetypes from database
-  const archetypes = await prisma.archetype.findMany({
+  const archetypes = await prisma.archetypes.findMany({
     select: {
       id: true,
       name: true,
@@ -88,7 +88,7 @@ async function main() {
       const fileApiUrl = await uploadFileToGoogle(filePath, `archetype-${archetype.name}`);
 
       // Update database
-      await prisma.archetype.update({
+      await prisma.archetypes.update({
         where: { id: archetype.id },
         data: { imageUrl: fileApiUrl }
       });

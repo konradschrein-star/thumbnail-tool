@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         // We filter by user indirectly or by masterJob relation
         const variantJobs = await prisma.variant_jobs.findMany({
             where: {
-                masterJob: {
+                generation_jobs: {
                     userId: session.user.id
                 }
             },
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
             },
             take: 30,
             include: {
-                masterJob: {
+                generation_jobs: {
                     include: {
                         channels: true,
                         archetypes: true
@@ -51,9 +51,9 @@ export async function GET(request: NextRequest) {
         const currentUserId = session.user.id;
         const mappedVariants = (variantJobs as any[]).map(v => ({
             id: v.id,
-            channelId: v.masterJob?.channelId || '',
-            archetypeId: v.masterJob?.archetypeId || '',
-            videoTopic: v.masterJob?.videoTopic || 'Translated Variant',
+            channelId: v.generation_jobs?.channelId || '',
+            archetypeId: v.generation_jobs?.archetypeId || '',
+            videoTopic: v.generation_jobs?.videoTopic || 'Translated Variant',
             thumbnailText: v.translatedText,
             customPrompt: null,
             promptUsed: null,
@@ -70,8 +70,8 @@ export async function GET(request: NextRequest) {
                 translationMode: v.translationMode as string,
                 originalText: v.originalText as string
             },
-            channel: v.masterJob?.channel,
-            archetype: v.masterJob?.archetype
+            channel: v.generation_jobs?.channel,
+            archetype: v.generation_jobs?.archetype
         }));
 
         // 4. Combine and sort

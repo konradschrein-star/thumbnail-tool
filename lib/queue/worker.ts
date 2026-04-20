@@ -144,9 +144,9 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
  */
 async function updateBatchProgress(batchJobId: string, hasFailed = false) {
   try {
-    const batchJob = await prisma.batchJob.findUnique({
+    const batchJob = await prisma.batch_jobs.findUnique({
       where: { id: batchJobId },
-      include: { jobs: true },
+      include: { generation_jobs: true },
     });
 
     if (!batchJob) {
@@ -154,8 +154,8 @@ async function updateBatchProgress(batchJobId: string, hasFailed = false) {
       return;
     }
 
-    const completedJobs = batchJob.jobs.filter((j) => j.status === 'completed').length;
-    const failedJobs = batchJob.jobs.filter((j) => j.status === 'failed').length;
+    const completedJobs = batchJob.generation_jobs.filter((j) => j.status === 'completed').length;
+    const failedJobs = batchJob.generation_jobs.filter((j) => j.status === 'failed').length;
     const totalJobs = batchJob.totalJobs;
 
     // Calculate batch status
@@ -164,7 +164,7 @@ async function updateBatchProgress(batchJobId: string, hasFailed = false) {
       batchStatus = failedJobs === 0 ? 'COMPLETED' : 'PARTIAL';
     }
 
-    await prisma.batchJob.update({
+    await prisma.batch_jobs.update({
       where: { id: batchJobId },
       data: {
         completedJobs,
@@ -191,9 +191,9 @@ async function generateBatchZip(batchJobId: string) {
   try {
     console.log(`\n📦 Generating ZIP for batch: ${batchJobId}`);
 
-    const batchJob = await prisma.batchJob.findUnique({
+    const batchJob = await prisma.batch_jobs.findUnique({
       where: { id: batchJobId },
-      include: { jobs: true },
+      include: { generation_jobs: true },
     });
 
     if (!batchJob) {
@@ -214,7 +214,7 @@ async function generateBatchZip(batchJobId: string) {
 
     // Copy completed thumbnails to temp directory
     const thumbnailPath = resolve(storageBasePath, 'thumbnails');
-    for (const job of batchJob.jobs) {
+    for (const job of batchJob.generation_jobs) {
       if (job.status === 'completed' && job.outputUrl) {
         const filename = job.outputUrl.split('/').pop();
         if (filename) {
@@ -267,7 +267,7 @@ async function generateBatchZip(batchJobId: string) {
 
     // Update batch with ZIP URL
     const zipUrl = `/storage/zips/${batchJobId}.zip`;
-    await prisma.batchJob.update({
+    await prisma.batch_jobs.update({
       where: { id: batchJobId },
       data: { outputZipUrl: zipUrl },
     });

@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 async function setupAdmin() {
   try {
     // Check if any users exist
-    const userCount = await prisma.user.count();
+    const userCount = await prisma.users.count();
 
     if (userCount > 0) {
       console.log('⚠️  Users already exist in the database.');
@@ -61,7 +61,7 @@ async function setupAdmin() {
 
     // Create user
     console.log('💾 Creating admin user...');
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         email: email.trim(),
         password: hashedPassword,

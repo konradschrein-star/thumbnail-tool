@@ -28,7 +28,7 @@ async function main() {
     },
   });
   channels.forEach(c => {
-    console.log(`  - ${c.name} → ${c.user.email} (${c._count.archetypes} archetypes)`);
+    console.log(`  - ${c.name} → ${c.users.email} (${c._count.channel_archetypes} archetypes)`);
   });
 
   // 3. Check archetypes with images

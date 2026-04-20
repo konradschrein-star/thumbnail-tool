@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const batchJob = await prisma.batch_jobs.findUnique({
       where: { id: batchJobId },
       include: {
-        jobs: {
+        generation_jobs: {
           select: {
             id: true,
             status: true,
@@ -58,10 +58,10 @@ export async function GET(request: NextRequest) {
 
     // Calculate statistics
     const jobsByStatus = {
-      pending: batchJob.jobs.filter((j) => j.status === 'pending').length,
-      processing: batchJob.jobs.filter((j) => j.status === 'processing').length,
-      completed: batchJob.jobs.filter((j) => j.status === 'completed').length,
-      failed: batchJob.jobs.filter((j) => j.status === 'failed').length,
+      pending: batchJob.generation_jobs.filter((j) => j.status === 'pending').length,
+      processing: batchJob.generation_jobs.filter((j) => j.status === 'processing').length,
+      completed: batchJob.generation_jobs.filter((j) => j.status === 'completed').length,
+      failed: batchJob.generation_jobs.filter((j) => j.status === 'failed').length,
     };
 
     const progressPercentage = batchJob.totalJobs > 0

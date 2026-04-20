@@ -77,7 +77,7 @@ export async function verifyPassword(
  * @returns True if upgrade was successful
  */
 export async function upgradePasswordHash(
-  user_id: string,
+  userId: string,
   plainPassword: string
 ): Promise<boolean> {
   try {

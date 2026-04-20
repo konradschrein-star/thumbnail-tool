@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         personaDescription,
-        user: { connect: { id: session.user.id } },
+        users: { connect: { id: session.user.id } },
         personaAssetPath,
         logoAssetPath,
         primaryColor: primaryColor || '#ffffff',

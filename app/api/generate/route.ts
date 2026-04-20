@@ -265,7 +265,10 @@ export async function POST(request: NextRequest) {
       try {
         // Use rotated API key for load distribution
         const apiKey = getRotatedApiKey();
-        const { buffer: imageBuffer, fallbackUsed, fallbackMessage, modelUsed, creditMultiplier } = await generationService.callNanoBanana(payload, apiKey);
+        const result = await generationService.callNanoBanana(payload, apiKey);
+        const { buffer: imageBuffer, fallbackUsed, fallbackMessage } = result;
+        const modelUsed = (result as any).modelUsed;
+        const creditMultiplier = (result as any).creditMultiplier || 1;
 
         // If OG model was used (3x more expensive), deduct additional 2 credits
         let additionalCreditsDeducted = 0;

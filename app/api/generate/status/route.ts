@@ -26,10 +26,10 @@ export async function GET(request: NextRequest) {
     const job = await prisma.generation_jobs.findUnique({
       where: { id: jobId },
       include: {
-        channel: {
+        channels: {
           select: { id: true, name: true },
         },
-        archetype: {
+        archetypes: {
           select: { id: true, name: true },
         },
       },
@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
         errorMessage: job.errorMessage,
         createdAt: job.createdAt,
         completedAt: job.completedAt,
-        channel: job.channel,
-        archetype: job.archetype,
+        channel: job.channels,
+        archetype: job.archetypes,
         isManual: job.isManual,
       },
     });

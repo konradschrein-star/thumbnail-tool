@@ -39,7 +39,7 @@ export class CreditServiceError extends Error {
  * @throws InsufficientCreditsError if user doesn't have enough credits
  */
 export async function deductCreditsAndCreateJob(
-  user_id: string,
+  userId: string,
   creditsRequired: number,
   jobData: {
     channelId: string;
@@ -54,7 +54,7 @@ export async function deductCreditsAndCreateJob(
     const result = await prisma.$transaction(
       async (tx) => {
         // Lock the user row and get current balance
-        const user = await tx.user.findUnique({
+        const user = await tx.users.findUnique({
           where: { id: userId },
           select: {
             id: true,
@@ -76,7 +76,7 @@ export async function deductCreditsAndCreateJob(
         const balanceAfter = balanceBefore - creditsRequired;
 
         // Update user credits and consumption counter atomically
-        await tx.user.update({
+        await tx.users.update({
           where: { id: userId },
           data: {
             credits: balanceAfter,
@@ -87,11 +87,10 @@ export async function deductCreditsAndCreateJob(
         });
 
         // Create generation job with credit tracking
-        const job = await tx.generationJob.create({
+        const job = await tx.generation_jobs.create({
           data: {
             ...jobData,
             userId,
-            creditsDeducted: creditsRequired,
             status: 'processing',
           },
         });
@@ -147,7 +146,7 @@ export async function deductCreditsAndCreateJob(
  * @throws InsufficientCreditsError if user doesn't have enough credits
  */
 export async function deductCreditsForJob(
-  user_id: string,
+  userId: string,
   count: number,
   reason: string,
   relatedJobId?: string | null
@@ -160,7 +159,7 @@ export async function deductCreditsForJob(
     const result = await prisma.$transaction(
       async (tx) => {
         // Lock the user row and get current balance
-        const user = await tx.user.findUnique({
+        const user = await tx.users.findUnique({
           where: { id: userId },
           select: {
             id: true,
@@ -182,7 +181,7 @@ export async function deductCreditsForJob(
         const balanceAfter = balanceBefore - count;
 
         // Update user credits and consumption counter atomically
-        await tx.user.update({
+        await tx.users.update({
           where: { id: userId },
           data: {
             credits: balanceAfter,
@@ -237,9 +236,9 @@ export async function deductCreditsForJob(
  * @returns Updated credit balance
  */
 export async function grantCredits(
-  user_id: string,
+  userId: string,
   amount: number,
-  admin_user_id: string,
+  adminUserId: string,
   reason: string
 ) {
   if (amount <= 0) {
@@ -249,7 +248,7 @@ export async function grantCredits(
   try {
     const result = await prisma.$transaction(
       async (tx) => {
-        const user = await tx.user.findUnique({
+        const user = await tx.users.findUnique({
           where: { id: userId },
           select: { credits: true, totalCreditsGranted: true },
         });
@@ -262,7 +261,7 @@ export async function grantCredits(
         const balanceAfter = balanceBefore + amount;
 
         // Grant credits and update granted counter
-        await tx.user.update({
+        await tx.users.update({
           where: { id: userId },
           data: {
             credits: balanceAfter,
@@ -281,7 +280,7 @@ export async function grantCredits(
             balanceBefore,
             balanceAfter,
             reason,
-            adminUserId,
+            adminId: adminUserId,
           },
         });
 
@@ -306,7 +305,7 @@ export async function grantCredits(
  * @param userId - User ID
  * @returns Current credit balance
  */
-export async function getUserCredits(user_id: string): Promise<number> {
+export async function getUserCredits(userId: string): Promise<number> {
   try {
     const user = await prisma.users.findUnique({
       where: { id: userId },
@@ -334,7 +333,7 @@ export async function getUserCredits(user_id: string): Promise<number> {
  * @returns Array of credit transactions
  */
 export async function getTransactionHistory(
-  user_id: string,
+  userId: string,
   limit: number = 50,
   offset: number = 0
 ) {
@@ -348,13 +347,11 @@ export async function getTransactionHistory(
         id: true,
         transaction_type: true,
         amount: true,
-        balance_before: true,
-        balance_after: true,
+        balanceBefore: true,
+        balanceAfter: true,
         reason: true,
         relatedJobId: true,
-        relatedBatchId: true,
-        admin_user_id: true,
-        metadata: true,
+        adminId: true,
         createdAt: true,
       },
     });
@@ -375,7 +372,7 @@ export async function getTransactionHistory(
  * @param userId - User ID
  * @returns Statistics object with total granted, consumed, and current balance
  */
-export async function getUserCreditStats(user_id: string) {
+export async function getUserCreditStats(userId: string) {
   try {
     const user = await prisma.users.findUnique({
       where: { id: userId },

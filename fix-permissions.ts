@@ -55,7 +55,7 @@ async function main() {
 
   console.log('\n📺 Current Channel Ownership:');
   channels.forEach(channel => {
-    console.log(`  - ${channel.name}: ${channel.user.email}`);
+    console.log(`  - ${channel.name}: ${channel.users.email}`);
   });
 
   // 5. Fix ownership based on channel names

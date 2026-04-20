@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const batchJobs = await prisma.batch_jobs.findMany({
       where,
       include: {
-        jobs: {
+        generation_jobs: {
           select: {
             id: true,
             status: true,

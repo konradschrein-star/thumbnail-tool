@@ -6,11 +6,11 @@ async function main() {
   console.log('🌱 Seeding Research Archetypes...\n');
 
   // Find or create a default channel
-  let channel = await prisma.channel.findFirst();
+  let channel = await prisma.channels.findFirst();
   
   if (!channel) {
     console.log('No channel found, creating default "Titan Research" channel...');
-    channel = await prisma.channel.create({
+    channel = await prisma.channels.create({
       data: {
         name: 'Titan Research',
         personaDescription: 'A professional and clean research persona.',
@@ -50,19 +50,19 @@ async function main() {
   ];
 
   for (const arch of researchArchetypes) {
-    const existing = await prisma.archetype.findFirst({
+    const existing = await prisma.archetypes.findFirst({
       where: { name: arch.name }
     });
 
     if (existing) {
       console.log(`- Archetype "${arch.name}" already exists, updating...`);
-      await prisma.archetype.update({
+      await prisma.archetypes.update({
         where: { id: existing.id },
         data: arch as any,
       });
     } else {
       console.log(`- Creating archetype: ${arch.name}`);
-      await prisma.archetype.create({
+      await prisma.archetypes.create({
         data: {
           ...arch,
           channelId: channel.id,

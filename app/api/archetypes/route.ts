@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       // Admin sees all archetypes
       if (channelId) {
         where = {
-          channels: {
+          channel_archetypes: {
             some: {
               channelId,
             },
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       if (channelId) {
         where = {
           userId: session.user.id,
-          channels: {
+          channel_archetypes: {
             some: {
               channelId,
             },
@@ -54,9 +54,9 @@ export async function GET(request: NextRequest) {
     const archetypes = await prisma.archetypes.findMany({
       where,
       include: {
-        channels: {
+        channel_archetypes: {
           include: {
-            channel: {
+            channels: {
               select: { id: true, name: true },
             },
           },
@@ -138,16 +138,16 @@ export async function POST(request: NextRequest) {
         category: category || 'General',
         isAdminOnly: isAdmin ? (isAdminOnly || false) : false,
         userId: session.user.id,
-        channels: {
+        channel_archetypes: {
           create: channelIdsArray.map(channelId => ({
             channelId,
           })),
         },
       },
       include: {
-        channels: {
+        channel_archetypes: {
           include: {
-            channel: {
+            channels: {
               select: { id: true, name: true },
             },
           },

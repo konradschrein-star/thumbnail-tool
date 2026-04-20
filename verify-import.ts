@@ -39,7 +39,7 @@ async function main() {
 
   console.log('\n📺 Channels:');
   channels.forEach((channel) => {
-    console.log(`  - ${channel.name} (${channel._count.archetypes} archetypes)`);
+    console.log(`  - ${channel.name} (${channel._count.channel_archetypes} archetypes)`);
   });
 
   await prisma.$disconnect();
