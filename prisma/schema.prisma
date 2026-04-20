@@ -189,5 +189,6 @@ model AccessRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([status])
   @@map("access_requests")
 }
