@@ -22,7 +22,7 @@ async function main() {
         });
 
         try {
-            const userCount = await client.user.count();
+            const userCount = await client.users.count();
             console.log(`✅ ${name} Success! (User count: ${userCount})`);
         } catch (error: any) {
             console.error(`❌ ${name} Failed!`);

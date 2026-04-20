@@ -43,11 +43,8 @@ async function main() {
 
   // 4. Check channel ownership
   const channels = await prisma.channels.findMany({
-    select: {
-      id: true,
-      name: true,
-      userId: true,
-      user: {
+    include: {
+      users: {
         select: { email: true },
       },
     },
@@ -55,7 +52,7 @@ async function main() {
 
   console.log('\n📺 Current Channel Ownership:');
   channels.forEach(channel => {
-    console.log(`  - ${channel.name}: ${channel.users.email}`);
+    console.log(`  - ${channel.name}: ${channel.users?.email || 'No owner'}`);
   });
 
   // 5. Fix ownership based on channel names

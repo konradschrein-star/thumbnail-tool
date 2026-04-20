@@ -104,7 +104,7 @@ async function main() {
       data: {
         ...archetype,
         userId: adminUser.id,
-        channels: {
+        channel_archetypes: {
           create: {
             channelId: adminChannel.id,
           },
@@ -146,7 +146,7 @@ async function main() {
       data: {
         ...archetype,
         userId: testUser.id,
-        channels: {
+        channel_archetypes: {
           create: {
             channelId: testChannel.id,
           },

@@ -19,7 +19,7 @@ async function main() {
   console.log('🔄 Migrating data from old database...\n');
 
   // Get admin user ID (konrad.schrein@gmail.com) in new database
-  const adminUser = await newDb.user.findUnique({
+  const adminUser = await newDb.users.findUnique({
     where: { email: 'konrad.schrein@gmail.com' },
   });
 
@@ -31,7 +31,7 @@ async function main() {
 
   // 1. Migrate Channels
   console.log('📺 Migrating channels...');
-  const oldChannels = await oldDb.channel.findMany();
+  const oldChannels = await oldDb.channels.findMany();
   console.log(`   Found ${oldChannels.length} channels in old database`);
 
   let channelsCreated = 0;
@@ -40,7 +40,7 @@ async function main() {
   for (const channel of oldChannels) {
     try {
       // Check if channel already exists (by name)
-      const existing = await newDb.channel.findFirst({
+      const existing = await newDb.channels.findFirst({
         where: { name: channel.name },
       });
 
@@ -51,7 +51,7 @@ async function main() {
       }
 
       // Create channel with admin as owner
-      const newChannel = await newDb.channel.create({
+      const newChannel = await newDb.channels.create({
         data: {
           name: channel.name,
           personaDescription: channel.personaDescription,
@@ -76,7 +76,7 @@ async function main() {
 
   // 2. Migrate Archetypes
   console.log('🎨 Migrating archetypes...');
-  const oldArchetypes = await oldDb.archetype.findMany();
+  const oldArchetypes = await oldDb.archetypes.findMany();
   console.log(`   Found ${oldArchetypes.length} archetypes in old database`);
 
   let archetypesCreated = 0;
@@ -84,7 +84,7 @@ async function main() {
   for (const archetype of oldArchetypes) {
     try {
       // Check if archetype already exists (by name)
-      const existing = await newDb.archetype.findFirst({
+      const existing = await newDb.archetypes.findFirst({
         where: { name: archetype.name },
       });
 
@@ -94,7 +94,7 @@ async function main() {
       }
 
       // Create archetype with admin as owner
-      await newDb.archetype.create({
+      await newDb.archetypes.create({
         data: {
           name: archetype.name,
           imageUrl: archetype.imageUrl,
@@ -117,7 +117,7 @@ async function main() {
 
   // 3. Migrate Channel-Archetype relationships (if they exist)
   try {
-    const oldRelations = await oldDb.channelArchetype.findMany();
+    const oldRelations = await oldDb.channel_archetypes.findMany();
     console.log(`🔗 Migrating ${oldRelations.length} channel-archetype relationships...`);
 
     let relationsCreated = 0;
@@ -126,16 +126,16 @@ async function main() {
         const newChannelId = channelIdMap.get(relation.channelId);
         if (!newChannelId) continue; // Channel wasn't migrated
 
-        const newArchetype = await newDb.archetype.findFirst({
+        const newArchetype = await newDb.archetypes.findFirst({
           where: {
-            name: (await oldDb.archetype.findUnique({ where: { id: relation.archetypeId } }))?.name
+            name: (await oldDb.archetypes.findUnique({ where: { id: relation.archetypeId } }))?.name
           },
         });
 
         if (!newArchetype) continue; // Archetype wasn't migrated
 
         // Check if relationship already exists
-        const existingRelation = await newDb.channelArchetype.findUnique({
+        const existingRelation = await newDb.channel_archetypes.findUnique({
           where: {
             channelId_archetypeId: {
               channelId: newChannelId,
@@ -145,7 +145,7 @@ async function main() {
         });
 
         if (!existingRelation) {
-          await newDb.channelArchetype.create({
+          await newDb.channel_archetypes.create({
             data: {
               channelId: newChannelId,
               archetypeId: newArchetype.id,

@@ -27,11 +27,10 @@ async function main() {
 
   // List all channels
   const channels = await prisma.channels.findMany({
-    select: {
-      name: true,
+    include: {
       _count: {
         select: {
-          archetypes: true,
+          channel_archetypes: true,
         },
       },
     },

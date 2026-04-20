@@ -21,14 +21,13 @@ async function main() {
   // 2. Check channels with ownership
   console.log('\n📺 Channels:');
   const channels = await prisma.channels.findMany({
-    select: {
-      name: true,
-      user: { select: { email: true } },
-      _count: { select: { archetypes: true } },
+    include: {
+      users: { select: { email: true } },
+      _count: { select: { channel_archetypes: true } },
     },
   });
   channels.forEach(c => {
-    console.log(`  - ${c.name} → ${c.users.email} (${c._count.channel_archetypes} archetypes)`);
+    console.log(`  - ${c.name} → ${c.users?.email} (${c._count.channel_archetypes} archetypes)`);
   });
 
   // 3. Check archetypes with images
