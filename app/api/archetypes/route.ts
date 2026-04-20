@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const archetypes = await prisma.archetype.findMany({
+    const archetypes = await prisma.archetypes.findMany({
       where,
       include: {
         channels: {
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create archetype with channel assignments
-    const archetype = await prisma.archetype.create({
+    const archetype = await prisma.archetypes.create({
       data: {
         name,
         imageUrl,

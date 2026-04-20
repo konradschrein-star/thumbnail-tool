@@ -19,7 +19,7 @@ export async function GET() {
       where: isAdmin ? {} : { userId: session.user.id }, // Admin sees all, users see only their own
       include: {
         _count: {
-          select: { archetypes: true, generationJobs: true },
+          select: { channel_archetypes: true, generation_jobs: true },
         },
       },
       orderBy: { createdAt: 'desc' },

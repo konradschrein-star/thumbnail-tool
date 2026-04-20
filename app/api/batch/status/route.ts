@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch batch job with all associated generation jobs
-    const batchJob = await prisma.batchJob.findUnique({
+    const batchJob = await prisma.batch_jobs.findUnique({
       where: { id: batchJobId },
       include: {
         jobs: {

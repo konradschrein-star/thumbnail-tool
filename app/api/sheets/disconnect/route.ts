@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id as string;
 
     // Find existing connection
-    const connection = await prisma.googleSheetsConnection.findUnique({
+    const connection = await prisma.google_sheets_connections.findUnique({
       where: { userId },
     });
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Delete connection record from database
-    await prisma.googleSheetsConnection.delete({
+    await prisma.google_sheets_connections.delete({
       where: { userId },
     });
 

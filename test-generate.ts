@@ -13,7 +13,7 @@ async function main() {
   const thumbnailText = 'TOP 10 AI TOOLS';
 
   // Create generation job
-  const job = await prisma.generationJob.create({
+  const job = await prisma.generation_jobs.create({
     data: {
       channelId,
       archetypeId,

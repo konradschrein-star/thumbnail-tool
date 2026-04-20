@@ -4,16 +4,16 @@
 import { prisma } from './lib/prisma';
 
 async function main() {
-  const channelCount = await prisma.channel.count();
-  const archetypeCount = await prisma.archetype.count();
-  const relationshipCount = await prisma.channelArchetype.count();
+  const channelCount = await prisma.channels.count();
+  const archetypeCount = await prisma.archetypes.count();
+  const relationshipCount = await prisma.channel_archetypes.count();
 
-  const adminUser = await prisma.user.findUnique({
+  const adminUser = await prisma.users.findUnique({
     where: { email: 'konrad.schrein@gmail.com' },
     select: { id: true, role: true },
   });
 
-  const adminChannels = await prisma.channel.count({
+  const adminChannels = await prisma.channels.count({
     where: { userId: adminUser?.id },
   });
 
@@ -26,7 +26,7 @@ async function main() {
   console.log(`Channels owned by admin: ${adminChannels}`);
 
   // List all channels
-  const channels = await prisma.channel.findMany({
+  const channels = await prisma.channels.findMany({
     select: {
       name: true,
       _count: {

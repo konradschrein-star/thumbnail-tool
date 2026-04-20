@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       where: { id: { in: channelIds } },
     });
 
-    const archetypes = await prisma.archetype.findMany({
+    const archetypes = await prisma.archetypes.findMany({
       where: { id: { in: archetypeIds } },
     });
 
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create batch job
-    const batchJob = await prisma.batchJob.create({
+    const batchJob = await prisma.batch_jobs.create({
       data: {
         name: batchName,
         userId,
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
 
     // Update batch status if all queued
     if (jobIds.length > 0) {
-      await prisma.batchJob.update({
+      await prisma.batch_jobs.update({
         where: { id: batchJob.id },
         data: { status: 'PROCESSING' },
       });

@@ -8,7 +8,7 @@ import { join } from 'path';
 async function main() {
   console.log('🔧 Fixing archetype image URLs...\n');
 
-  const archetypes = await prisma.archetype.findMany({
+  const archetypes = await prisma.archetypes.findMany({
     select: { id: true, name: true, imageUrl: true },
   });
 
@@ -29,7 +29,7 @@ async function main() {
     const filePath = join(publicDir, archetype.imageUrl);
     if (!existsSync(filePath)) {
       // Set to empty string if file doesn't exist
-      await prisma.archetype.update({
+      await prisma.archetypes.update({
         where: { id: archetype.id },
         data: { imageUrl: '' },
       });

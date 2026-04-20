@@ -20,7 +20,7 @@ async function main() {
     const { topic, text } = TEST_TOPICS[i];
 
     // Create generation job
-    const job = await prisma.generationJob.create({
+    const job = await prisma.generation_jobs.create({
       data: {
         channelId,
         archetypeId,

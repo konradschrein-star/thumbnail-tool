@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
         // POLICY: Delete manual generation jobs for non-admin users that are older than the last 30 items
         // Step 1: Find all non-admin users
-        const nonAdmins = await (prisma.user as any).findMany({
+        const nonAdmins = await (prisma.users as any).findMany({
             where: { role: 'USER' },
             select: { id: true },
         });
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
                     }
 
                     // Delete variants first (due to FK constraints if any, though Prisma handles it)
-                    await prisma.variantJob.deleteMany({
+                    await prisma.variant_jobs.deleteMany({
                         where: { masterJobId: job.id },
                     });
 

@@ -17,8 +17,8 @@ export async function GET(
         const job = await prisma.generation_jobs.findUnique({
             where: { id, userId: session.user.id } as any,
             include: {
-                channel: true,
-                archetype: true,
+                channels: true,
+                archetypes: true,
             },
         });
 

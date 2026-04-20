@@ -9,26 +9,26 @@ datasource db {
 }
 
 model access_requests {
-  id        String   @id
+  id        String   @id @default(cuid())
   name      String?
   email     String
   reason    String?
   status    String   @default("pending")
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 
   @@index([status])
 }
 
 model archetypes {
-  id                 String               @id
+  id                 String               @id @default(cuid())
   name               String
   imageUrl           String
   layoutInstructions String
   isAdminOnly        Boolean              @default(false)
   category           String?              @default("General")
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime             @updatedAt
   basePrompt         String?
   userId             String?
   users              users?               @relation(fields: [userId], references: [id])
@@ -39,7 +39,7 @@ model archetypes {
 }
 
 model batch_jobs {
-  id              String            @id
+  id              String            @id @default(cuid())
   userId          String?
   name            String
   status          BatchStatus       @default(PENDING)
@@ -48,7 +48,7 @@ model batch_jobs {
   failedJobs      Int               @default(0)
   outputZipUrl    String?
   createdAt       DateTime          @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime          @updatedAt
   generation_jobs generation_jobs[]
 
   @@index([status])
@@ -69,7 +69,7 @@ model channel_archetypes {
 }
 
 model channels {
-  id                 String               @id
+  id                 String               @id @default(cuid())
   name               String
   personaDescription String
   personaAssetPath   String?
@@ -78,7 +78,7 @@ model channels {
   secondaryColor     String?              @default("#000000")
   tags               String?
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime             @updatedAt
   userId             String?
   channel_archetypes channel_archetypes[]
   users              users?               @relation(fields: [userId], references: [id])
@@ -88,7 +88,7 @@ model channels {
 }
 
 model generation_jobs {
-  id             String         @id
+  id             String         @id @default(cuid())
   channelId      String
   archetypeId    String
   userId         String?
@@ -123,7 +123,7 @@ model generation_jobs {
 }
 
 model google_sheets_connections {
-  id           String   @id
+  id           String   @id @default(cuid())
   userId       String   @unique
   accessToken  String
   refreshToken String
@@ -131,7 +131,7 @@ model google_sheets_connections {
   sheetId      String?
   sheetName    String?
   createdAt    DateTime @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime @updatedAt
 
   @@index([userId])
 }

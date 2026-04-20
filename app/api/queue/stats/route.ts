@@ -32,13 +32,13 @@ export async function GET(request: NextRequest) {
     });
 
     // Get batch stats
-    const activeBatches = await prisma.batchJob.count({
+    const activeBatches = await prisma.batch_jobs.count({
       where: { status: { in: ['PENDING', 'PROCESSING'] } },
     });
-    const completedBatches = await prisma.batchJob.count({
+    const completedBatches = await prisma.batch_jobs.count({
       where: { status: 'COMPLETED' },
     });
-    const failedBatches = await prisma.batchJob.count({
+    const failedBatches = await prisma.batch_jobs.count({
       where: { status: 'FAILED' },
     });
 

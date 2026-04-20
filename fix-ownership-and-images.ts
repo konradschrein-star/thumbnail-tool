@@ -9,10 +9,10 @@ async function main() {
   console.log('🔧 Fixing ownership and checking images...\n');
 
   // Get users
-  const adminUser = await prisma.user.findUnique({
+  const adminUser = await prisma.users.findUnique({
     where: { email: 'konrad.schrein@gmail.com' },
   });
-  const peterUser = await prisma.user.findUnique({
+  const peterUser = await prisma.users.findUnique({
     where: { email: 'peter@ytavictory.com' },
   });
 
@@ -21,12 +21,12 @@ async function main() {
   }
 
   // 1. Fix Peters test channel ownership
-  const petersChannel = await prisma.channel.findFirst({
+  const petersChannel = await prisma.channels.findFirst({
     where: { name: 'Peters test channel' },
   });
 
   if (petersChannel && petersChannel.userId !== peterUser.id) {
-    await prisma.channel.update({
+    await prisma.channels.update({
       where: { id: petersChannel.id },
       data: { userId: peterUser.id },
     });
@@ -35,7 +35,7 @@ async function main() {
 
   // 2. Check archetype images
   console.log('🎨 Checking archetype images...\n');
-  const archetypes = await prisma.archetype.findMany({
+  const archetypes = await prisma.archetypes.findMany({
     select: { id: true, name: true, imageUrl: true },
   });
 

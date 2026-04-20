@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       channel = EMERGENCY_CHANNELS.find(c => c.id === channelId) as any || EMERGENCY_CHANNELS[0];
     }
 
-    let archetype = await prisma.archetype.findUnique({
+    let archetype = await prisma.archetypes.findUnique({
       where: { id: archetypeId }
     });
     if (!archetype) {

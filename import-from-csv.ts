@@ -13,7 +13,7 @@ async function main() {
   console.log('📥 Importing data from CSV files...\n');
 
   // Get admin user
-  const adminUser = await prisma.user.findUnique({
+  const adminUser = await prisma.users.findUnique({
     where: { email: 'konrad.schrein@gmail.com' },
   });
 
@@ -35,7 +35,7 @@ async function main() {
 
   for (const row of channelsData) {
     try {
-      const existing = await prisma.channel.findFirst({
+      const existing = await prisma.channels.findFirst({
         where: { name: row.name },
       });
 
@@ -45,7 +45,7 @@ async function main() {
         continue;
       }
 
-      const newChannel = await prisma.channel.create({
+      const newChannel = await prisma.channels.create({
         data: {
           name: row.name,
           personaDescription: row.personaDescription || '',
@@ -80,7 +80,7 @@ async function main() {
 
   for (const row of archetypesData) {
     try {
-      const existing = await prisma.archetype.findFirst({
+      const existing = await prisma.archetypes.findFirst({
         where: { name: row.name },
       });
 
@@ -90,7 +90,7 @@ async function main() {
         continue;
       }
 
-      const newArchetype = await prisma.archetype.create({
+      const newArchetype = await prisma.archetypes.create({
         data: {
           name: row.name,
           imageUrl: row.imageUrl || '',
@@ -130,7 +130,7 @@ async function main() {
         continue; // Skip if channel or archetype wasn't imported
       }
 
-      const existing = await prisma.channelArchetype.findUnique({
+      const existing = await prisma.channel_archetypes.findUnique({
         where: {
           channelId_archetypeId: {
             channelId: newChannelId,
@@ -140,7 +140,7 @@ async function main() {
       });
 
       if (!existing) {
-        await prisma.channelArchetype.create({
+        await prisma.channel_archetypes.create({
           data: {
             channelId: newChannelId,
             archetypeId: newArchetypeId,

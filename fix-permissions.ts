@@ -7,7 +7,7 @@ async function main() {
   console.log('🔧 Fixing permissions and ownership...\n');
 
   // 1. List all users
-  const users = await prisma.user.findMany({
+  const users = await prisma.users.findMany({
     select: { id: true, email: true, role: true, name: true },
   });
 
@@ -24,7 +24,7 @@ async function main() {
 
   if (adminUser.role !== 'ADMIN') {
     console.log(`\n⚠️  Admin role is ${adminUser.role}, updating to ADMIN...`);
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: adminUser.id },
       data: { role: 'ADMIN' },
     });
@@ -42,7 +42,7 @@ async function main() {
   }
 
   // 4. Check channel ownership
-  const channels = await prisma.channel.findMany({
+  const channels = await prisma.channels.findMany({
     select: {
       id: true,
       name: true,
@@ -64,7 +64,7 @@ async function main() {
   // Peters test channel should be owned by Peter
   const petersTestChannel = channels.find(c => c.name === 'Peters test channel');
   if (petersTestChannel && peterUser && petersTestChannel.userId !== peterUser.id) {
-    await prisma.channel.update({
+    await prisma.channels.update({
       where: { id: petersTestChannel.id },
       data: { userId: peterUser.id },
     });
@@ -74,7 +74,7 @@ async function main() {
   // Entrepreneur Skool should be owned by admin
   const entrepreneurChannel = channels.find(c => c.name === 'Entrepreneur Skool');
   if (entrepreneurChannel && entrepreneurChannel.userId !== adminUser.id) {
-    await prisma.channel.update({
+    await prisma.channels.update({
       where: { id: entrepreneurChannel.id },
       data: { userId: adminUser.id },
     });
@@ -86,7 +86,7 @@ async function main() {
   for (const channelName of adminChannels) {
     const channel = channels.find(c => c.name === channelName);
     if (channel && channel.userId !== adminUser.id) {
-      await prisma.channel.update({
+      await prisma.channels.update({
         where: { id: channel.id },
         data: { userId: adminUser.id },
       });
@@ -96,7 +96,7 @@ async function main() {
 
   // 6. Check archetype images
   console.log('\n🎨 Checking archetype images...');
-  const archetypes = await prisma.archetype.findMany({
+  const archetypes = await prisma.archetypes.findMany({
     select: { id: true, name: true, imageUrl: true },
     take: 5,
   });

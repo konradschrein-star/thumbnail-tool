@@ -116,7 +116,7 @@ async function handleMasterJobTranslation(
   // 1. Fetch master job
   const masterJob = await prisma.generation_jobs.findUnique({
     where: { id: masterJobId },
-    include: { channel: true, archetype: true }
+    include: { channels: true, archetypes: true }
   });
 
   if (!masterJob) {
@@ -163,32 +163,32 @@ async function handleMasterJobTranslation(
       const payload = {
         systemPrompt: "You are an expert AI image generator fine-tuned for high-CTR YouTube thumbnails.",
         userPrompt: payloadEngine.buildFullPrompt(
-          masterJob.channel,
-          masterJob.archetype,
+          masterJob.channels,
+          masterJob.archetypes,
           {
             videoTopic: masterJob.videoTopic,
             thumbnailText: translatedText, // Use translated text!
             customPrompt: undefined
           },
           true, // includeBrandColors
-          !!masterJob.channel.personaAssetPath // includePersona
+          !!masterJob.channels.personaAssetPath // includePersona
         ),
         base64Images: {
-          archetype: await payloadEngine.encodeImageToBase64(masterJob.archetype.imageUrl)
+          archetype: await payloadEngine.encodeImageToBase64(masterJob.archetypes.imageUrl)
         } as any
       };
 
       // Add persona image if available
-      if (masterJob.channel.personaAssetPath) {
-        const personaImage = await payloadEngine.encodeImageToBase64(masterJob.channel.personaAssetPath);
+      if (masterJob.channels.personaAssetPath) {
+        const personaImage = await payloadEngine.encodeImageToBase64(masterJob.channels.personaAssetPath);
         if (personaImage && personaImage.data) {
           payload.base64Images.persona = personaImage;
         }
       }
 
       // Add logo image if available
-      if (masterJob.channel.logoAssetPath) {
-        const logoImage = await payloadEngine.encodeImageToBase64(masterJob.channel.logoAssetPath);
+      if (masterJob.channels.logoAssetPath) {
+        const logoImage = await payloadEngine.encodeImageToBase64(masterJob.channels.logoAssetPath);
         if (logoImage && logoImage.data) {
           payload.base64Images.logo = logoImage;
         }

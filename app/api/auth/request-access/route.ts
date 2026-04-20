@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
         // 1. SAVE TO DATABASE
         try {
-            await prisma.accessRequest.create({
+            await prisma.access_requests.create({
                 data: {
                     name: name || null,
                     email: email,

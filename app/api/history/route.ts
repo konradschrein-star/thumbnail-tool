@@ -20,14 +20,14 @@ export async function GET(request: NextRequest) {
             },
             take: 30,
             include: {
-                channel: true,
-                archetype: true,
+                channels: true,
+                archetypes: true,
             },
         });
 
         // 2. Fetch last 30 variant jobs for this user
         // We filter by user indirectly or by masterJob relation
-        const variantJobs = await prisma.variantJob.findMany({
+        const variantJobs = await prisma.variant_jobs.findMany({
             where: {
                 masterJob: {
                     userId: session.user.id
@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
             include: {
                 masterJob: {
                     include: {
-                        channel: true,
-                        archetype: true
+                        channels: true,
+                        archetypes: true
                     }
                 }
             }

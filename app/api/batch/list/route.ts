@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch batch jobs
-    const batchJobs = await prisma.batchJob.findMany({
+    const batchJobs = await prisma.batch_jobs.findMany({
       where,
       include: {
         jobs: {
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get total count
-    const totalCount = await prisma.batchJob.count({ where });
+    const totalCount = await prisma.batch_jobs.count({ where });
 
     return NextResponse.json({
       success: true,

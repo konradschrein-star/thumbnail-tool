@@ -112,7 +112,7 @@ export async function cleanupTemporaryTranslations(olderThanHours: number = 24):
         }
 
         // Optionally: Delete the VariantJob record itself
-        // await prisma.variantJob.delete({ where: { id: variant.id } });
+        // await prisma.variant_jobs.delete({ where: { id: variant.id } });
       } catch (err: any) {
         console.error(`   ✗ Cleanup failed for variant ${variant.id}:`, err.message);
       }

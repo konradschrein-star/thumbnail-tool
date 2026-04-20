@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: authResult.user.id },
       select: { preferences: true }
     });
@@ -140,7 +140,7 @@ export async function PATCH(request: NextRequest) {
     };
 
     // Update user preferences
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id: authResult.user.id },
       data: { preferences: newPreferences as any }
     });

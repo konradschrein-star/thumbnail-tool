@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     const expiresIn = tokens.expiry_date ? new Date(tokens.expiry_date) : new Date(Date.now() + 3600 * 1000);
 
     // Store connection in database (upsert to handle reconnection)
-    await prisma.googleSheetsConnection.upsert({
+    await prisma.google_sheets_connections.upsert({
       where: { userId },
       create: {
         userId,

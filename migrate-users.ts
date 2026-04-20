@@ -37,7 +37,7 @@ async function main() {
   for (const userData of OLD_USERS) {
     try {
       // Check if user already exists
-      const existingUser = await prisma.user.findUnique({
+      const existingUser = await prisma.users.findUnique({
         where: { email: userData.email },
       });
 
@@ -50,7 +50,7 @@ async function main() {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
 
       // Create user
-      const user = await prisma.user.create({
+      const user = await prisma.users.create({
         data: {
           email: userData.email,
           password: hashedPassword,

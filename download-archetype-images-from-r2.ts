@@ -27,7 +27,7 @@ async function main() {
   console.log('📥 Downloading archetype images from R2...\n');
 
   // Get all archetypes with imageUrl
-  const archetypes = await prisma.archetype.findMany({
+  const archetypes = await prisma.archetypes.findMany({
     where: {
       OR: [
         { imageUrl: { contains: '/api/assets/' } },
@@ -100,7 +100,7 @@ async function main() {
 
       // Update database with new local path
       const newImageUrl = `/archetypes/${cleanFilename}`;
-      await prisma.archetype.update({
+      await prisma.archetypes.update({
         where: { id: archetype.id },
         data: { imageUrl: newImageUrl },
       });

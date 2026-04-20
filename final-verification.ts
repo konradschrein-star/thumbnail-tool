@@ -12,7 +12,7 @@ async function main() {
   const publicDir = join(process.cwd(), 'public');
 
   // 1. Check users
-  const users = await prisma.user.findMany({
+  const users = await prisma.users.findMany({
     select: { email: true, role: true },
   });
   console.log('👥 Users:');
@@ -20,7 +20,7 @@ async function main() {
 
   // 2. Check channels with ownership
   console.log('\n📺 Channels:');
-  const channels = await prisma.channel.findMany({
+  const channels = await prisma.channels.findMany({
     select: {
       name: true,
       user: { select: { email: true } },
@@ -32,7 +32,7 @@ async function main() {
   });
 
   // 3. Check archetypes with images
-  const archetypes = await prisma.archetype.findMany({
+  const archetypes = await prisma.archetypes.findMany({
     select: { name: true, imageUrl: true },
   });
 

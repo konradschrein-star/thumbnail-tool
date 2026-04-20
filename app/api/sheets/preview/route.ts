@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Find Google Sheets connection
-    const connection = await prisma.googleSheetsConnection.findUnique({
+    const connection = await prisma.google_sheets_connections.findUnique({
       where: { userId },
     });
 

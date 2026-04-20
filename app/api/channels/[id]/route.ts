@@ -18,7 +18,7 @@ export async function GET(
       where: { id },
       include: {
         _count: {
-          select: { archetypes: true, generationJobs: true },
+          select: { channel_archetypes: true, generation_jobs: true },
         },
       },
     });

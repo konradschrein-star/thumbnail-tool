@@ -24,7 +24,7 @@ async function main() {
   for (const row of csvData) {
     try {
       // Find archetype by name
-      const archetype = await prisma.archetype.findFirst({
+      const archetype = await prisma.archetypes.findFirst({
         where: { name: row.name },
       });
 
@@ -36,7 +36,7 @@ async function main() {
 
       // Update imageUrl if it's different
       if (archetype.imageUrl !== row.imageUrl) {
-        await prisma.archetype.update({
+        await prisma.archetypes.update({
           where: { id: archetype.id },
           data: { imageUrl: row.imageUrl },
         });
