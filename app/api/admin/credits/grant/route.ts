@@ -117,18 +117,17 @@ export async function POST(request: NextRequest) {
         // Create deduction transaction
         await tx.credit_transactions.create({
           data: {
-            user_id: user.id,
+            userId: user.id,
             transaction_type: 'deduct',
             amount: deductAmount,
-            balance_before: user.credits,
-            balance_after: user.credits - deductAmount,
+            balanceAfter: user.credits - deductAmount,
             reason,
-            adminUserId,
+            adminId: adminUserId,
           },
         });
 
         // Update user credits
-        const updated = await tx.user.update({
+        const updated = await tx.users.update({
           where: { id: user.id },
           data: {
             credits: { decrement: deductAmount },

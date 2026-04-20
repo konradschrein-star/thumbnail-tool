@@ -107,11 +107,12 @@ model generation_jobs {
   aiProvider     AIProvider     @default(AI33)
   fallbackUsed   Boolean        @default(false)
   fallbackReason String?
-  archetypes     archetypes     @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
-  batch_jobs     batch_jobs?    @relation(fields: [batchJobId], references: [id])
-  channels       channels       @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  users          users?         @relation(fields: [userId], references: [id])
-  variant_jobs   variant_jobs[]
+  archetypes          archetypes            @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+  batch_jobs          batch_jobs?           @relation(fields: [batchJobId], references: [id])
+  channels            channels              @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  users               users?                @relation(fields: [userId], references: [id])
+  variant_jobs        variant_jobs[]
+  credit_transactions credit_transactions[]
 
   @@index([archetypeId])
   @@index([batchJobId])
@@ -156,16 +157,19 @@ model users {
 }
 
 model credit_transactions {
-  id               String   @id
+  id               String           @id
   userId           String
   adminId          String?
   transaction_type String
   amount           Int
+  balanceBefore    Int?
   balanceAfter     Int
   reason           String?
-  createdAt        DateTime @default(now())
-  users            users    @relation("UserCredits", fields: [userId], references: [id])
-  admin            users?   @relation("AdminGrants", fields: [adminId], references: [id])
+  relatedJobId     String?
+  createdAt        DateTime         @default(now())
+  users            users            @relation("UserCredits", fields: [userId], references: [id])
+  admin            users?           @relation("AdminGrants", fields: [adminId], references: [id])
+  generation_jobs  generation_jobs? @relation(fields: [relatedJobId], references: [id])
 
   @@index([userId])
   @@index([adminId])
