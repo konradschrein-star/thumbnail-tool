@@ -74,16 +74,14 @@ export async function GET(request: NextRequest) {
         where,
         select: {
           id: true,
-          user_id: true,
+          userId: true,
           transaction_type: true,
           amount: true,
-          balance_before: true,
-          balance_after: true,
+          balanceBefore: true,
+          balanceAfter: true,
           reason: true,
           relatedJobId: true,
-          relatedBatchId: true,
-          admin_user_id: true,
-          metadata: true,
+          adminId: true,
           createdAt: true,
           users: {
             select: {
