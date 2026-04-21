@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertCircle, ChevronDown, Loader, Play } from 'lucide-react';
+import { AlertCircle, ChevronDown, Loader, Play, RefreshCw } from 'lucide-react';
 
 interface SheetPreviewProps {
   onBatchCreated: (batchId: string) => void;
@@ -66,8 +66,7 @@ export function SheetPreview({ onBatchCreated }: SheetPreviewProps) {
   };
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
-      {/* Header */}
+    <div className="card">
       <button
         onClick={() => {
           if (!isExpanded) {
@@ -76,65 +75,51 @@ export function SheetPreview({ onBatchCreated }: SheetPreviewProps) {
             setIsExpanded(false);
           }
         }}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-700/50 transition-colors"
+        className="expand-button"
       >
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-bold text-white">Sheet Preview</h3>
+        <div className="expand-header">
+          <h3 className="card-title-sm">Sheet Preview</h3>
           {preview && (
-            <span className="px-3 py-1 bg-blue-900/50 text-blue-300 rounded-full text-sm">
+            <span className="badge">
               {preview.totalRows} rows
             </span>
           )}
         </div>
-        <ChevronDown
-          className={`w-5 h-5 text-slate-400 transition-transform ${
-            isExpanded ? 'rotate-180' : ''
-          }`}
-        />
+        <ChevronDown className={`chevron ${isExpanded ? 'expanded' : ''}`} />
       </button>
 
-      {/* Content */}
       {isExpanded && (
-        <div className="border-t border-slate-700 px-6 py-4 space-y-4">
+        <div className="card-content">
           {error && (
-            <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 flex gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-red-300">{error}</p>
+            <div className="alert error">
+              <AlertCircle className="icon" />
+              <p>{error}</p>
             </div>
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader className="w-6 h-6 text-blue-400 animate-spin" />
+            <div className="loading-state">
+              <Loader className="spinner" />
             </div>
           ) : preview ? (
             <>
-              {/* Preview Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="table-container">
+                <table className="data-table">
                   <thead>
-                    <tr className="bg-slate-700/50">
-                      <th className="px-4 py-2 text-left text-slate-300 font-medium">Channel</th>
-                      <th className="px-4 py-2 text-left text-slate-300 font-medium">Archetype</th>
-                      <th className="px-4 py-2 text-left text-slate-300 font-medium">Topic</th>
-                      <th className="px-4 py-2 text-left text-slate-300 font-medium">Text</th>
+                    <tr>
+                      <th>Channel</th>
+                      <th>Archetype</th>
+                      <th>Topic</th>
+                      <th>Text</th>
                     </tr>
                   </thead>
                   <tbody>
                     {preview.rows.slice(0, 5).map((row, idx) => (
-                      <tr key={idx} className="border-t border-slate-700">
-                        <td className="px-4 py-2 text-slate-300 font-mono text-xs">
-                          {row.channelId.substring(0, 8)}...
-                        </td>
-                        <td className="px-4 py-2 text-slate-300 font-mono text-xs">
-                          {row.archetypeId.substring(0, 8)}...
-                        </td>
-                        <td className="px-4 py-2 text-slate-300 truncate max-w-xs">
-                          {row.videoTopic}
-                        </td>
-                        <td className="px-4 py-2 text-slate-300 truncate max-w-xs">
-                          {row.thumbnailText}
-                        </td>
+                      <tr key={idx}>
+                        <td className="mono">{row.channelId.substring(0, 8)}...</td>
+                        <td className="mono">{row.archetypeId.substring(0, 8)}...</td>
+                        <td className="truncate">{row.videoTopic}</td>
+                        <td className="truncate">{row.thumbnailText}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -142,32 +127,25 @@ export function SheetPreview({ onBatchCreated }: SheetPreviewProps) {
               </div>
 
               {preview.totalRows > 5 && (
-                <p className="text-sm text-slate-400">
+                <p className="info-text">
                   Showing 5 of {preview.totalRows} rows
                 </p>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={fetchPreview}
-                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
-                >
+              <div className="action-buttons">
+                <button onClick={fetchPreview} className="button secondary">
+                  <RefreshCw size={16} />
                   Refresh
                 </button>
-                <button
-                  onClick={handleSync}
-                  disabled={syncing}
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                >
+                <button onClick={handleSync} disabled={syncing} className="button success">
                   {syncing ? (
                     <>
-                      <Loader className="w-4 h-4 animate-spin" />
+                      <Loader className="icon-spin" />
                       Syncing...
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4" />
+                      <Play size={16} />
                       Start Generation
                     </>
                   )}
@@ -177,6 +155,233 @@ export function SheetPreview({ onBatchCreated }: SheetPreviewProps) {
           ) : null}
         </div>
       )}
+
+      <style jsx>{`
+        .card {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          overflow: hidden;
+        }
+
+        .expand-button {
+          width: 100%;
+          padding: 1.5rem 2rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+
+        .expand-button:hover {
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .expand-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .card-title-sm {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #ffffff;
+          margin: 0;
+          font-family: var(--font-outfit);
+        }
+
+        .badge {
+          padding: 0.375rem 0.875rem;
+          background: rgba(59, 130, 246, 0.1);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+          color: #60a5fa;
+          border-radius: 9999px;
+          font-size: 0.875rem;
+          font-weight: 600;
+        }
+
+        .chevron {
+          width: 20px;
+          height: 20px;
+          color: #71717a;
+          transition: transform 0.3s ease;
+        }
+
+        .chevron.expanded {
+          transform: rotate(180deg);
+        }
+
+        .card-content {
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          padding: 1.5rem 2rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .alert {
+          display: flex;
+          gap: 0.75rem;
+          padding: 1rem 1.25rem;
+          border-radius: 12px;
+        }
+
+        .alert.error {
+          background: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.2);
+          color: #fca5a5;
+        }
+
+        .alert .icon {
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
+          margin-top: 2px;
+          color: #f87171;
+        }
+
+        .alert p {
+          margin: 0;
+          font-size: 0.9375rem;
+          line-height: 1.5;
+        }
+
+        .loading-state {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 3rem;
+        }
+
+        .spinner {
+          width: 32px;
+          height: 32px;
+          color: #60a5fa;
+          animation: spin 1s linear infinite;
+        }
+
+        .table-container {
+          overflow-x: auto;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .data-table {
+          width: 100%;
+          font-size: 0.875rem;
+          border-collapse: collapse;
+        }
+
+        .data-table thead {
+          background: rgba(255, 255, 255, 0.03);
+        }
+
+        .data-table th {
+          padding: 0.875rem 1rem;
+          text-align: left;
+          color: #a1a1aa;
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 0.75rem;
+          letter-spacing: 0.05em;
+        }
+
+        .data-table tbody tr {
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .data-table tbody tr:hover {
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .data-table td {
+          padding: 0.875rem 1rem;
+          color: #d4d4d8;
+        }
+
+        .data-table td.mono {
+          font-family: 'Monaco', 'Courier New', monospace;
+          font-size: 0.8125rem;
+          color: #a1a1aa;
+        }
+
+        .data-table td.truncate {
+          max-width: 250px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .info-text {
+          font-size: 0.875rem;
+          color: #71717a;
+          margin: 0;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 1rem;
+          padding-top: 0.5rem;
+        }
+
+        .button {
+          flex: 1;
+          padding: 0.875rem 1.25rem;
+          border: none;
+          border-radius: 12px;
+          font-size: 0.9375rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: inherit;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.625rem;
+        }
+
+        .button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .button.secondary {
+          background: rgba(255, 255, 255, 0.05);
+          color: #d4d4d8;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .button.secondary:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        .button.success {
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          color: #ffffff;
+          border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .button.success:hover:not(:disabled) {
+          background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+          transform: translateY(-1px);
+          box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+        }
+
+        .icon-spin {
+          width: 16px;
+          height: 16px;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
