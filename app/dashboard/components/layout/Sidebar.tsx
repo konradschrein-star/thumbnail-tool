@@ -13,10 +13,11 @@ import {
   LayoutDashboard,
   Languages,
   BookOpen,
-  Shield
+  Shield,
+  Layers
 } from 'lucide-react';
 
-export type TabType = 'channels' | 'archetypes' | 'generate' | 'history' | 'translate' | 'api-docs';
+export type TabType = 'channels' | 'archetypes' | 'generate' | 'history' | 'translate' | 'api-docs' | 'batch';
 
 interface SidebarProps {
   activeTab: TabType;
@@ -28,6 +29,7 @@ const navItems: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'archetypes', label: 'Archetypes', icon: <Palette size={18} /> },
   { id: 'generate', label: 'Generate', icon: <Sparkles size={18} /> },
   { id: 'history', label: 'History', icon: <History size={18} /> },
+  { id: 'batch', label: 'Batch Generation', icon: <Layers size={18} /> },
   { id: 'translate', label: 'Translate', icon: <Languages size={18} /> },
   { id: 'api-docs', label: 'API Docs', icon: <BookOpen size={18} /> },
 ];
@@ -57,7 +59,13 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           {navItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => onTabChange(item.id)}
+              onClick={() => {
+                if (item.id === 'batch') {
+                  router.push('/bulk');
+                } else {
+                  onTabChange(item.id);
+                }
+              }}
               className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
             >
               <span className="nav-icon">{item.icon}</span>
