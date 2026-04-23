@@ -60,7 +60,7 @@ export class AI33Client {
     this.apiKey = config.apiKey;
     this.baseUrl = config.baseUrl || 'https://api.ai33.pro';
     this.pollingIntervalMs = config.pollingIntervalMs || 3000; // 3 seconds
-    this.maxPollingAttempts = config.maxPollingAttempts || 60; // 3 minutes max
+    this.maxPollingAttempts = config.maxPollingAttempts || 100; // 5 minutes max (increased for high-load periods)
   }
 
   /**
@@ -250,6 +250,6 @@ export function initializeAI33Client(apiKey?: string): AI33Client {
   return new AI33Client({
     apiKey: key,
     pollingIntervalMs: 3000,
-    maxPollingAttempts: 60,
+    maxPollingAttempts: 100, // 5 minutes timeout
   });
 }

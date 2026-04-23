@@ -8,7 +8,6 @@ import { EMERGENCY_CHANNELS, EMERGENCY_ARCHETYPES } from '@/lib/emergency-data';
 import * as CreditService from '@/lib/credit-service';
 import { getRotatedApiKey } from '@/lib/api-keys';
 import { getUserLimiter } from '@/lib/rate-limiter';
-import { createUnifiedGeneratorFromEnv } from '@/lib/ai/image-generator';
 
 export async function POST(request: NextRequest) {
   const authResult = await getApiAuth(request);
@@ -245,7 +244,7 @@ export async function POST(request: NextRequest) {
             customPrompt,
             isManual: true,
             status: 'processing',
-            credits_deducted: shouldDeductCredits ? 1 : null // Track credit usage per job (snake_case to match schema)
+            creditsDeducted: shouldDeductCredits ? 1 : null // Track credit usage per job
           },
         } as any);
         jobIds.push(job.id);
@@ -264,31 +263,12 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // Use unified generator with AI33 → Google fallback
-        const generator = createUnifiedGeneratorFromEnv();
-
-        // Use condensed prompt for AI33 (strict length limits)
-        const condensedPrompt = payloadEngine.buildCondensedPrompt(channel as any, archetype as any, { videoTopic, thumbnailText });
-
-        // Convert relative URLs to full URLs if needed
-        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3072';
-        const archetypeUrl = archetype.imageUrl.startsWith('http')
-          ? archetype.imageUrl
-          : `${baseUrl}${archetype.imageUrl}`;
-        const personaUrl = (includePersona && (channel as any).personaAssetPath)
-          ? ((channel as any).personaAssetPath.startsWith('http')
-              ? (channel as any).personaAssetPath
-              : `${baseUrl}${(channel as any).personaAssetPath}`)
-          : undefined;
-
-        const result = await generator.generateImage({
-          prompt: condensedPrompt,
-          referenceImageUrl: archetypeUrl,
-          personaImageUrl: personaUrl
-        });
-        const { buffer: imageBuffer, fallbackUsed, provider } = result;
-        const fallbackMessage = result.fallbackMessage || (provider === 'google' ? 'Used Google fallback' : undefined);
-        const creditMultiplier = 1; // AI33 uses same credit cost
+        // Use rotated API key for load distribution
+        const apiKey = getRotatedApiKey();
+        const result = await generationService.callNanoBanana(payload, apiKey);
+        const { buffer: imageBuffer, fallbackUsed, fallbackMessage } = result;
+        const modelUsed = (result as any).modelUsed;
+        const creditMultiplier = (result as any).creditMultiplier || 1;
 
         // If OG model was used (3x more expensive), deduct additional 2 credits
         let additionalCreditsDeducted = 0;

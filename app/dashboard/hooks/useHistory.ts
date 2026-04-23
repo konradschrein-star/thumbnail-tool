@@ -16,6 +16,7 @@ export interface HistoryJob {
   createdAt: string;
   completedAt: string | null;
   isManual: boolean;
+  batchJobId?: string | null;
   userId: string | null;
   metadata?: {
     isVariant?: boolean;
@@ -51,7 +52,12 @@ export interface HistoryJob {
   };
 }
 
-export default function useHistory() {
+interface UseHistoryOptions {
+  type?: string;
+  status?: string;
+}
+
+export default function useHistory(options?: UseHistoryOptions) {
   const [jobs, setJobs] = useState<HistoryJob[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -60,7 +66,12 @@ export default function useHistory() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/history');
+      const params = new URLSearchParams();
+      if (options?.type) params.append('type', options.type);
+      if (options?.status) params.append('status', options.status);
+
+      const url = `/api/history${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url);
       const data = await response.json();
 
       if (!response.ok) {
@@ -73,7 +84,7 @@ export default function useHistory() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [options?.type, options?.status]);
 
   useEffect(() => {
     fetchHistory();

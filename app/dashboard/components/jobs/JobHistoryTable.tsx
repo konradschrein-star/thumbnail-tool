@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ErrorMessage from '@/app/dashboard/components/shared/ErrorMessage';
 import JobRow from './JobRow';
 import useHistory, { HistoryJob } from '@/app/dashboard/hooks/useHistory';
@@ -47,9 +47,43 @@ interface JobHistoryTableProps {
 export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
   const { channels } = useChannels();
   const [channelFilter, setChannelFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const { jobs, loading, error } = useHistory();
+  const { jobs, loading, error, refetch } = useHistory({
+    type: typeFilter === 'all' ? undefined : typeFilter,
+    status: statusFilter || undefined,
+  });
+
+  // Auto-refresh when jobs are pending or processing
+  useEffect(() => {
+    const hasActiveJobs = jobs.some(
+      (job) => job.status === 'pending' || job.status === 'processing'
+    );
+
+    if (!hasActiveJobs) return;
+
+    // Only poll when page is visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden && hasActiveJobs) {
+        refetch();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Poll every 10 seconds
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        refetch();
+      }
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [jobs, refetch]);
 
   if (loading && jobs.length === 0) {
     return <div className="loading">Loading generation history...</div>;
@@ -84,6 +118,21 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="filter-input"
             />
+          </div>
+
+          <div className="filter-group">
+            <label className="filter-label">Type</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="filter-select"
+              title="Filter by Job Type"
+            >
+              <option value="all">All Jobs</option>
+              <option value="single">Single Generations</option>
+              <option value="batch">Batch Jobs</option>
+              <option value="translation">Translations</option>
+            </select>
           </div>
 
           <div className="filter-group">

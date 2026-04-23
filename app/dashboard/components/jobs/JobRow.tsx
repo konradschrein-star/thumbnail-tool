@@ -13,7 +13,9 @@ import {
   Download,
   RotateCcw,
   Image as ImageIcon,
-  Globe
+  Globe,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { HistoryJob } from '@/app/dashboard/hooks/useHistory';
 import { generateProfessionalFilename, downloadRemoteImage } from '@/lib/download-utils';
@@ -48,16 +50,33 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
 
     const { label, icon } = config[status];
 
+    // Determine job type
+    const isBatch = job.batchJobId;
+    const isTranslation = job.metadata && typeof job.metadata === 'object' && 'isVariant' in job.metadata && job.metadata.isVariant;
+    const isSingle = job.isManual && !isBatch;
+
     return (
       <div className="status-badges-wrapper">
         <span className={`status-badge ${status}`}>
           {icon}
           {label}
         </span>
-        {job.metadata?.isVariant && (
+        {isTranslation && (
           <span className="status-badge variant">
             <Globe size={12} />
             {job.metadata.language}
+          </span>
+        )}
+        {isBatch && (
+          <span className="status-badge batch">
+            <Layers size={12} />
+            Batch
+          </span>
+        )}
+        {isSingle && (
+          <span className="status-badge single">
+            <Sparkles size={12} />
+            Single
           </span>
         )}
       </div>
@@ -87,10 +106,10 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
           {formatDate(job.createdAt)}
         </td>
         <td className="job-cell channel">
-          <span className="channel-tag">{job.channel.name}</span>
+          <span className="channel-tag">{job.channel?.name || 'Unknown Channel'}</span>
         </td>
         <td className="job-cell archetype">
-          <span className="secondary-text">{job.archetype.name}</span>
+          <span className="secondary-text">{job.archetype?.name || 'Unknown Archetype'}</span>
         </td>
         <td className="job-cell topic">
           {truncateText(job.videoTopic)}
@@ -106,8 +125,8 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
                 variant="ghost"
                 onClick={() => {
                   const filename = generateProfessionalFilename(
-                    job.channel.name,
-                    job.archetype.category || 'General',
+                    job.channel?.name || 'Channel',
+                    job.archetype?.category || 'General',
                     job.metadata?.isVariant ? `${job.videoTopic}_${job.metadata.language}` : job.videoTopic,
                     1
                   );
@@ -168,11 +187,11 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
               </div>
               <div className="info-item">
                 <span className="info-label">Channel</span>
-                <span className="info-value">{job.channel.name}</span>
+                <span className="info-value">{job.channel?.name || 'Unknown'}</span>
               </div>
               <div className="info-item">
                 <span className="info-label">Archetype</span>
-                <span className="info-value">{job.archetype.name}</span>
+                <span className="info-value">{job.archetype?.name || 'Unknown'}</span>
               </div>
               {job.metadata?.isVariant && (
                 <>
@@ -199,8 +218,8 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
                   variant="primary"
                   onClick={() => {
                     const filename = generateProfessionalFilename(
-                      job.channel.name,
-                      job.archetype.category || 'General',
+                      job.channel?.name || 'Channel',
+                      job.archetype?.category || 'General',
                       job.metadata?.isVariant ? `${job.videoTopic}_${job.metadata.language}` : job.videoTopic,
                       1
                     );
@@ -240,7 +259,7 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
               </div>
               <div className="meta-item">
                 <span>Archetype:</span>
-                <span>{job.archetype.name}</span>
+                <span>{job.archetype?.name || 'Unknown'}</span>
               </div>
             </div>
 

@@ -132,7 +132,7 @@ export async function callNanoBanana(
       ]
     };
 
-    const callWithPayload = async (content: any, modelName: string = 'gemini-3-pro-image-preview') => {
+    const callWithPayload = async (content: any, modelName: string = 'gemini-3.1-pro-image-preview') => {
       return await ai.models.generateContent({
         model: modelName,
         contents: [content],
@@ -154,7 +154,7 @@ export async function callNanoBanana(
     // NB2 is PRIMARY for 50% cost savings ($0.0672 vs $0.134 per image)
     const models = [
       { id: 'gemini-3.1-flash-image-preview', name: 'Nano Banana 2 (Flash)' },
-      { id: 'gemini-3-pro-image-preview', name: 'Nano Banana Pro' },
+      { id: 'gemini-3.1-pro-image-preview', name: 'Nano Banana Pro' },
       { id: 'gemini-2.5-flash-image', name: 'Nano Banana OG (Stable)' },
     ];
 

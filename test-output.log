@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\batch-generation.spec.ts:52:7 › Batch Generation System - End-to-End Tests › 1. Single Thumbnail Generation (Critical Baseline)
+[1A[2K[chromium] › tests\batch-generation.spec.ts:52:7 › Batch Generation System - End-to-End Tests › 1. Single Thumbnail Generation (Critical Baseline)
+[BROWSER ERROR] Failed to load resource: the server responded with a status of 404 (Not Found)
+
+[1A[2K=== TEST 1: Single Thumbnail Generation ===
+
+
+[1A[2K✓ Navigated to Generate tab
+
+[1A[2KFilling generation form...
+
+[1A[2K  1) [chromium] › tests\batch-generation.spec.ts:52:7 › Batch Generation System - End-to-End Tests › 1. Single Thumbnail Generation (Critical Baseline) 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('select[title="Select Channel"]') to be visible[22m
+
+
+      65 |
+      66 |     // Wait for form to load
+    > 67 |     await page.waitForSelector('select[title="Select Channel"]', { timeout: 10000 });
+         |                ^
+      68 |
+      69 |     // Select channel
+      70 |     await page.selectOption('select[title="Select Channel"]', TEST_CHANNEL_ID);
+        at C:\Users\konra\OneDrive\Projekte\20260224 Thumbnail Creator V2\tests\batch-generation.spec.ts:67:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\batch-generation-Batch-Gen-b4d83-neration-Critical-Baseline--chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\batch-generation-Batch-Gen-b4d83-neration-Critical-Baseline--chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\batch-generation-Batch-Gen-b4d83-neration-Critical-Baseline--chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\batch-generation.spec.ts:52:7 › Batch Generation System - End-to-End Tests › 1. Single Thumbnail Generation (Critical Baseline) 

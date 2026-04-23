@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, Loader, XCircle, Download, TrendingUp } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, Loader, XCircle, Download, TrendingUp, ArrowLeft } from 'lucide-react';
 
 interface BatchJob {
   id: string;
@@ -33,9 +33,10 @@ interface BatchJob {
 
 interface BatchProgressProps {
   batchId: string | null;
+  onClose?: () => void;
 }
 
-export function BatchProgress({ batchId }: BatchProgressProps) {
+export function BatchProgress({ batchId, onClose }: BatchProgressProps) {
   const [batchJob, setBatchJob] = useState<BatchJob | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -181,6 +182,12 @@ export function BatchProgress({ batchId }: BatchProgressProps) {
 
   return (
     <div className="container">
+      {onClose && (
+        <button onClick={onClose} className="back-button">
+          <ArrowLeft size={18} />
+          Back to List
+        </button>
+      )}
       <div className="main-card">
         <div className="header">
           <div>
@@ -287,6 +294,28 @@ export function BatchProgress({ batchId }: BatchProgressProps) {
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
+        }
+
+        .back-button {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.25rem;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          color: #a1a1aa;
+          font-size: 0.9rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          align-self: flex-start;
+        }
+
+        .back-button:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: #ffffff;
+          transform: translateX(-2px);
         }
 
         .main-card,

@@ -16,5 +16,25 @@ module.exports = {
       out_file: './logs/out.log',
       time: true,
     },
+    {
+      name: 'thumbnail-worker',
+      script: 'npm',
+      args: 'run worker',
+      cwd: '/opt/thumbnail-generator',
+      env: {
+        NODE_ENV: 'production',
+        WORKER_CONCURRENCY: 2, // Process 2 jobs concurrently
+      },
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      error_file: './logs/worker-error.log',
+      out_file: './logs/worker-out.log',
+      time: true,
+      min_uptime: '10s',
+      max_restarts: 10,
+      restart_delay: 5000,
+    },
   ],
 };

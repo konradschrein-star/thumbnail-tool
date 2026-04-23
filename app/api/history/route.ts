@@ -9,43 +9,82 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 1. Fetch last 30 manual jobs
-        const masterJobs = await prisma.generation_jobs.findMany({
-            where: {
-                userId: session.user.id,
-                isManual: true,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-            take: 30,
-            include: {
-                channels: true,
-                archetypes: true,
-            },
-        });
+        // Get query parameters for filtering
+        const { searchParams } = new URL(request.url);
+        const typeFilter = searchParams.get('type') || 'all'; // all|single|batch|translation
+        const statusFilter = searchParams.get('status'); // pending|processing|completed|failed
 
-        // 2. Fetch last 30 variant jobs for this user
-        // We filter by user indirectly or by masterJob relation
-        const variantJobs = await prisma.variant_jobs.findMany({
-            where: {
-                generation_jobs: {
-                    userId: session.user.id
-                }
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-            take: 30,
-            include: {
-                generation_jobs: {
-                    include: {
-                        channels: true,
-                        archetypes: true
+        // Build where clause for generation_jobs
+        const masterJobsWhere: any = {
+            userId: session.user.id,
+        };
+
+        // Apply type filter for master jobs
+        if (typeFilter === 'single') {
+            masterJobsWhere.isManual = true;
+            masterJobsWhere.batchJobId = null;
+        } else if (typeFilter === 'batch') {
+            masterJobsWhere.batchJobId = { not: null };
+        } else if (typeFilter === 'translation') {
+            // Skip master jobs entirely for translation filter
+            masterJobsWhere.id = 'skip';
+        } else {
+            // For 'all', fetch all jobs (manual and batch)
+            masterJobsWhere.OR = [
+                { isManual: true },
+                { batchJobId: { not: null } }
+            ];
+        }
+
+        // Apply status filter
+        if (statusFilter) {
+            masterJobsWhere.status = statusFilter;
+        }
+
+        // 1. Fetch master jobs (unless skipped)
+        const masterJobs = masterJobsWhere.id === 'skip'
+            ? []
+            : await prisma.generation_jobs.findMany({
+                where: masterJobsWhere,
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                take: 30,
+                include: {
+                    channels: true,
+                    archetypes: true,
+                },
+            });
+
+        // 2. Fetch variant jobs (unless filtered out)
+        const variantJobsWhere: any = {
+            generation_jobs: {
+                userId: session.user.id
+            }
+        };
+
+        // Apply status filter for variants
+        if (statusFilter) {
+            variantJobsWhere.status = statusFilter;
+        }
+
+        const variantJobs = typeFilter === 'single' || typeFilter === 'batch'
+            ? [] // Skip variants if filtering for single or batch
+            : await prisma.variant_jobs.findMany({
+                where: variantJobsWhere,
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                take: 30,
+                include: {
+                    generation_jobs: {
+                        include: {
+                            channels: true,
+                            archetypes: true
+                        }
                     }
                 }
-            }
-        });
+            });
 
         // 3. Map variants to a standardized format that matches HistoryJob
         const currentUserId = session.user.id;

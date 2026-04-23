@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { BlurFade } from '@/app/dashboard/components/ui/blur-fade';
-import { Languages, Upload, CheckCircle2, Loader2, Play, Image as ImageIcon } from 'lucide-react';
+import { Languages, Upload, CheckCircle2, Loader2, Play, Image as ImageIcon, Layers } from 'lucide-react';
 import { ShimmerButton } from '@/app/dashboard/components/ui/shimmer-button';
 import ErrorMessage from '@/app/dashboard/components/shared/ErrorMessage';
 import useHistory from '@/app/dashboard/hooks/useHistory';
 import CustomLanguageManager from '@/app/dashboard/components/translate/CustomLanguageManager';
 import MultiImageUpload from '@/app/dashboard/components/translate/MultiImageUpload';
+import { BatchSelector } from '@/app/dashboard/components/translate/BatchSelector';
 
 const DEFAULT_LANGUAGES = [
   { code: 'German', label: 'German' },
@@ -19,7 +20,7 @@ const DEFAULT_LANGUAGES = [
   { code: 'Japanese', label: 'Japanese' },
 ];
 
-type TranslateMode = 'JOB' | 'UPLOAD';
+type TranslateMode = 'JOB' | 'UPLOAD' | 'BATCH';
 
 export default function TranslatePage() {
   const { jobs, loading: jobsLoading } = useHistory();
@@ -31,6 +32,11 @@ export default function TranslatePage() {
   // Upload mode state
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [originalText, setOriginalText] = useState('');
+
+  // Batch mode state
+  const [selectedBatchId, setSelectedBatchId] = useState('');
+  const [selectedBatchName, setSelectedBatchName] = useState('');
+  const [selectedBatchCount, setSelectedBatchCount] = useState(0);
 
   // Shared state
   const [customLanguages, setCustomLanguages] = useState<Array<{ code: string; label: string }>>([]);
@@ -55,38 +61,64 @@ export default function TranslatePage() {
     setError('');
 
     try {
-      const payload: any = { targetLanguages: selectedLangs };
-
-      if (mode === 'JOB') {
-        if (!selectedJobId) {
-          throw new Error('Please select a job to translate');
+      if (mode === 'BATCH') {
+        // Batch translation uses different endpoint
+        if (!selectedBatchId) {
+          throw new Error('Please select a batch to translate');
         }
-        payload.masterJobId = selectedJobId;
+
+        const response = await fetch('/api/batch/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            batchJobId: selectedBatchId,
+            targetLanguages: selectedLangs,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Batch translation failed');
+        }
+
+        setResultMessage(data.message || `Queued ${data.translationCount} translations`);
+        setSuccess(true);
       } else {
-        if (uploadedImages.length === 0) {
-          throw new Error('Please upload at least one image');
+        // Job and upload modes use existing endpoint
+        const payload: any = { targetLanguages: selectedLangs };
+
+        if (mode === 'JOB') {
+          if (!selectedJobId) {
+            throw new Error('Please select a job to translate');
+          }
+          payload.masterJobId = selectedJobId;
+        } else {
+          if (uploadedImages.length === 0) {
+            throw new Error('Please upload at least one image');
+          }
+          if (!originalText.trim()) {
+            throw new Error('Please enter the original text that appears on the images');
+          }
+          payload.uploadedImages = uploadedImages;
+          payload.originalText = originalText.trim();
         }
-        if (!originalText.trim()) {
-          throw new Error('Please enter the original text that appears on the images');
+
+        const response = await fetch('/api/generate/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Translation failed');
         }
-        payload.uploadedImages = uploadedImages;
-        payload.originalText = originalText.trim();
+
+        setResultMessage(data.message || 'Translation completed successfully');
+        setSuccess(true);
       }
-
-      const response = await fetch('/api/generate/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Translation failed');
-      }
-
-      setResultMessage(data.message || 'Translation completed successfully');
-      setSuccess(true);
     } catch (err: any) {
       setError(err.message || 'Translation request failed');
     } finally {
@@ -102,12 +134,23 @@ export default function TranslatePage() {
     setSelectedJobId('');
     setUploadedImages([]);
     setOriginalText('');
+    setSelectedBatchId('');
+    setSelectedBatchName('');
+    setSelectedBatchCount(0);
+  };
+
+  const handleSelectBatch = (batchId: string, batchName: string, thumbnailCount: number) => {
+    setSelectedBatchId(batchId);
+    setSelectedBatchName(batchName);
+    setSelectedBatchCount(thumbnailCount);
+    setError('');
   };
 
   const canTranslate =
     selectedLangs.length > 0 &&
     ((mode === 'JOB' && selectedJobId) ||
-      (mode === 'UPLOAD' && uploadedImages.length > 0 && originalText.trim()));
+     (mode === 'UPLOAD' && uploadedImages.length > 0 && originalText.trim()) ||
+     (mode === 'BATCH' && selectedBatchId));
 
   return (
     <div className="translate-container">
@@ -147,6 +190,13 @@ export default function TranslatePage() {
                 From Existing Job
               </button>
               <button
+                className={`mode-tab ${mode === 'BATCH' ? 'active' : ''}`}
+                onClick={() => setMode('BATCH')}
+              >
+                <Layers size={16} />
+                From Batch
+              </button>
+              <button
                 className={`mode-tab ${mode === 'UPLOAD' ? 'active' : ''}`}
                 onClick={() => setMode('UPLOAD')}
               >
@@ -161,11 +211,13 @@ export default function TranslatePage() {
             <BlurFade delay={0.2} direction="right">
               <div className="selection-card glass">
                 <div className="card-header">
-                  {mode === 'JOB' ? <Play size={18} /> : <ImageIcon size={18} />}
+                  {mode === 'JOB' ? <Play size={18} /> : mode === 'BATCH' ? <Layers size={18} /> : <ImageIcon size={18} />}
                   <h3>1. Select Source</h3>
                 </div>
 
-                {mode === 'JOB' ? (
+                {mode === 'BATCH' ? (
+                  <BatchSelector onSelectBatch={handleSelectBatch} />
+                ) : mode === 'JOB' ? (
                   <div className="jobs-list">
                     {jobsLoading ? (
                       <div className="loading-jobs">

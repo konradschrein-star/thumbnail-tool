@@ -8,6 +8,7 @@ import { GoogleSheetsConnect } from './components/GoogleSheetsConnect';
 import { SheetPreview } from './components/SheetPreview';
 import { BatchProgress } from './components/BatchProgress';
 import { ManualUpload } from './components/ManualUpload';
+import { BatchList } from './components/BatchList';
 import { Layers, FileSpreadsheet, Upload, History } from 'lucide-react';
 
 export default function BulkOperationsPage() {
@@ -122,7 +123,14 @@ export default function BulkOperationsPage() {
 
         {activeTab === 'history' && (
           <div className="content-section">
-            <BatchProgress batchId={selectedBatchId} />
+            {!selectedBatchId ? (
+              <BatchList onSelectBatch={(batchId) => setSelectedBatchId(batchId)} />
+            ) : (
+              <BatchProgress
+                batchId={selectedBatchId}
+                onClose={() => setSelectedBatchId(null)}
+              />
+            )}
           </div>
         )}
       </div>

@@ -201,6 +201,21 @@ export function getBrandingContext(topic: string, channel: any): BrandContext {
 }
 
 /**
+ * Builds a condensed prompt for AI33 (which has strict prompt length limits)
+ */
+export function buildCondensedPrompt(
+  channel: any,
+  archetype: any,
+  job: JobConfig
+): string {
+  const topic = sanitizePrompt(job.videoTopic, 80);
+  const text = sanitizePrompt(job.thumbnailText, 40);
+  const style = archetype.name || 'modern YouTube';
+
+  return `Create a ${style} style YouTube thumbnail for: "${topic}". Include text: "${text}". High quality, vibrant colors, professional design.`;
+}
+
+/**
  * Builds the comprehensive text prompt that will be sent to the generation engine.
  */
 export function buildFullPrompt(
