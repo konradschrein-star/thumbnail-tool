@@ -4,7 +4,6 @@ import React, { useRef, useMemo, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import {
   MeshTransmissionMaterial,
-  Environment,
   Float,
   Text,
   PerspectiveCamera,
@@ -88,9 +87,10 @@ function Scene() {
   return (
     <>
       <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={50} />
-      <Environment preset="city" />
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={1} />
+      <pointLight position={[-10, -5, 5]} intensity={0.5} color="#60a5fa" />
+      <spotLight position={[0, 10, 0]} angle={0.3} intensity={0.5} color="#e2e8f0" />
 
       <Center>
         <Crystal />

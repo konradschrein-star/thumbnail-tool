@@ -5,7 +5,6 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import {
   Points,
   PointMaterial,
-  Environment,
   Float,
   Line,
   PerspectiveCamera
@@ -103,10 +102,11 @@ function Scene() {
   return (
     <>
       <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={50} />
-      <ambientLight intensity={0.2} />
+      <ambientLight intensity={0.3} />
+      <pointLight position={[10, 10, 10]} intensity={0.5} color="#8b5cf6" />
+      <pointLight position={[-10, -10, -10]} intensity={0.3} color="#4c1d95" />
       <LoomParticles />
       <LoomConnections />
-      <Environment preset="night" />
     </>
   );
 }
