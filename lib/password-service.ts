@@ -89,7 +89,7 @@ export async function upgradePasswordHash(
       where: { id: userId },
       data: {
         password: newHash,
-        passwordHashAlgorithm: 'bcrypt',
+        password_hash_algorithm: 'bcrypt',
       },
     });
 
