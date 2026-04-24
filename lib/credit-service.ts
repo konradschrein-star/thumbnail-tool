@@ -59,7 +59,7 @@ export async function deductCreditsAndCreateJob(
           select: {
             id: true,
             credits: true,
-            totalCreditsConsumed: true
+            total_credits_consumed: true
           },
         });
 
@@ -72,15 +72,15 @@ export async function deductCreditsAndCreateJob(
           throw new InsufficientCreditsError(creditsRequired, user.credits);
         }
 
-        const balanceBefore = user.credits;
-        const balanceAfter = balanceBefore - creditsRequired;
+        const balance_before = user.credits;
+        const balance_after = balance_before - creditsRequired;
 
         // Update user credits and consumption counter atomically
         await tx.users.update({
           where: { id: userId },
           data: {
-            credits: balanceAfter,
-            totalCreditsConsumed: {
+            credits: balance_after,
+            total_credits_consumed: {
               increment: creditsRequired,
             },
           },
@@ -98,17 +98,18 @@ export async function deductCreditsAndCreateJob(
         // Log the transaction
         await tx.credit_transactions.create({
           data: {
-            userId,
+            id: require("crypto").randomUUID(),
+            user_id: userId,
             transaction_type: 'deduct',
             amount: -creditsRequired,
-            balanceBefore,
-            balanceAfter,
+            balance_before,
+            balance_after,
             reason: `Deducted for job: ${job.videoTopic}`,
-            relatedJobId: job.id,
+            related_job_id: job.id,
           },
         });
 
-        return { job, creditsRemaining: balanceAfter };
+        return { job, creditsRemaining: balance_after };
       },
       {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -141,7 +142,7 @@ export async function deductCreditsAndCreateJob(
  * @param userId - User ID to deduct credits from
  * @param count - Number of credits to deduct
  * @param reason - Reason for deduction
- * @param relatedJobId - Optional job/variant ID to link the transaction to
+ * @param related_job_id - Optional job/variant ID to link the transaction to
  * @returns Remaining credit balance
  * @throws InsufficientCreditsError if user doesn't have enough credits
  */
@@ -149,7 +150,7 @@ export async function deductCreditsForJob(
   userId: string,
   count: number,
   reason: string,
-  relatedJobId?: string | null
+  related_job_id?: string | null
 ) {
   if (count <= 0) {
     throw new CreditServiceError('Deduction amount must be positive');
@@ -164,7 +165,7 @@ export async function deductCreditsForJob(
           select: {
             id: true,
             credits: true,
-            totalCreditsConsumed: true
+            total_credits_consumed: true
           },
         });
 
@@ -177,15 +178,15 @@ export async function deductCreditsForJob(
           throw new InsufficientCreditsError(count, user.credits);
         }
 
-        const balanceBefore = user.credits;
-        const balanceAfter = balanceBefore - count;
+        const balance_before = user.credits;
+        const balance_after = balance_before - count;
 
         // Update user credits and consumption counter atomically
         await tx.users.update({
           where: { id: userId },
           data: {
-            credits: balanceAfter,
-            totalCreditsConsumed: {
+            credits: balance_after,
+            total_credits_consumed: {
               increment: count,
             },
           },
@@ -194,17 +195,18 @@ export async function deductCreditsForJob(
         // Log the transaction
         await tx.credit_transactions.create({
           data: {
-            userId,
+            id: require("crypto").randomUUID(),
+            user_id: userId,
             transaction_type: 'deduct',
             amount: -count,
-            balanceBefore,
-            balanceAfter,
+            balance_before,
+            balance_after,
             reason,
-            relatedJobId: relatedJobId || null,
+            related_job_id: related_job_id || null,
           },
         });
 
-        return balanceAfter;
+        return balance_after;
       },
       {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -250,22 +252,22 @@ export async function grantCredits(
       async (tx) => {
         const user = await tx.users.findUnique({
           where: { id: userId },
-          select: { credits: true, totalCreditsGranted: true },
+          select: { credits: true, total_credits_granted: true },
         });
 
         if (!user) {
           throw new CreditServiceError('User not found');
         }
 
-        const balanceBefore = user.credits;
-        const balanceAfter = balanceBefore + amount;
+        const balance_before = user.credits;
+        const balance_after = balance_before + amount;
 
         // Grant credits and update granted counter
         await tx.users.update({
           where: { id: userId },
           data: {
-            credits: balanceAfter,
-            totalCreditsGranted: {
+            credits: balance_after,
+            total_credits_granted: {
               increment: amount,
             },
           },
@@ -274,17 +276,18 @@ export async function grantCredits(
         // Log the grant transaction
         await tx.credit_transactions.create({
           data: {
-            userId,
+            id: require("crypto").randomUUID(),
+            user_id: userId,
             transaction_type: 'grant',
             amount,
-            balanceBefore,
-            balanceAfter,
+            balance_before,
+            balance_after,
             reason,
-            adminId: adminUserId,
+            admin_user_id: adminUserId,
           },
         });
 
-        return balanceAfter;
+        return balance_after;
       },
       {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -339,20 +342,20 @@ export async function getTransactionHistory(
 ) {
   try {
     const transactions = await prisma.credit_transactions.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
+      where: { user_id: userId },
+      orderBy: { created_at: 'desc' },
       take: limit,
       skip: offset,
       select: {
         id: true,
         transaction_type: true,
         amount: true,
-        balanceBefore: true,
-        balanceAfter: true,
+        balance_before: true,
+        balance_after: true,
         reason: true,
-        relatedJobId: true,
-        adminId: true,
-        createdAt: true,
+        related_job_id: true,
+        admin_user_id: true,
+        created_at: true,
       },
     });
 
@@ -378,8 +381,8 @@ export async function getUserCreditStats(userId: string) {
       where: { id: userId },
       select: {
         credits: true,
-        totalCreditsGranted: true,
-        totalCreditsConsumed: true,
+        total_credits_granted: true,
+        total_credits_consumed: true,
       },
     });
 
@@ -389,9 +392,9 @@ export async function getUserCreditStats(userId: string) {
 
     return {
       currentBalance: user.credits,
-      totalGranted: user.totalCreditsGranted,
-      totalConsumed: user.totalCreditsConsumed,
-      netBalance: user.totalCreditsGranted - user.totalCreditsConsumed,
+      totalGranted: user.total_credits_granted,
+      totalConsumed: user.total_credits_consumed,
+      netBalance: user.total_credits_granted - user.total_credits_consumed,
     };
   } catch (error) {
     throw new CreditServiceError(

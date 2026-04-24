@@ -3,6 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { EMERGENCY_CHANNELS } from '@/lib/emergency-data';
 
+// Strip HTML tags and limit field length to prevent XSS and oversized payloads
+function sanitizeText(str: string, maxLen: number): string {
+  if (typeof str !== 'string') return '';
+  return str.replace(/<[^>]*>/g, '').replace(/[<>"'&]/g, '').trim().slice(0, maxLen);
+}
+
+
 // GET /api/channels - List all channels (filtered by user, admin sees all)
 export async function GET() {
   try {
@@ -43,16 +50,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const {
-      name,
-      personaDescription,
-      personaAssetPath,
-      logoAssetPath,
-      primaryColor,
-      secondaryColor,
-      tags
-    } = body;
+    const rawBody = await request.text();
+    if (rawBody.length > 10000) {
+      return NextResponse.json({ error: 'Request payload too large' }, { status: 413 });
+    }
+    const body = JSON.parse(rawBody);
+    const name = sanitizeText(body.name || '', 200);
+    const personaDescription = sanitizeText(body.personaDescription || '', 5000);
+    const personaAssetPath = body.personaAssetPath;
+    const logoAssetPath = body.logoAssetPath;
+    const primaryColor = body.primaryColor;
+    const secondaryColor = body.secondaryColor;
+    const tags = body.tags;
 
     if (!name || !personaDescription) {
       return NextResponse.json(
@@ -67,14 +76,16 @@ export async function POST(request: NextRequest) {
     // regenerates.
     const channel = await prisma.channels.create({
       data: {
+        id: require('crypto').randomUUID(),
         name,
         personaDescription,
-        users: { connect: { id: session.user.id } },
+        userId: session.user.id,
         personaAssetPath,
         logoAssetPath,
         primaryColor: primaryColor || '#ffffff',
         secondaryColor: secondaryColor || '#000000',
-        tags: typeof tags === 'string' ? (tags.trim() || null) : (Array.isArray(tags) && tags.length > 0 ? tags.join(',') : null)
+        tags: typeof tags === 'string' ? (tags.trim() || null) : (Array.isArray(tags) && tags.length > 0 ? tags.join(',') : null),
+        updatedAt: new Date()
       },
     });
 

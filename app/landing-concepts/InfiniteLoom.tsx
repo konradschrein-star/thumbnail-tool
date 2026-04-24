@@ -14,6 +14,27 @@ import * as THREE from 'three';
 import { motion as motionDom } from 'framer-motion';
 import LoginForm from './shared/LoginForm';
 
+
+class CanvasErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error) {
+    console.warn('WebGL/Canvas failed, rendering without 3D background:', error.message);
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
 function LoomParticles() {
   const ref = useRef<THREE.Points>(null);
   const count = 2000;

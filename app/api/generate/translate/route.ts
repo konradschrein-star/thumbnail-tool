@@ -141,7 +141,7 @@ async function handleMasterJobTranslation(
 
     try {
       // Create VariantJob record
-      const variant = await (prisma as any).variantJob.create({
+      const variant = await prisma.variant_jobs.create({
         data: {
           masterJobId: masterJob.id,
           language,
@@ -214,7 +214,7 @@ async function handleMasterJobTranslation(
       console.log(`   ✓ Uploaded to: ${outputUrl}`);
 
       // Update variant job
-      const updatedVariant = await (prisma as any).variantJob.update({
+      const updatedVariant = await prisma.variant_jobs.update({
         where: { id: variant.id },
         data: {
           status: 'completed',
@@ -229,13 +229,13 @@ async function handleMasterJobTranslation(
 
       // Try to update variant with error (may fail if variant wasn't created)
       try {
-        const variant = await (prisma as any).variantJob.findFirst({
+        const variant = await prisma.variant_jobs.findFirst({
           where: { masterJobId, language },
           orderBy: { createdAt: 'desc' }
         });
 
         if (variant) {
-          await (prisma as any).variantJob.update({
+          await prisma.variant_jobs.update({
             where: { id: variant.id },
             data: {
               status: 'failed',
@@ -341,7 +341,7 @@ async function handleUploadedImagesTranslation(
 
         try {
           // Create VariantJob (no masterJobId for uploaded images)
-          const variant = await (prisma as any).variantJob.create({
+          const variant = await prisma.variant_jobs.create({
             data: {
               masterJobId: null,
               sourceImageUrl: imageUrl,
@@ -398,7 +398,7 @@ If there is NO text in the original image, recreate it exactly without adding an
           console.log(`     ✓ Uploaded to: ${outputUrl}`);
 
           // Update variant
-          const updatedVariant = await (prisma as any).variantJob.update({
+          const updatedVariant = await prisma.variant_jobs.update({
             where: { id: variant.id },
             data: {
               status: 'completed',
@@ -413,13 +413,13 @@ If there is NO text in the original image, recreate it exactly without adding an
 
           // Update variant with error
           try {
-            const variant = await (prisma as any).variantJob.findFirst({
+            const variant = await prisma.variant_jobs.findFirst({
               where: { sourceImageUrl: imageUrl, language },
               orderBy: { createdAt: 'desc' }
             });
 
             if (variant) {
-              await (prisma as any).variantJob.update({
+              await prisma.variant_jobs.update({
                 where: { id: variant.id },
                 data: {
                   status: 'failed',

@@ -4,6 +4,11 @@ import { auth } from '@/lib/auth';
 import { EMERGENCY_ARCHETYPES } from '@/lib/emergency-data';
 
 // GET /api/archetypes?channelId=xxx - List archetypes (filtered by user ownership)
+
+function sanitizeText(str: string, maxLen: number): string {
+  if (typeof str !== 'string') return '';
+  return str.replace(/<[^>]*>/g, '').replace(/[<>"'&]/g, '').trim().slice(0, maxLen);
+}
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -131,6 +136,7 @@ export async function POST(request: NextRequest) {
     // Create archetype with channel assignments
     const archetype = await prisma.archetypes.create({
       data: {
+        id: require('crypto').randomUUID(),
         name,
         imageUrl,
         layoutInstructions: layoutInstructions || '',
@@ -138,8 +144,10 @@ export async function POST(request: NextRequest) {
         category: category || 'General',
         isAdminOnly: isAdmin ? (isAdminOnly || false) : false,
         userId: session.user.id,
+        updatedAt: new Date(),
         channel_archetypes: {
           create: channelIdsArray.map(channelId => ({
+            id: require('crypto').randomUUID(),
             channelId,
           })),
         },

@@ -67,8 +67,8 @@ export async function GET(request: NextRequest) {
       prisma.users.aggregate({
         _sum: {
           credits: true,
-          totalCreditsGranted: true,
-          totalCreditsConsumed: true,
+          total_credits_granted: true,
+          total_credits_consumed: true,
         },
       }),
 
@@ -83,13 +83,13 @@ export async function GET(request: NextRequest) {
       // Recent transactions (last 10)
       prisma.credit_transactions.findMany({
         take: 10,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
         select: {
           id: true,
           transaction_type: true,
           amount: true,
           reason: true,
-          createdAt: true,
+          created_at: true,
           users: {
             select: {
               email: true,
@@ -134,8 +134,8 @@ export async function GET(request: NextRequest) {
         },
         credits: {
           totalAvailable: userCreditsAggregate._sum.credits || 0,
-          totalGranted: userCreditsAggregate._sum.totalCreditsGranted || 0,
-          totalConsumed: userCreditsAggregate._sum.totalCreditsConsumed || 0,
+          totalGranted: userCreditsAggregate._sum.total_credits_granted || 0,
+          totalConsumed: userCreditsAggregate._sum.total_credits_consumed || 0,
         },
         jobs: {
           byStatus: jobStatsByStatus,

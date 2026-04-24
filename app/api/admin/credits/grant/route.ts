@@ -132,13 +132,14 @@ export async function POST(request: NextRequest) {
           // Create deduction transaction
           await tx.credit_transactions.create({
             data: {
-              userId: user.id,
+              id: require('crypto').randomUUID(),
+              user_id: user.id,
               transaction_type: 'deduct',
               amount: deductAmount,
-              balanceBefore: currentUser.credits,
-              balanceAfter: currentUser.credits - deductAmount,
+              balance_before: currentUser.credits,
+              balance_after: currentUser.credits - deductAmount,
               reason,
-              adminId: adminUserId,
+              admin_user_id: adminUserId,
             },
           });
 
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
             where: { id: user.id },
             data: {
               credits: { decrement: deductAmount },
-              totalCreditsConsumed: { increment: deductAmount },
+              total_credits_consumed: { increment: deductAmount },
             },
             select: { credits: true },
           });

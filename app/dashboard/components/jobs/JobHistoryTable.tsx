@@ -338,6 +338,7 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
+            table-layout: fixed;
           }
 
           .job-table th {
@@ -349,6 +350,9 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
             color: #64748b;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             background: rgba(255, 255, 255, 0.01);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
 
           .action-header {

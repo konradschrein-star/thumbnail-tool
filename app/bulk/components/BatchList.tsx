@@ -472,6 +472,7 @@ export function BatchList({ onSelectBatch }: BatchListProps) {
         .batch-table {
           width: 100%;
           border-collapse: collapse;
+          table-layout: fixed;
         }
 
         .batch-table thead {
@@ -487,12 +488,19 @@ export function BatchList({ onSelectBatch }: BatchListProps) {
           text-transform: uppercase;
           letter-spacing: 0.05em;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .batch-table td {
           padding: 1rem;
           color: #d4d4d8;
           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 0;
         }
 
         .batch-row:last-child td {

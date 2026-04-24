@@ -17,10 +17,12 @@ export async function POST(request: NextRequest) {
         try {
             await prisma.access_requests.create({
                 data: {
+                    id: require('crypto').randomUUID(),
                     name: name || null,
                     email: email,
                     reason: reason || null,
-                    status: 'pending'
+                    status: 'pending',
+                    updatedAt: new Date()
                 }
             });
             console.log(`Access request saved to DB for: ${email}`);

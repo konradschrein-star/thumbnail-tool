@@ -68,8 +68,8 @@ export class UnifiedImageGenerator {
         console.log('   → Attempting AI33 generation (low-cost provider)...');
         const buffer = await this.ai33Client.generateImage({
           prompt: request.prompt,
-          width: 1024,
-          height: 1024,
+          width: 1280,
+          height: 720,
         });
 
         console.log('✓ AI33 generation successful');

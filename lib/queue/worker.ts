@@ -98,9 +98,6 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
         status: 'completed',
         outputUrl,
         promptUsed: fullPrompt,
-        aiProvider: generationResult.provider === 'ai33' ? 'AI33' : 'GOOGLE',
-        fallbackUsed: generationResult.fallbackUsed,
-        fallbackReason: generationResult.fallbackMessage || null,
         completedAt: new Date(),
         metadata: {
           cost: generationResult.cost,

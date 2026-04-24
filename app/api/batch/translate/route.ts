@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
           // Create variant job
           await prisma.variant_jobs.create({
             data: {
+              id: require('crypto').randomUUID(),
               masterJobId: job.id,
               language,
               originalText: job.thumbnailText,

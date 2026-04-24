@@ -28,10 +28,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               const hashedPassword = await bcrypt.hash('test', 10);
               await prisma.users.create({
                 data: {
+                  id: require('crypto').randomUUID(),
                   email: 'test@test.ai',
                   password: hashedPassword,
                   name: 'Demo Architect',
-                  role: 'USER', // Kept as standard USER so the 10/day rate limit applies
+                  role: 'USER',
+                  updatedAt: new Date(),
                 }
               });
             }

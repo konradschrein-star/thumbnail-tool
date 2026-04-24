@@ -64,7 +64,7 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
         {isTranslation && (
           <span className="status-badge variant">
             <Globe size={12} />
-            {job.metadata.language}
+            {(job.metadata as any)?.language}
           </span>
         )}
         {isBatch && (
@@ -127,7 +127,7 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
                   const filename = generateProfessionalFilename(
                     job.channel?.name || 'Channel',
                     job.archetype?.category || 'General',
-                    job.metadata?.isVariant ? `${job.videoTopic}_${job.metadata.language}` : job.videoTopic,
+                    job.metadata?.isVariant ? `${job.videoTopic}_${(job.metadata as any)?.language}` : job.videoTopic,
                     1
                   );
                   downloadRemoteImage(job.outputUrl!, filename);
@@ -197,7 +197,7 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
                 <>
                   <div className="info-item">
                     <span className="info-label">Language</span>
-                    <span className="info-value">{job.metadata.language}</span>
+                    <span className="info-value">{(job.metadata as any)?.language}</span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Original Text</span>
@@ -220,7 +220,7 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
                     const filename = generateProfessionalFilename(
                       job.channel?.name || 'Channel',
                       job.archetype?.category || 'General',
-                      job.metadata?.isVariant ? `${job.videoTopic}_${job.metadata.language}` : job.videoTopic,
+                      job.metadata?.isVariant ? `${job.videoTopic}_${(job.metadata as any)?.language}` : job.videoTopic,
                       1
                     );
                     downloadRemoteImage(job.outputUrl!, filename);
@@ -326,6 +326,10 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
           padding: 1rem 0.75rem;
           vertical-align: middle;
           font-size: 0.875rem;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 0;
         }
 
         .timestamp {

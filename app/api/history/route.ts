@@ -113,8 +113,15 @@ export async function GET(request: NextRequest) {
             archetype: v.generation_jobs?.archetype
         }));
 
-        // 4. Combine and sort
-        const combined = [...masterJobs, ...mappedVariants]
+        // 4. Map masterJobs to add channel/archetype aliases expected by frontend
+        const mappedMasterJobs = (masterJobs as any[]).map(job => ({
+            ...job,
+            channel: job.channels,
+            archetype: job.archetypes,
+        }));
+
+        // 5. Combine and sort
+        const combined = [...mappedMasterJobs, ...mappedVariants]
             .sort((a: any, b: any) => 
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             )

@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         ...batchJob,
+        jobs: batchJob.generation_jobs,
         jobsByStatus,
         progressPercentage,
       },

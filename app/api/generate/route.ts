@@ -298,12 +298,12 @@ export async function POST(request: NextRequest) {
             creditsRemaining = await CreditService.deductCreditsForJob(
               userId,
               additionalCredits,
-              `Additional ${additionalCredits} credit(s) for expensive fallback model (${modelUsed})`,
+              `Additional ${additionalCredits} credit(s) for expensive fallback model (${provider})`,
               job.id
             );
             additionalCreditsDeducted = additionalCredits;
             creditsDeducted += additionalCredits;
-            console.log(`   💳 Deducted ${additionalCredits} additional credit(s) for ${modelUsed} (total: ${creditMultiplier} credits)`);
+            console.log(`   💳 Deducted ${additionalCredits} additional credit(s) for ${provider} (total: ${creditMultiplier} credits)`);
           } catch (creditError) {
             console.error('Failed to deduct additional credits for expensive model:', creditError);
             // Continue anyway - primary credit was already deducted
@@ -328,7 +328,7 @@ export async function POST(request: NextRequest) {
                 outputUrl,
                 promptUsed: `${payload.systemPrompt}\n\n${payload.userPrompt}${fallbackUsed ? `\n\n[FALLBACK TRIGGERED: ${fallbackMessage}]` : ''}`,
                 completedAt: new Date(),
-                creditsDeducted: shouldDeductCredits ? creditMultiplier : null // Track actual credits used
+                credits_deducted: shouldDeductCredits ? creditMultiplier : null
               },
             } as any);
           } catch (dbError) {

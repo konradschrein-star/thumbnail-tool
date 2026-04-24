@@ -86,6 +86,7 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
         value={name}
         onChange={setName}
         placeholder="e.g., Tech Review Channel"
+        maxLength={100}
         required
         error={errors.name}
         disabled={isSubmitting}

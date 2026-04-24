@@ -41,7 +41,7 @@ export default function Table({ columns, data, emptyMessage = 'No data available
               <th
                 key={column.key}
                 className={column.key}
-                data-width={column.width}
+                style={{ width: column.width, maxWidth: column.width }}
               >
                 {column.header}
               </th>
@@ -52,7 +52,7 @@ export default function Table({ columns, data, emptyMessage = 'No data available
           {data.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {columns.map((column) => (
-                <td key={column.key}>
+                <td key={column.key} style={{ maxWidth: column.width || '200px' }}>
                   {column.render
                     ? column.render(row[column.key], row)
                     : row[column.key]}
@@ -65,7 +65,7 @@ export default function Table({ columns, data, emptyMessage = 'No data available
 
       <style jsx>{`
         .table-wrapper {
-          overflow: hidden;
+          overflow-x: auto;
           border-radius: var(--radius);
           width: 100%;
         }
@@ -74,6 +74,7 @@ export default function Table({ columns, data, emptyMessage = 'No data available
           width: 100%;
           border-collapse: collapse;
           font-size: 0.875rem;
+          table-layout: fixed;
         }
 
         th {
@@ -86,6 +87,9 @@ export default function Table({ columns, data, emptyMessage = 'No data available
           text-transform: uppercase;
           font-size: 0.75rem;
           letter-spacing: 0.05em;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         td {
@@ -93,6 +97,9 @@ export default function Table({ columns, data, emptyMessage = 'No data available
           color: var(--foreground);
           border-bottom: 1px solid var(--border);
           transition: background 0.2s ease;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         tr:last-child td {

@@ -85,8 +85,8 @@ export async function GET(request: NextRequest) {
           name: true,
           role: true,
           credits: true,
-          totalCreditsGranted: true,
-          totalCreditsConsumed: true,
+          total_credits_granted: true,
+          total_credits_consumed: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -175,13 +175,15 @@ export async function POST(request: NextRequest) {
     // Create user
     const newUser = await prisma.users.create({
       data: {
+        id: require('crypto').randomUUID(),
         email: email.toLowerCase().trim(),
         name: name || null,
         password: hashedPassword,
-        passwordHashAlgorithm: 'bcrypt',
+        password_hash_algorithm: 'bcrypt',
         role: role || 'USER',
         credits: credits || 0,
-        totalCreditsGranted: credits || 0,
+        total_credits_granted: credits || 0,
+        updatedAt: new Date(),
       },
       select: {
         id: true,
@@ -265,7 +267,7 @@ export async function PATCH(request: NextRequest) {
 
     if (newPassword) {
       updateData.password = await hashPassword(newPassword);
-      updateData.passwordHashAlgorithm = 'bcrypt';
+      updateData.password_hash_algorithm = 'bcrypt';
     }
 
     const updatedUser = await prisma.users.update({

@@ -9,24 +9,24 @@ datasource db {
 }
 
 model access_requests {
-  id        String   @id
+  id        String   @id @default(cuid())
   name      String?
   email     String
   reason    String?
   status    String   @default("pending")
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 }
 
 model archetypes {
-  id                 String               @id
+  id                 String               @id @default(cuid())
   name               String
   imageUrl           String
   layoutInstructions String
   isAdminOnly        Boolean              @default(false)
   category           String?              @default("General")
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime @updatedAt
   basePrompt         String?
   userId             String?
   users              users?               @relation(fields: [userId], references: [id])
@@ -38,7 +38,7 @@ model archetypes {
 }
 
 model channel_archetypes {
-  id          String     @id
+  id          String     @id @default(cuid())
   channelId   String
   archetypeId String
   createdAt   DateTime   @default(now())
@@ -51,7 +51,7 @@ model channel_archetypes {
 }
 
 model channels {
-  id                 String               @id
+  id                 String               @id @default(cuid())
   name               String
   personaDescription String
   personaAssetPath   String?
@@ -60,7 +60,7 @@ model channels {
   secondaryColor     String?              @default("#000000")
   tags               String?
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime @updatedAt
   userId             String?
   channel_archetypes channel_archetypes[]
   users              users?               @relation(fields: [userId], references: [id])
@@ -71,7 +71,7 @@ model channels {
 }
 
 model credit_transactions {
-  id               String   @id
+  id               String   @id @default(cuid())
   user_id          String
   transaction_type String
   amount           Int
@@ -145,12 +145,12 @@ model batch_jobs {
 }
 
 model users {
-  id                      String                @id
+  id                      String                @id @default(cuid())
   email                   String                @unique
   password                String
   name                    String?
   createdAt               DateTime              @default(now())
-  updatedAt               DateTime
+  updatedAt               DateTime @updatedAt
   role                    String                @default("USER")
   preferences             Json?
   credits                 Int                   @default(0)
@@ -165,7 +165,7 @@ model users {
 }
 
 model variant_jobs {
-  id              String           @id
+  id              String           @id @default(cuid())
   masterJobId     String?
   language        String
   translatedText  String

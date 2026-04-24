@@ -61,11 +61,11 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     if (userId) {
-      where.userId = userId;
+      where.user_id = userId;
     }
 
     if (typeFilter && ['grant', 'deduct', 'refund'].includes(typeFilter)) {
-      where.transactionType = typeFilter;
+      where.transaction_type = typeFilter;
     }
 
     // Fetch transactions with user info
@@ -74,15 +74,15 @@ export async function GET(request: NextRequest) {
         where,
         select: {
           id: true,
-          userId: true,
+          user_id: true,
           transaction_type: true,
           amount: true,
-          balanceBefore: true,
-          balanceAfter: true,
+          balance_before: true,
+          balance_after: true,
           reason: true,
-          relatedJobId: true,
-          adminId: true,
-          createdAt: true,
+          related_job_id: true,
+          admin_user_id: true,
+          created_at: true,
           users: {
             select: {
               email: true,
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
         take: limit,
         skip: offset,
       }),
@@ -101,8 +101,8 @@ export async function GET(request: NextRequest) {
     const adminUserIds = [
       ...new Set(
         transactions
-          .filter((t) => t.adminId)
-          .map((t) => t.adminId as string)
+          .filter((t) => t.admin_user_id)
+          .map((t) => t.admin_user_id as string)
       ),
     ];
 
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     // Enrich transactions with admin user info
     const enrichedTransactions = transactions.map((t) => ({
       ...t,
-      adminUser: t.adminId ? adminUserMap.get(t.adminId) : null,
+      adminUser: t.admin_user_id ? adminUserMap.get(t.admin_user_id) : null,
     }));
 
     return NextResponse.json({
