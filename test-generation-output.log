@@ -1,0 +1,37 @@
+
+Running 2 tests using 1 worker
+
+[1A[2K[1/2] [chromium] › tests\verify-generation.spec.ts:63:7 › Generation System Verification › 1. Batch Generation - CSV Upload
+[1A[2K[chromium] › tests\verify-generation.spec.ts:63:7 › Generation System Verification › 1. Batch Generation - CSV Upload
+
+
+📋 API CALLS SUMMARY:
+
+[1A[2K============================================================
+
+[1A[2K  1) [chromium] › tests\verify-generation.spec.ts:63:7 › Generation System Verification › 1. Batch Generation - CSV Upload 
+
+    Error: No test data available. Please create a channel and archetype first.
+
+      57 |
+      58 |     if (!channelId || !archetypeId) {
+    > 59 |       throw new Error('No test data available. Please create a channel and archetype first.');
+         |             ^
+      60 |     }
+      61 |   });
+      62 |
+        at C:\Users\konra\OneDrive\Projekte\20260224 Thumbnail Creator V2\tests\verify-generation.spec.ts:59:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\verify-generation-Generati-4a802-tch-Generation---CSV-Upload-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\verify-generation-Generati-4a802-tch-Generation---CSV-Upload-chromium\error-context.md
+
+    Error Context: test-results\verify-generation-Generati-4a802-tch-Generation---CSV-Upload-chromium\error-context.md
+
+
+[1A[2K[2/2] [chromium] › tests\verify-generation.spec.ts:192:7 › Generation System Verification › 2. Single Generation - Dashboard
+[1A[2K  1 failed
+    [chromium] › tests\verify-generation.spec.ts:63:7 › Generation System Verification › 1. Batch Generation - CSV Upload 
+  1 did not run

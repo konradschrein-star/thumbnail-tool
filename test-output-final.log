@@ -1,0 +1,258 @@
+
+Running 2 tests using 1 worker
+
+[1A[2K[1/2] [chromium] › tests\simple-generation-test.spec.ts:54:7 › Simple Generation Test › Batch Generation - Full Flow
+[1A[2K[chromium] › tests\simple-generation-test.spec.ts:54:7 › Simple Generation Test › Batch Generation - Full Flow
+
+🚀 Starting Batch Generation Test...
+
+
+[1A[2K   📡 GET /api/auth/session → 200
+
+[1A[2K   📡 GET /api/auth/session → 200
+
+[1A[2K   📡 GET /api/auth/providers → 200
+
+[1A[2K   📡 GET /api/auth/csrf → 200
+
+[1A[2K   📡 POST /api/auth/callback/credentials → 200
+
+[1A[2K   📡 GET /api/auth/session → 200
+
+[1A[2K✓ Logged in as admin
+
+[1A[2K
+📦 Navigating to bulk generation...
+
+[1A[2K   📡 GET /api/auth/session → 200
+
+[1A[2K   📡 GET /api/auth/session → 200
+
+[1A[2K
+🔍 Fetching available channels and archetypes...
+
+[1A[2K   Found undefined channels
+
+[1A[2K
+
+📊 API SUMMARY:
+
+[1A[2K======================================================================
+
+[1A[2KGET    /api/auth/session                   → 200
+
+[1A[2KGET    /api/auth/session                   → 200
+
+[1A[2KGET    /api/auth/providers                 → 200
+
+[1A[2KGET    /api/auth/csrf                      → 200
+
+[1A[2KPOST   /api/auth/callback/credentials      → 200
+
+[1A[2KGET    /api/auth/session                   → 200
+
+[1A[2KGET    /api/auth/session                   → 200
+
+[1A[2KGET    /api/auth/session                   → 200
+
+[1A[2K  1) [chromium] › tests\simple-generation-test.spec.ts:54:7 › Simple Generation Test › Batch Generation - Full Flow 
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      74 |     }
+      75 |
+    > 76 |     const channelId = channels[0].id;
+         |                                   ^
+      77 |     const channelName = channels[0].name;
+      78 |     console.log(`   Using channel: ${channelName} (${channelId})`);
+      79 |
+        at C:\Users\konra\OneDrive\Projekte\20260224 Thumbnail Creator V2\tests\simple-generation-test.spec.ts:76:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-generation-test-Sim-64060-atch-Generation---Full-Flow-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\simple-generation-test-Sim-64060-atch-Generation---Full-Flow-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-generation-test-Sim-64060-atch-Generation---Full-Flow-chromium\error-context.md
+
+
+[1A[2K[2/2] [chromium] › tests\simple-generation-test.spec.ts:166:7 › Simple Generation Test › Single Generation - Dashboard
+[1A[2K[chromium] › tests\simple-generation-test.spec.ts:166:7 › Simple Generation Test › Single Generation - Dashboard
+
+🎨 Starting Single Generation Test...
+
+
+[1A[2K   📡 GET /api/auth/session → 200
+
+[1A[2K   📡 GET /api/auth/session → 200
+
+[1A[2K   📡 GET /api/auth/providers → 200
+
+[1A[2K   📡 GET /api/auth/csrf → 200
+
+[1A[2K   📡 POST /api/auth/callback/credentials → 200
+
+[1A[2K   📡 GET /api/auth/session → 200
+
+[1A[2K✓ Logged in as admin
+
+[1A[2K   📡 GET /api/channels → 200
+
+[1A[2K   📡 GET /api/user/preferences → 200
+
+[1A[2K   📡 GET /api/archetypes → 200
+
+[1A[2K   📡 GET /api/history → 200
+
+[1A[2K   📡 GET /api/channels → 200
+
+[1A[2K   📡 GET /api/archetypes → 200
+
+[1A[2K   📡 GET /api/history → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-16/archetypes/1773621975690-3.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-16/archetypes/1773621925990-2.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-04-17/archetypes/ccd6c8b9-2268-4a8e-a112-2eac659ce3c0-Design_4.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-04-17/archetypes/34cb1acf-b96b-4d0e-a583-1cbc3b609e4f-Design_5.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487645673-thumbnail__17_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-16/archetypes/1773622079218-11.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-16/archetypes/1773622111839-12.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-04-17/archetypes/58327b9c-8c9e-4202-8602-29424cfd31e9-Design_3.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-16/archetypes/1773622032772-5.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-27/archetypes/a3f80498-a552-49f9-bd98-649cf76075d2-thumbnail__20_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-04-17/archetypes/cd3652ae-5a44-4992-b166-bd22e7180130-Untitled_design__2_.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-16/archetypes/1773622005406-4.png → 200
+
+[1A[2K
+
+📊 API SUMMARY:
+
+[1A[2K======================================================================
+
+[1A[2KGET    /api/auth/session                   → 200
+
+[1A[2KGET    /api/auth/session                   → 200
+
+[1A[2KGET    /api/auth/providers                 → 200
+
+[1A[2KGET    /api/auth/csrf                      → 200
+
+[1A[2KPOST   /api/auth/callback/credentials      → 200
+
+[1A[2KGET    /api/auth/session                   → 200
+
+[1A[2KGET    /api/channels                       → 200
+
+[1A[2KGET    /api/user/preferences               → 200
+
+[1A[2KGET    /api/archetypes                     → 200
+
+[1A[2KGET    /api/history                        → 200
+
+[1A[2KGET    /api/channels                       → 200
+
+[1A[2KGET    /api/archetypes                     → 200
+
+[1A[2KGET    /api/history                        → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-03-16/archetypes/1773621975690-3.png → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-03-16/archetypes/1773621925990-2.png → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-04-17/archetypes/ccd6c8b9-2268-4a8e-a112-2eac659ce3c0-Design_4.png → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-04-17/archetypes/34cb1acf-b96b-4d0e-a583-1cbc3b609e4f-Design_5.png → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-03-26/archetypes/1774487645673-thumbnail__17_.jpeg → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-03-16/archetypes/1773622079218-11.png → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-03-16/archetypes/1773622111839-12.png → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-04-17/archetypes/58327b9c-8c9e-4202-8602-29424cfd31e9-Design_3.png → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-03-16/archetypes/1773622032772-5.png → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-03-27/archetypes/a3f80498-a552-49f9-bd98-649cf76075d2-thumbnail__20_.jpeg → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-04-17/archetypes/cd3652ae-5a44-4992-b166-bd22e7180130-Untitled_design__2_.png → 200
+
+[1A[2KGET    /api/assets/users/test-user/2026-03-16/archetypes/1773622005406-4.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-16/archetypes/1773621875625-1.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-04-17/archetypes/7072d9d2-6695-4cd5-90db-be4c80181026-Design_2.png → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487948437-thumbnail__10_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774488171661-nano-banana-2_You_are_a_thumbnail_editor_since_10_years_and_an_absolute_professional_in_creati-0.jpg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487874501-thumbnail__13_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487684805-thumbnail__16_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487595847-thumbnail__20_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487536864-thumbnail__22_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487519593-thumbnail__25_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487459025-thumbnail__27_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487331410-thumbnail__33_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774488049070-thumbnail__5_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-04-17/archetypes/10be58de-fbe4-420b-9911-6f6f3f645d7b-test.jpg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774488020134-thumbnail__9_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487730268-thumbnail__15_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487797907-thumbnail__14_.jpeg → 200
+
+[1A[2K   📡 GET /api/assets/users/test-user/2026-03-26/archetypes/1774487887023-thumbnail__11_.jpeg → 200
+
+[1A[2K   📡 GET /api/channels → 200
+
+[1A[2K  2) [chromium] › tests\simple-generation-test.spec.ts:166:7 › Simple Generation Test › Single Generation - Dashboard 
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      178 |     }
+      179 |
+    > 180 |     const channelId = channels[0].id;
+          |                                   ^
+      181 |     console.log(`Using channel: ${channels[0].name}`);
+      182 |
+      183 |     const archetypesResponse = await page.request.get(`https://thumbnails.schreinercontentsystems.com/api/archetypes?channelId=${channelId}`);
+        at C:\Users\konra\OneDrive\Projekte\20260224 Thumbnail Creator V2\tests\simple-generation-test.spec.ts:180:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-generation-test-Sim-aee69-ngle-Generation---Dashboard-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\simple-generation-test-Sim-aee69-ngle-Generation---Dashboard-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-generation-test-Sim-aee69-ngle-Generation---Dashboard-chromium\error-context.md
+
+
+[1A[2K  2 failed
+    [chromium] › tests\simple-generation-test.spec.ts:54:7 › Simple Generation Test › Batch Generation - Full Flow 
+    [chromium] › tests\simple-generation-test.spec.ts:166:7 › Simple Generation Test › Single Generation - Dashboard 

@@ -55,6 +55,22 @@ export function sanitizePrompt(text: string, maxLength: number): string {
 }
 
 /**
+ * Validates prompt length to prevent API errors
+ * Google Nano Banana typically has a ~2000-3000 character limit for prompts
+ */
+export function validatePromptLength(prompt: string, maxLength: number = 2000): { valid: boolean; length: number; error?: string } {
+  const length = prompt.length;
+  if (length > maxLength) {
+    return {
+      valid: false,
+      length,
+      error: `Prompt too long (${length} characters). Maximum allowed: ${maxLength} characters.`
+    };
+  }
+  return { valid: true, length };
+}
+
+/**
  * Encodes an image to base64 and detects its MIME type.
  * Aggressively attempts local resolution for any internal paths/URLs.
  */
@@ -216,7 +232,7 @@ export function buildCondensedPrompt(
 }
 
 /**
- * Builds the comprehensive text prompt that will be sent to the generation engine.
+ * Builds a concise prompt for image generation (optimized for API limits)
  */
 export function buildFullPrompt(
   channel: any,
@@ -225,28 +241,31 @@ export function buildFullPrompt(
   includeBrandColors: boolean,
   includePersona: boolean
 ): string {
-  const topic = sanitizePrompt(job.videoTopic, 150);
-  const text = sanitizePrompt(job.thumbnailText, 80);
+  const topic = sanitizePrompt(job.videoTopic, 100);
+  const text = sanitizePrompt(job.thumbnailText, 50);
   const brand = getBrandingContext(job.videoTopic, channel);
-  const archetypeStyle = sanitizePrompt(archetype.basePrompt || archetype.layoutInstructions || '', 2000);
 
-  return `You are an expert YouTube thumbnail designer with 10 years of experience. Your task is to adapt the thumbnail style, typography, and stylistic devices to perfectly match the target audience.
+  // Build concise style instruction (max 200 chars from archetype)
+  const styleHint = sanitizePrompt(archetype.basePrompt || archetype.layoutInstructions || 'modern YouTube thumbnail style', 200);
 
-## Text Instructions
-**Step 1**: Analyze the reference image for the presence of text or typography.
-- **IF YES**: Render this text clearly: ${text || 'DO NOT RENDER ANY TEXT'}. Ensure it is highly legible, matches modern YouTube aesthetics, and uses ALL CAPS or Title Case consistently. Apply thick outer strokes or heavy drop shadows like in the reference image to create depth and maximum contrast.
-- **IF NO**: Do not render any additional text, characters, or letters. Maintain the text-free composition of the reference.
+  // Build persona section (max 300 chars)
+  const personaSection = includePersona && channel.personaDescription
+    ? `Character: ${sanitizePrompt(channel.personaDescription, 300)}.`
+    : '';
 
-## Technical Instructions
-- **REFERENCE USAGE**: Use the provided reference image as the core style and layout inspiration. Maintain the general composition, object placement, and background style of the reference. Maintain vibrant high-contrast lighting and dramatic rim lighting on the subject.
-- **ARCHETYPE STYLE**: ${archetypeStyle}
-- **COLOR THEORY**: Utilize the topic's identity colors (e.g., PowerPoint = Orange/Red) to dominate the scene. **Ensure there is strong visual contrast and depth to keep elements separated and professional. Do not allow similar colors to blend together into a flat mess.** ${includeBrandColors ? `Harmonically integrate ${brand.primaryColor} and ${brand.secondaryColor} as high-contrast accents.` : ''}
-- **LOGOS**: Integrate official topic-related logos where appropriate. Ensure they are vibrant and clearly visible.
+  // Build color section
+  const colorSection = includeBrandColors
+    ? `Colors: ${brand.primaryColor} and ${brand.secondaryColor}.`
+    : '';
 
-## Persona Instructions
-**Step 2**: Analyze the reference image for the presence of a person or character.
-- **IF YES**: ${includePersona && channel.personaDescription ? `RETAIN the lighting, pose, and exact facial expression (e.g., wide eyes, open mouth, intense focus, thinking face) from the reference image, but COMPLETELY IGNORE the original person's facial features, bone structure, and identity. Entirely replace their identity with this Persona: [${sanitizePrompt(channel.personaDescription, 1000)}]` : 'Render a high-quality human subject matching the reference pose and expression.'}
-- **IF NO**: Maintain the person-free composition of the reference image. Do not add any people, faces, or silhouettes.`;
+  // Concise, focused prompt
+  return `Create a YouTube thumbnail matching the reference image style.
+Topic: "${topic}"
+Text to display: "${text}"
+Style: ${styleHint}
+${personaSection}
+${colorSection}
+Match the reference image's composition, lighting, and visual style. Use vibrant colors and high contrast.`.trim();
 }
 
 /**

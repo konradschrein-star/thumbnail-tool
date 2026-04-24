@@ -74,12 +74,23 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
       data: { status: 'processing' },
     });
 
-    // Build prompt
-    const fullPrompt =
-      customPrompt ||
-      `${channel.personaDescription}\n\n${archetype.layoutInstructions}\n\nVideo Topic: ${videoTopic}\nThumbnail Text: ${sanitizePrompt(thumbnailText, 200)}`;
+    // Build prompt using simplified prompt builder
+    const { buildFullPrompt, validatePromptLength } = require('../payload-engine');
+    const fullPrompt = customPrompt || buildFullPrompt(
+      channel,
+      archetype,
+      { videoTopic, thumbnailText, customPrompt },
+      true, // includeBrandColors
+      true  // includePersona
+    );
 
-    console.log('   → Generating image...');
+    // Validate prompt length before attempting generation
+    const validation = validatePromptLength(fullPrompt, 2000);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
+
+    console.log(`   → Generating image... (prompt: ${validation.length} chars)`);
 
     // Generate image with archetype reference URL
     const generationResult = await generator.generateImage({

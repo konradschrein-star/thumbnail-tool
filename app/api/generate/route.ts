@@ -4,6 +4,7 @@ import { getApiAuth } from '@/lib/api-auth';
 import * as CreditService from '@/lib/credit-service';
 import { getUserLimiter } from '@/lib/rate-limiter';
 import { thumbnailQueue } from '@/lib/queue/thumbnail-queue';
+import { buildFullPrompt, validatePromptLength } from '@/lib/payload-engine';
 
 export async function POST(request: NextRequest) {
   const authResult = await getApiAuth(request);
@@ -164,6 +165,27 @@ export async function POST(request: NextRequest) {
     // FINAL GUARD: Enforce Admin-Only archetypes
     if (archetype.isAdminOnly && (userRole !== 'ADMIN' || isTestUser)) {
       return NextResponse.json({ error: 'Unauthorized archetype usage. This style is restricted to administrators.' }, { status: 403 });
+    }
+
+    // Validate prompt length before queueing jobs
+    const testPrompt = customPrompt || buildFullPrompt(
+      channel,
+      archetype,
+      { videoTopic, thumbnailText, customPrompt },
+      includeBrandColors,
+      includePersona
+    );
+
+    const promptValidation = validatePromptLength(testPrompt, 2000);
+    if (!promptValidation.valid) {
+      return NextResponse.json(
+        {
+          error: 'Prompt is too long',
+          details: promptValidation.error,
+          suggestion: 'Try shortening the video topic, thumbnail text, or persona description.'
+        },
+        { status: 400 }
+      );
     }
 
     // Deduct credits upfront for non-admins
