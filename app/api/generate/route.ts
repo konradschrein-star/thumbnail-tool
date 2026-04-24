@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import * as payloadEngine from '@/lib/payload-engine';
-import * as generationService from '@/lib/generation-service';
-import * as r2Service from '@/lib/r2-service';
 import { getApiAuth } from '@/lib/api-auth';
-import { EMERGENCY_CHANNELS, EMERGENCY_ARCHETYPES } from '@/lib/emergency-data';
 import * as CreditService from '@/lib/credit-service';
-import { getRotatedApiKey } from '@/lib/api-keys';
 import { getUserLimiter } from '@/lib/rate-limiter';
-import { createUnifiedGeneratorFromEnv } from '@/lib/ai/image-generator';
+import { thumbnailQueue } from '@/lib/queue/thumbnail-queue';
 
 export async function POST(request: NextRequest) {
   const authResult = await getApiAuth(request);
@@ -40,6 +35,7 @@ export async function POST(request: NextRequest) {
       }
     );
   }
+
   const userEmail = authResult.user.email || 'test@titan.ai';
   const userRole = authResult.user.role || 'USER';
   const isSuperuser = authResult.user.isSuperuser || false;
@@ -83,7 +79,6 @@ export async function POST(request: NextRequest) {
 
     const rawCount = parseInt(String(versionCount), 10);
     const count = Math.min(Math.max(isNaN(rawCount) ? 1 : rawCount, 1), 4);
-    const results = [];
 
     // Credit system: Non-admins must have sufficient credits
     let creditsRemaining: number | null = null;
@@ -125,7 +120,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate that channel and archetype exist (no silent fallbacks)
+    // Validate that channel and archetype exist
     if (!channel) {
       return NextResponse.json(
         { error: 'Channel not found. Please select a valid channel.' },
@@ -144,7 +139,6 @@ export async function POST(request: NextRequest) {
     if (userRole !== 'ADMIN') {
       // Check channel ownership
       if (channel.userId !== userId) {
-        // Log security event server-side (don't expose details to client)
         console.error(`[Security] Unauthorized channel access attempt - User: ${userId}, Channel: ${channelId} (${channel.name}), Owner: ${channel.userId}`);
         return NextResponse.json(
           { error: 'Forbidden: Access denied' },
@@ -159,7 +153,6 @@ export async function POST(request: NextRequest) {
       });
 
       if (archetype.userId !== userId && archetype.userId !== testUser?.id) {
-        // Log security event server-side (don't expose details to client)
         console.error(`[Security] Unauthorized archetype access attempt - User: ${userId}, Archetype: ${archetypeId} (${archetype.name}), Owner: ${archetype.userId}`);
         return NextResponse.json(
           { error: 'Forbidden: Access denied' },
@@ -168,31 +161,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // FINAL GUARD: Enforce Admin-Only archetypes at the generation layer
-    // This prevents direct API manipulation by non-admins or the test account
+    // FINAL GUARD: Enforce Admin-Only archetypes
     if (archetype.isAdminOnly && (userRole !== 'ADMIN' || isTestUser)) {
       return NextResponse.json({ error: 'Unauthorized archetype usage. This style is restricted to administrators.' }, { status: 403 });
     }
 
-    // Deduct credits upfront for non-admins using atomic service
+    // Deduct credits upfront for non-admins
     let creditsDeducted = 0;
-    const jobIds: string[] = [];
 
     if (shouldDeductCredits) {
       try {
-        // Use atomic credit deduction to prevent race conditions
         creditsRemaining = await CreditService.deductCreditsForJob(
           userId,
           count,
           `Deducted ${count} credits for ${count} thumbnail generation(s): ${videoTopic}`,
-          null // relatedJobId will be set when jobs are created
+          null
         );
-
         creditsDeducted = count;
       } catch (error) {
         console.error('Credit deduction failed:', error);
 
-        // Handle insufficient credits error specifically
         if (error instanceof CreditService.InsufficientCreditsError) {
           return NextResponse.json(
             {
@@ -212,30 +200,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build base payload using the engine's data-driven approach
-    // If the user modified the draft in the UI, we just use that directly!
-    const fullUserPrompt = customPrompt || payloadEngine.buildFullPrompt(channel as any, archetype as any, { videoTopic, thumbnailText }, includeBrandColors, includePersona);
+    console.log(`\n🎨 Queueing ${count} thumbnail generation(s) for user ${userEmail}`);
 
-    const payload: payloadEngine.AIRequestPayload = {
-      systemPrompt: "You are an expert AI image generator fine-tuned for high-CTR YouTube thumbnails.",
-      userPrompt: fullUserPrompt,
-      base64Images: {
-        archetype: await payloadEngine.encodeImageToBase64(archetype.imageUrl),
-        persona: (includePersona && (channel as any).personaAssetPath)
-          ? await payloadEngine.encodeImageToBase64((channel as any).personaAssetPath)
-          : undefined,
-      },
-    };
-
-    // Track successful and failed generations for refund calculation
-    let successfulGenerations = 0;
-    let failedGenerations = 0;
+    // Create jobs and queue them asynchronously
+    const jobIds: string[] = [];
+    const jobs: any[] = [];
 
     for (let i = 0; i < count; i++) {
-      // Create initial job record - fail fast if database is unavailable
-      let job;
       try {
-        job = await prisma.generation_jobs.create({
+        // Create generation job with 'pending' status
+        const job = await prisma.generation_jobs.create({
           data: {
             channelId,
             archetypeId,
@@ -244,157 +218,75 @@ export async function POST(request: NextRequest) {
             thumbnailText,
             customPrompt,
             isManual: true,
-            status: 'processing',
-            credits_deducted: shouldDeductCredits ? 1 : null // Track credit usage per job (snake_case to match schema)
+            status: 'pending',
+            credits_deducted: shouldDeductCredits ? 1 : null,
           },
         } as any);
-        jobIds.push(job.id);
-      } catch (dbError) {
-        console.error('Database error: Failed to create job record:', dbError);
 
-        // Fail fast - do not proceed with generation if we can't track it
-        // This prevents orphaned images and ensures data consistency
-        return NextResponse.json(
+        // Queue the job for async processing
+        await thumbnailQueue.add(
+          'thumbnail-generation',
           {
-            error: 'Database unavailable. Please try again in a moment.',
-            technicalDetails: 'Failed to create job record'
+            jobId: job.id,
+            channelId,
+            archetypeId,
+            videoTopic,
+            thumbnailText,
+            customPrompt,
+            includeBrandColors,
+            includePersona,
           },
-          { status: 503 }
+          {
+            jobId: job.id,
+          }
         );
-      }
 
-      try {
-        // Use unified generator with AI33 → Google fallback
-        const generator = createUnifiedGeneratorFromEnv();
+        jobIds.push(job.id);
+        jobs.push(job);
+        console.log(`   ✓ Queued job ${i + 1}/${count}: ${job.id}`);
+      } catch (error) {
+        console.error(`Failed to create/queue job ${i + 1}:`, error);
 
-        // Use condensed prompt for AI33 (strict length limits)
-        const condensedPrompt = payloadEngine.buildCondensedPrompt(channel as any, archetype as any, { videoTopic, thumbnailText });
-
-        // Convert relative URLs to full URLs if needed
-        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3072';
-        const archetypeUrl = archetype.imageUrl.startsWith('http')
-          ? archetype.imageUrl
-          : `${baseUrl}${archetype.imageUrl}`;
-        const personaUrl = (includePersona && (channel as any).personaAssetPath)
-          ? ((channel as any).personaAssetPath.startsWith('http')
-              ? (channel as any).personaAssetPath
-              : `${baseUrl}${(channel as any).personaAssetPath}`)
-          : undefined;
-
-        const result = await generator.generateImage({
-          prompt: condensedPrompt,
-          referenceImageUrl: archetypeUrl,
-          personaImageUrl: personaUrl
-        });
-        const { buffer: imageBuffer, fallbackUsed, provider } = result;
-        const fallbackMessage = result.fallbackMessage || (provider === 'google' ? 'Used Google fallback' : undefined);
-        const creditMultiplier = 1; // AI33 uses same credit cost
-
-        // If OG model was used (3x more expensive), deduct additional 2 credits
-        let additionalCreditsDeducted = 0;
-        if (shouldDeductCredits && creditMultiplier > 1) {
-          const additionalCredits = creditMultiplier - 1; // e.g., 3 - 1 = 2 additional credits
-          try {
-            creditsRemaining = await CreditService.deductCreditsForJob(
-              userId,
-              additionalCredits,
-              `Additional ${additionalCredits} credit(s) for expensive fallback model (${provider})`,
-              job.id
-            );
-            additionalCreditsDeducted = additionalCredits;
-            creditsDeducted += additionalCredits;
-            console.log(`   💳 Deducted ${additionalCredits} additional credit(s) for ${provider} (total: ${creditMultiplier} credits)`);
-          } catch (creditError) {
-            console.error('Failed to deduct additional credits for expensive model:', creditError);
-            // Continue anyway - primary credit was already deducted
-          }
-        }
-
-        // Upload to R2 (Mandatory for Vercel)
-        const filename = `gen_${job.id}.png`;
-        const outputUrl = await r2Service.uploadToR2(imageBuffer, filename, 'image/png', userEmail);
-
-        // Retry logic for job status update
-        let updatedJob = null;
-        let retryCount = 0;
-        const maxRetries = 2;
-
-        while (retryCount <= maxRetries && !updatedJob) {
-          try {
-            updatedJob = await prisma.generation_jobs.update({
-              where: { id: job.id },
-              data: {
-                status: 'completed',
-                outputUrl,
-                promptUsed: `${payload.systemPrompt}\n\n${payload.userPrompt}${fallbackUsed ? `\n\n[FALLBACK TRIGGERED: ${fallbackMessage}]` : ''}`,
-                completedAt: new Date(),
-                credits_deducted: shouldDeductCredits ? creditMultiplier : null
-              },
-            } as any);
-          } catch (dbError) {
-            retryCount++;
-            console.error(`DB job update (complete) failed (attempt ${retryCount}/${maxRetries + 1}):`, dbError);
-
-            if (retryCount <= maxRetries) {
-              // Wait 1 second before retry
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            } else {
-              // All retries exhausted - log for manual recovery
-              console.error(`CRITICAL: Job ${job.id} completed but failed to update DB after ${maxRetries + 1} attempts. Image exists at ${outputUrl}`);
-            }
-          }
-        }
-
-        if (updatedJob) {
-          results.push({ ...updatedJob, fallbackUsed, fallbackMessage });
-          successfulGenerations++;
-        } else {
-          // Fallback: return job data even though DB update failed
-          results.push({ ...job, status: 'completed', outputUrl, fallbackUsed, fallbackMessage });
-          successfulGenerations++;
-        }
-      } catch (error: any) {
-        console.error(`Version ${i} failed:`, error);
-        failedGenerations++;
-
-        try {
+        // If queueing fails, mark job as failed if it was created
+        if (jobs[i]) {
           await prisma.generation_jobs.update({
-            where: { id: job.id },
-            data: { status: 'failed', errorMessage: error.message },
-          } as any);
-        } catch (dbError) {
-          console.error('DB job update (failed) failed:', dbError);
+            where: { id: jobs[i].id },
+            data: {
+              status: 'failed',
+              errorMessage: 'Failed to queue job',
+            },
+          }).catch(err => console.error('Failed to update failed job:', err));
         }
-
-        if (count === 1) throw error;
-        results.push({ id: job.id, status: 'failed', errorMessage: error.message });
       }
     }
 
-    // NO REFUNDS - Credits deducted regardless of success/failure
-    // This prevents exploitation and keeps the system simple
-    // Failed generations are logged but credits are not refunded
+    if (jobIds.length === 0) {
+      return NextResponse.json(
+        { error: 'Failed to queue any jobs' },
+        { status: 500 }
+      );
+    }
+
+    console.log(`✓ Successfully queued ${jobIds.length}/${count} jobs`);
 
     const response: any = {
       success: true,
-      jobs: results,
-      job: results[0],
+      jobs: jobs,
+      job: jobs[0],
+      message: `Queued ${jobIds.length} thumbnail generation job(s). They will complete in the background.`,
+      jobIds: jobIds,
     };
 
     // Include credit info for non-admins
     if (shouldDeductCredits) {
       response.creditsRemaining = creditsRemaining;
-      response.creditsDeducted = creditsDeducted; // Full amount deducted, no refunds
+      response.creditsDeducted = creditsDeducted;
     }
 
     return NextResponse.json(response);
   } catch (error: any) {
     console.error('Generation Error (Top Level):', error);
 
-    // NO REFUNDS - Credits are deducted regardless of outcome
-    // Log the error but don't refund to prevent exploitation
-
-    // Handle insufficient credits error with custom response
     if (error instanceof CreditService.InsufficientCreditsError) {
       return NextResponse.json(
         {
@@ -407,7 +299,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure we do not leak full stack traces in the 500 response
     const errorMessage = error instanceof Error
       ? error.message
       : 'An unexpected error occurred during generation';

@@ -9,6 +9,8 @@ export interface ThumbnailJobData {
   videoTopic: string;
   thumbnailText: string;
   customPrompt?: string;
+  includeBrandColors?: boolean;
+  includePersona?: boolean;
 }
 
 export const thumbnailQueue = new Queue<ThumbnailJobData>('thumbnail-generation', {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { BlurFade } from '../ui/blur-fade';
 import { BorderBeam } from '../ui/border-beam';
 import { ShimmerButton } from '../ui/shimmer-button';
@@ -31,6 +31,7 @@ interface GenerateFormProps {
 }
 
 export default function GenerateForm({ initialData }: GenerateFormProps) {
+  const router = useRouter();
   const { channels } = useChannels();
   const [selectedChannelId, setSelectedChannelId] = useState(initialData?.channelId || '');
   const { archetypes } = useArchetypes(selectedChannelId);
@@ -229,6 +230,9 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
         includeBrandColors,
         includePersona,
       });
+
+      // Redirect to history page after successfully queueing jobs
+      router.push('/dashboard?tab=history');
     } catch (err) {
       // Error is handled by useGenerate hook
     }
