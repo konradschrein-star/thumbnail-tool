@@ -131,9 +131,12 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
     return () => clearTimeout(timer);
   }, [selectedChannelId, archetypeId, videoTopic, thumbnailText, includeBrandColors, includePersona]);
 
-  // Reset archetype when channel changes
+  // Reset form fields when channel changes (prevent state bleeding across channels)
   useEffect(() => {
     setArchetypeId('');
+    setVideoTopic('');
+    setThumbnailText('');
+    setDraftPrompt('');
   }, [selectedChannelId]);
 
   // V32: Implement State Persistence via sessionStorage

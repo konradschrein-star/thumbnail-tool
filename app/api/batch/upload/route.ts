@@ -276,6 +276,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate prompt lengths for all rows before creating batch
+    const { buildFullPrompt, validatePromptLength } = await import('@/lib/payload-engine');
+    const promptValidationErrors: { row: number; error: string; length: number }[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const channel = channels.find(c => c.id === row.channelId);
+      const archetype = archetypes.find(a => a.id === row.archetypeId);
+
+      if (!channel || !archetype) continue; // Already validated above
+
+      // Build the full prompt as it will be in the worker
+      let testPrompt = buildFullPrompt(
+        channel,
+        archetype,
+        { videoTopic: row.videoTopic, thumbnailText: row.thumbnailText, customPrompt: row.customPrompt },
+        true, // includeBrandColors
+        true  // includePersona
+      );
+
+      // Add custom prompt if provided
+      if (row.customPrompt && row.customPrompt.trim()) {
+        testPrompt += `\n\nAdditional Style Instructions: ${row.customPrompt.trim()}`;
+      }
+
+      const validation = validatePromptLength(testPrompt, 2000);
+      if (!validation.valid) {
+        promptValidationErrors.push({
+          row: i + 1,
+          error: validation.error || 'Prompt too long',
+          length: validation.length
+        });
+      }
+    }
+
+    if (promptValidationErrors.length > 0) {
+      const errorDetails = promptValidationErrors
+        .slice(0, 5) // Show first 5 errors
+        .map(e => `Row ${e.row}: ${e.length} chars`)
+        .join('; ');
+
+      return NextResponse.json(
+        {
+          error: `${promptValidationErrors.length} row(s) have prompts that are too long`,
+          details: errorDetails + (promptValidationErrors.length > 5 ? `... and ${promptValidationErrors.length - 5} more` : ''),
+          suggestion: 'Shorten video topics, thumbnail text, or remove custom prompts. Maximum prompt length: 2000 characters.'
+        },
+        { status: 400 }
+      );
+    }
+
     // Create batch job and deduct credits atomically (for non-admins)
     let batchJob;
 
