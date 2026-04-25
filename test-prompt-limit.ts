@@ -24,7 +24,10 @@ async function testPromptLength(promptLength: number): Promise<boolean> {
 
     // Generate a prompt of specific length
     const basePrompt = "Create a YouTube thumbnail showing ";
-    const filler = "a very detailed and interesting scene with lots of specific details about the content ".repeat(100);
+    // Generate enough filler to reach any length
+    const fillerUnit = "a very detailed and interesting scene with lots of specific details about the content ";
+    const repeats = Math.ceil((promptLength - basePrompt.length) / fillerUnit.length) + 10;
+    const filler = fillerUnit.repeat(repeats);
     const prompt = (basePrompt + filler).slice(0, promptLength);
 
     console.log(`\n📝 Testing prompt length: ${prompt.length} characters`);

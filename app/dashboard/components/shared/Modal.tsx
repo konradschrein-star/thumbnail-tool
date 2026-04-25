@@ -78,10 +78,11 @@ export default function Modal({
           background-color: rgba(0, 0, 0, 0.75);
           backdrop-filter: blur(8px);
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: center;
           z-index: 1000;
-          padding: 1rem;
+          padding: 2rem 1rem;
+          overflow-y: auto;
           animation: fade-in 0.2s ease;
         }
 
