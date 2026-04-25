@@ -18,14 +18,12 @@ module.exports = {
     },
     {
       name: 'thumbnail-worker',
-      script: 'npx',
-      args: 'tsx worker.ts',
+      script: './start-worker.sh',
       cwd: '/opt/thumbnail-generator',
       env: {
         NODE_ENV: 'production',
         WORKER_CONCURRENCY: 2, // Process 2 jobs concurrently
       },
-      env_file: '.env',
       instances: 1,
       autorestart: true,
       watch: false,
