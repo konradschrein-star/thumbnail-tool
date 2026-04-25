@@ -306,7 +306,7 @@ export default function TranslatePage() {
                     onClick={handleTranslate}
                     disabled={loading || !canTranslate}
                     className="translate-btn"
-                    background="#ffffff"
+                    background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                   >
                     {loading ? (
                       <>

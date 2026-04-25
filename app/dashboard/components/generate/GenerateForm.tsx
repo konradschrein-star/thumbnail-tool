@@ -263,74 +263,7 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
         </div>
       </BlurFade>
 
-      {success && result ? (
-        <div className="success-wrapper">
-          <BlurFade delay={0.2} direction="up">
-            <div className="success-container glass-dark">
-              <div className="success-header">
-                <div className="check-icon"><CheckCircle2 size={32} /></div>
-                <h3>Success!</h3>
-                <p>Your premium thumbnail{result.jobs && result.jobs.length > 1 ? 's have' : ' has'} been generated.</p>
-              </div>
-
-              {(result.jobs || [result.job]).some(job => job.fallbackUsed) && (
-                <div className="fallback-warning-banner glass-dark">
-                  <div className="warning-icon">
-                    <Zap size={20} />
-                  </div>
-                  <div>
-                    <strong className="warning-title">High Demand Fallback Triggered</strong>
-                    <p className="warning-message">
-                      {(result.jobs || [result.job]).find(job => job.fallbackUsed)?.fallbackMessage || "Nano Banana Pro was busy. We successfully fell back to Nano Banana 2 (Flash Image)."}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className={`result-preview-grid ${result.jobs && result.jobs.length > 1 ? 'multi' : 'single'}`}>
-                {(result.jobs || [result.job]).map((job, idx) => (
-                  <div key={job.id || idx} className="result-item glass">
-                    <img
-                      src={job.outputUrl}
-                      alt={`Generated thumbnail ${idx + 1}`}
-                      className="generated-image"
-                    />
-                    <div className="result-actions-overlay">
-                      <Button
-                        size="small"
-                        variant="secondary"
-                        onClick={() => handleDownload(job.outputUrl, idx)}
-                        className="action-btn"
-                      >
-                        <Zap size={14} style={{ marginRight: '0.4rem' }} /> Download
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="secondary"
-                        onClick={() => window.open(job.outputUrl, '_blank')}
-                        className="action-btn"
-                      >
-                        <Layout size={14} style={{ marginRight: '0.4rem' }} /> Full Size
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="success-actions">
-                <Button variant="secondary" onClick={handleRedo} disabled={loading}>
-                  {loading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} style={{ marginRight: '0.6rem' }} />}
-                  Redo Batch
-                </Button>
-                <ShimmerButton onClick={handleReset} background="#ffffff" className="success-shimmer">
-                  New Generation
-                </ShimmerButton>
-              </div>
-            </div>
-          </BlurFade>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="form-wrapper">
+      <form onSubmit={handleSubmit} className="form-wrapper">
           {error && <ErrorMessage message={error} onDismiss={() => reset()} />}
 
           <div className="form-grid">
@@ -579,7 +512,6 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
             </BlurFade>
           </div>
         </form>
-      )}
 
       <style jsx>{`
         .generate-container {
