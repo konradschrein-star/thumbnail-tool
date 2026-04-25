@@ -60,22 +60,32 @@ export class UnifiedImageGenerator {
    * Tries AI33 first, falls back to Google Gemini if needed
    */
   async generateImage(request: GoogleImageGenerationRequest): Promise<GenerationResult> {
-    console.log('🎨 Starting image generation with fallback strategy...');
+    console.log('🎨 Starting image generation with AI33 as primary provider...');
 
-    // Skip AI33 if reference images are provided (AI33 doesn't support them)
-    const hasReferenceImages = !!(request.referenceImageUrl || request.personaImageUrl || request.logoImageUrl);
-    if (hasReferenceImages) {
-      console.log('   ⚠️ Reference images detected - skipping AI33, using Google Gemini directly');
+    // Collect reference images for AI33
+    const referenceImages: string[] = [];
+    if (request.referenceImageUrl) {
+      referenceImages.push(request.referenceImageUrl);
+      console.log(`   📎 Archetype reference: ${request.referenceImageUrl}`);
+    }
+    if (request.personaImageUrl) {
+      referenceImages.push(request.personaImageUrl);
+      console.log(`   📎 Persona reference: ${request.personaImageUrl}`);
+    }
+    if (request.logoImageUrl) {
+      referenceImages.push(request.logoImageUrl);
+      console.log(`   📎 Logo reference: ${request.logoImageUrl}`);
     }
 
-    // Try AI33 first if available and no reference images
-    if (this.useAI33 && this.ai33Client && !hasReferenceImages) {
+    // Try AI33 first if available (ALWAYS PRIMARY)
+    if (this.useAI33 && this.ai33Client) {
       try {
-        console.log('   → Attempting AI33 generation (low-cost provider)...');
+        console.log('   → Attempting AI33 generation (primary provider with reference images)...');
         const buffer = await this.ai33Client.generateImage({
           prompt: request.prompt,
           width: 1280,
           height: 720,
+          referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
         });
 
         console.log('✓ AI33 generation successful');

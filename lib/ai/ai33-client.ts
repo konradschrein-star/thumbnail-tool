@@ -12,6 +12,7 @@ export interface AI33GenerationRequest {
   prompt: string;
   width?: number;
   height?: number;
+  referenceImages?: string[]; // Array of local file paths or URLs for reference images
 }
 
 export interface AI33ClientConfig {
@@ -78,6 +79,7 @@ export class AI33Client {
     const taskId = await this.submitGenerationRequest({
       prompt: request.prompt,
       aspectRatio,
+      referenceImages: request.referenceImages,
     });
 
     console.log(`   Task ID: ${taskId}`);
@@ -116,16 +118,36 @@ export class AI33Client {
   private async submitGenerationRequest(params: {
     prompt: string;
     aspectRatio: string;
+    referenceImages?: string[];
   }): Promise<string> {
     try {
       const formData = new FormData();
-      formData.append('prompt', params.prompt);
+
+      // Build prompt with @img references if reference images are provided
+      let finalPrompt = params.prompt;
+      if (params.referenceImages && params.referenceImages.length > 0) {
+        // Add @img1 reference for archetype
+        finalPrompt = `Create a YouTube thumbnail matching the style and layout of @img1. ${params.prompt}`;
+      }
+
+      formData.append('prompt', finalPrompt);
       formData.append('model_id', 'bytedance-seedream-4.5');
       formData.append('generations_count', '1');
       formData.append('model_parameters', JSON.stringify({
         aspect_ratio: params.aspectRatio,
         resolution: '2K',
       }));
+
+      // Attach reference images as assets
+      if (params.referenceImages && params.referenceImages.length > 0) {
+        const fs = await import('fs');
+        for (const imagePath of params.referenceImages) {
+          const imageBuffer = fs.readFileSync(imagePath);
+          const blob = new Blob([imageBuffer], { type: 'image/png' });
+          formData.append('assets', blob, 'reference.png');
+          console.log(`   📎 Attached reference image: ${imagePath}`);
+        }
+      }
 
       const response = await fetch(`${this.baseUrl}/v1i/task/generate-image`, {
         method: 'POST',
