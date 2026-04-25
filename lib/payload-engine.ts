@@ -254,14 +254,13 @@ export function buildFullPrompt(
 
 CRITICAL RULES:
 1. TEXT REPLACEMENT: ${textRule}
-2. TOPIC CHANGE: The thumbnail is about "${topic}". Completely disregard and replace any subject or topic from the reference thumbnail.
+2. TOPIC CHANGE: The thumbnail is about "${topic}". Completely disregard and replace any unrelated subject or topic from the reference thumbnail.
 3. CHARACTER REPLACEMENT: ${includePersona && channel.personaDescription ? `Replace any character in the reference image with this character: ${sanitizePrompt(channel.personaDescription, 300)}. Match their pose and position.` : 'If the reference has a character, keep the same pose and style but update to match the new topic. If no character exists, do not add one.'}
-4. PLACEHOLDERS & INSTRUCTIONS: If there are instructions in the reference image, follow them. Replace placeholder text like "Logo", "Add text here", "Picture of UI", etc. with actual content matching the topic. Do NOT copy placeholder text literally.
+4. PLACEHOLDERS & INSTRUCTIONS: If there are instructions in the reference image, follow them. Replace placeholder text with actual content matching the topic. Do NOT copy placeholder text literally.
 
-Style: ${styleHint}
-${colorSection}
+Style: Ensure an extremely premium, high-end visual aesthetic. It should look highly curated, flawless, and exclusive.
 
-Match the reference image's composition, lighting, color scheme, and visual energy. Use vibrant colors and high contrast.`.trim();
+Match the reference image's composition, lighting, color scheme (topic adjusted), and visual energy. Use vibrant colors and high contrast.`.trim();
 }
 
 /**
