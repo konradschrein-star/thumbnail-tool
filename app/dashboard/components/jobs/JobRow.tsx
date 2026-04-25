@@ -98,7 +98,22 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
 
   return (
     <>
-      <tr className="job-row">
+      <tr
+        className="job-row"
+        onDoubleClick={(e) => {
+          // Don't navigate if clicking on a button or checkbox
+          const target = e.target as HTMLElement;
+          if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.closest('button')) {
+            return;
+          }
+
+          // Only navigate to detail page if job is completed
+          if (job.status === 'completed') {
+            window.location.href = `/dashboard/job/${job.id}`;
+          }
+        }}
+        style={{ cursor: job.status === 'completed' ? 'pointer' : 'default' }}
+      >
         <td className="checkbox-cell">
           <input
             type="checkbox"
