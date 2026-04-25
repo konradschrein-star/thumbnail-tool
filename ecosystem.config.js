@@ -18,8 +18,8 @@ module.exports = {
     },
     {
       name: 'thumbnail-worker',
-      script: 'npm',
-      args: 'run worker',
+      script: 'npx',
+      args: 'tsx worker.ts',
       cwd: '/opt/thumbnail-generator',
       env: {
         NODE_ENV: 'production',
