@@ -55,7 +55,7 @@ export default function useChannels() {
         throw new Error(data.error || 'Failed to fetch channels');
       }
 
-      setChannels(data.channels);
+      setChannels(data);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch channels');
     } finally {

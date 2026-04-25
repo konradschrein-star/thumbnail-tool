@@ -61,7 +61,7 @@ export default function useArchetypes(channelId?: string) {
         throw new Error(data.error || 'Failed to fetch archetypes');
       }
 
-      setArchetypes(data.archetypes);
+      setArchetypes(data);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch archetypes');
     } finally {
