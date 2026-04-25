@@ -26,6 +26,98 @@ export default function JobDetailView({ jobId }: JobDetailViewProps) {
   const [selectedArchetypeId, setSelectedArchetypeId] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
 
+  // Action state
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [showIterateModal, setShowIterateModal] = useState(false);
+  const [iterateRequest, setIterateRequest] = useState('');
+  const [isIterating, setIsIterating] = useState(false);
+
+  // Handler functions
+  const handleRegenerate = async () => {
+    // Validate form
+    if (!videoTopic.trim() || !thumbnailText.trim() || !selectedChannelId || !selectedArchetypeId) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setIsRegenerating(true);
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channelId: selectedChannelId,
+          archetypeId: selectedArchetypeId,
+          videoTopic: videoTopic.trim(),
+          thumbnailText: thumbnailText.trim(),
+          customPrompt: customPrompt.trim() || undefined,
+          versionCount: 1,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to queue job');
+      }
+
+      const result = await response.json();
+      alert('Job queued successfully!');
+      router.push('/dashboard?tab=history');
+    } catch (error) {
+      console.error('Regenerate error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to regenerate');
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const handleIterate = async () => {
+    if (!iterateRequest.trim()) {
+      alert('Please describe what you want to change');
+      return;
+    }
+
+    if (!job?.outputUrl) {
+      alert('No thumbnail to iterate on');
+      return;
+    }
+
+    setIsIterating(true);
+
+    try {
+      const response = await fetch('/api/generate/iterate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originalJobId: job.id,
+          referenceImageUrl: job.outputUrl,
+          changeRequest: iterateRequest.trim(),
+          channelId: selectedChannelId,
+          archetypeId: selectedArchetypeId,
+          videoTopic: videoTopic.trim(),
+          thumbnailText: thumbnailText.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to queue iteration');
+      }
+
+      const result = await response.json();
+      alert('Iteration queued successfully!');
+      setShowIterateModal(false);
+      setIterateRequest('');
+      router.push('/dashboard?tab=history');
+    } catch (error) {
+      console.error('Iterate error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to iterate');
+    } finally {
+      setIsIterating(false);
+    }
+  };
+
   // Fetch job details
   useEffect(() => {
     async function fetchJob() {
@@ -236,17 +328,66 @@ export default function JobDetailView({ jobId }: JobDetailViewProps) {
             <small>Character count: {customPrompt.length} / 2000</small>
           </div>
 
-          {/* Action Buttons - Placeholders for now, will be implemented in Task 8 */}
+          {/* Action Buttons */}
           <div className="form-actions">
-            <Button variant="secondary" disabled>
-              Regenerate (Coming soon)
+            <Button
+              variant="secondary"
+              onClick={handleRegenerate}
+              disabled={isRegenerating || !videoTopic.trim() || !thumbnailText.trim() || !selectedChannelId || !selectedArchetypeId}
+            >
+              {isRegenerating ? 'Queueing...' : 'Regenerate'}
             </Button>
-            <Button variant="primary" disabled>
-              Iterate (Coming soon)
+            <Button
+              variant="primary"
+              onClick={() => setShowIterateModal(true)}
+              disabled={job?.status !== 'completed' || !job?.outputUrl}
+            >
+              Iterate
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Iterate Modal */}
+      {showIterateModal && (
+        <div className="modal-overlay" onClick={() => !isIterating && setShowIterateModal(false)}>
+          <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
+            <h3>Iterate on Thumbnail</h3>
+            <p className="modal-subtitle">
+              What would you like to change about this thumbnail?
+            </p>
+
+            <textarea
+              value={iterateRequest}
+              onChange={(e) => setIterateRequest(e.target.value)}
+              className="iterate-textarea"
+              rows={5}
+              placeholder="e.g., Make the background blue, add a shocked expression, change text to all caps..."
+              autoFocus
+            />
+
+            <div className="modal-actions">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowIterateModal(false);
+                  setIterateRequest('');
+                }}
+                disabled={isIterating}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleIterate}
+                disabled={isIterating || !iterateRequest.trim()}
+              >
+                {isIterating ? 'Queueing...' : 'Create Iteration'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .job-detail-container {
@@ -368,6 +509,63 @@ export default function JobDetailView({ jobId }: JobDetailViewProps) {
           display: flex;
           gap: 1rem;
           margin-top: 2rem;
+        }
+
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .modal-content {
+          padding: 2rem;
+          border-radius: 12px;
+          max-width: 600px;
+          width: 90%;
+        }
+
+        .modal-content h3 {
+          margin: 0 0 0.5rem 0;
+          font-size: 1.25rem;
+          color: #fafafa;
+        }
+
+        .modal-subtitle {
+          margin: 0 0 1.5rem 0;
+          color: #94a3b8;
+          font-size: 0.875rem;
+        }
+
+        .iterate-textarea {
+          width: 100%;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          color: #fafafa;
+          font-size: 0.9375rem;
+          padding: 0.75rem;
+          outline: none;
+          resize: vertical;
+          margin-bottom: 1.5rem;
+          font-family: inherit;
+        }
+
+        .iterate-textarea:focus {
+          border-color: #ffffff;
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-actions {
+          display: flex;
+          gap: 1rem;
+          justify-content: flex-end;
         }
 
         @media (max-width: 1024px) {
