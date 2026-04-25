@@ -12,25 +12,33 @@
 import 'dotenv/config';
 
 import { createWorker, shutdownWorker } from './lib/queue/worker';
+import { appendFileSync } from 'fs';
+
+// Direct file logging to bypass PM2 buffering
+const logFile = '/opt/thumbnail-generator/logs/worker-debug.log';
+function log(message: string) {
+  const timestamp = new Date().toISOString();
+  appendFileSync(logFile, `${timestamp} ${message}\n`);
+  console.log(message); // Also log to console
+}
 
 async function main() {
-  // Force immediate output
-  process.stdout.write('\n🚀 Starting thumbnail generation worker...\n');
-  process.stdout.write(`   Time: ${new Date().toISOString()}\n`);
+  log('\n🚀 Starting thumbnail generation worker...');
+  log(`   Time: ${new Date().toISOString()}`);
 
   // Debug: Show environment
-  process.stdout.write(`   NODE_ENV: ${process.env.NODE_ENV}\n`);
-  process.stdout.write(`   REDIS_HOST: ${process.env.REDIS_HOST ? 'SET' : 'MISSING'}\n`);
-  process.stdout.write(`   DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'MISSING'}\n`);
-  process.stdout.write(`   GOOGLE_API_KEY: ${process.env.GOOGLE_API_KEY ? 'SET' : 'MISSING'}\n`);
-  process.stdout.write(`   STORAGE_PATH: ${process.env.STORAGE_PATH ? 'SET' : 'MISSING'}\n`);
+  log(`   NODE_ENV: ${process.env.NODE_ENV}`);
+  log(`   REDIS_HOST: ${process.env.REDIS_HOST ? 'SET' : 'MISSING'}`);
+  log(`   DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'MISSING'}`);
+  log(`   GOOGLE_API_KEY: ${process.env.GOOGLE_API_KEY ? 'SET' : 'MISSING'}`);
+  log(`   STORAGE_PATH: ${process.env.STORAGE_PATH ? 'SET' : 'MISSING'}`);
 
   // Validate environment variables
   const requiredEnvVars = ['REDIS_HOST', 'DATABASE_URL', 'GOOGLE_API_KEY', 'STORAGE_PATH'];
   const missingEnvVars = requiredEnvVars.filter((v) => !process.env[v]);
 
   if (missingEnvVars.length > 0) {
-    process.stderr.write(`\n❌ Missing environment variables: ${missingEnvVars.join(', ')}\n`);
+    log(`\n❌ Missing environment variables: ${missingEnvVars.join(', ')}`);
     process.exit(1);
   }
 
@@ -48,9 +56,9 @@ async function main() {
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('SIGINT', () => shutdown('SIGINT'));
 
-    console.log('✓ Worker is running and listening for jobs...\n');
+    log('✓ Worker is running and listening for jobs...\n');
   } catch (error) {
-    console.error(`\n❌ Failed to start worker: ${error instanceof Error ? error.message : String(error)}`);
+    log(`\n❌ Failed to start worker: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 }
