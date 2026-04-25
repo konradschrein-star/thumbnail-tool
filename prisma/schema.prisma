@@ -26,7 +26,7 @@ model archetypes {
   isAdminOnly        Boolean              @default(false)
   category           String?              @default("General")
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime @updatedAt
+  updatedAt          DateTime             @updatedAt
   basePrompt         String?
   userId             String?
   users              users?               @relation(fields: [userId], references: [id])
@@ -60,7 +60,7 @@ model channels {
   secondaryColor     String?              @default("#000000")
   tags               String?
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime @updatedAt
+  updatedAt          DateTime             @updatedAt
   userId             String?
   channel_archetypes channel_archetypes[]
   users              users?               @relation(fields: [userId], references: [id])
@@ -104,15 +104,15 @@ model generation_jobs {
   status           String         @default("pending")
   errorMessage     String?
   isManual         Boolean        @default(true)
-  batchJobId       String?
   metadata         Json?
   createdAt        DateTime       @default(now())
   completedAt      DateTime?
   credits_deducted Int?
+  batchJobId       String?
   archetypes       archetypes     @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+  batch_jobs       batch_jobs?    @relation(fields: [batchJobId], references: [id], onDelete: Cascade)
   channels         channels       @relation(fields: [channelId], references: [id], onDelete: Cascade)
   users            users?         @relation(fields: [userId], references: [id])
-  batch_jobs       batch_jobs?    @relation(fields: [batchJobId], references: [id], onDelete: Cascade)
   variant_jobs     variant_jobs[]
 
   @@index([archetypeId])
@@ -134,9 +134,9 @@ model batch_jobs {
   completedJobs    Int               @default(0)
   failedJobs       Int               @default(0)
   outputZipUrl     String?
-  credits_deducted Int?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  credits_deducted Int?
   users            users             @relation(fields: [userId], references: [id], onDelete: Cascade)
   generation_jobs  generation_jobs[]
 
@@ -151,7 +151,7 @@ model users {
   password                String
   name                    String?
   createdAt               DateTime              @default(now())
-  updatedAt               DateTime @updatedAt
+  updatedAt               DateTime              @updatedAt
   role                    String                @default("USER")
   preferences             Json?
   credits                 Int                   @default(0)
@@ -173,12 +173,12 @@ model variant_jobs {
   outputUrl       String?
   status          String           @default("pending")
   errorMessage    String?
-  metadata        Json?
   createdAt       DateTime         @default(now())
   completedAt     DateTime?
   originalText    String?
   sourceImageUrl  String?
   translationMode String           @default("MASTER_JOB")
+  metadata        Json?
   generation_jobs generation_jobs? @relation(fields: [masterJobId], references: [id], onDelete: Cascade)
 
   @@index([masterJobId])
