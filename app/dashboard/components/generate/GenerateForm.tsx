@@ -292,25 +292,6 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
                         </option>
                       ))}
                     </select>
-                    {selectedChannelId && (
-                      (channels.find((c: any) => c.id === selectedChannelId)?.personaAssetPath ||
-                        channels.find((c: any) => c.id === selectedChannelId)?.logoAssetPath) && (
-                        <div className="preview-small-card glass-dark">
-                          {channels.find((c: any) => c.id === selectedChannelId)?.personaAssetPath && (
-                            <div className="preview-item">
-                              <span className="preview-label">Persona</span>
-                              <img src={channels.find((c: any) => c.id === selectedChannelId)?.personaAssetPath} alt="Persona preview" />
-                            </div>
-                          )}
-                          {channels.find((c: any) => c.id === selectedChannelId)?.logoAssetPath && (
-                            <div className="preview-item">
-                              <span className="preview-label">Logo</span>
-                              <img src={channels.find((c: any) => c.id === selectedChannelId)?.logoAssetPath} alt="Logo preview" />
-                            </div>
-                          )}
-                        </div>
-                      )
-                    )}
                     {validationErrors.channelId && (
                       <div className="error-text">{validationErrors.channelId}</div>
                     )}
@@ -666,36 +647,6 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
           font-size: 0.75rem;
           color: #ef4444;
           margin-top: 0.25rem;
-        }
-
-        .preview-small-card {
-          margin-top: 1rem;
-          padding: 1rem;
-          display: flex;
-          gap: 1rem;
-          border-radius: var(--radius);
-        }
-
-        .preview-item {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .preview-label {
-          font-size: 0.7rem;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--muted-foreground);
-          font-weight: 700;
-        }
-
-        .preview-item img {
-          width: 50px;
-          height: 50px;
-          object-fit: cover;
-          border-radius: 4px;
-          border: 1px solid var(--border);
         }
 
         .archetype-preview-card {
