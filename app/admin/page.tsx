@@ -192,19 +192,34 @@ export default function EnhancedAdminPage() {
 
   // Redirect if not admin
   useEffect(() => {
-    if (status === 'loading') return;
+    console.log('[Admin] Session status:', status, 'User:', session?.user?.email);
+
+    if (status === 'loading') {
+      // Add timeout to prevent infinite loading
+      const timeout = setTimeout(() => {
+        console.error('[Admin] Session loading timeout - forcing reload');
+        window.location.href = '/auth/signin';
+      }, 10000); // 10 second timeout for session loading
+
+      return () => clearTimeout(timeout);
+    }
 
     if (!session?.user) {
+      console.log('[Admin] No session - redirecting to login');
       router.push('/auth/signin');
       return;
     }
 
     const userRole = (session.user as any).role;
+    console.log('[Admin] User role:', userRole);
+
     if (userRole !== 'ADMIN') {
+      console.log('[Admin] Not admin - redirecting to dashboard');
       router.push('/dashboard');
       return;
     }
 
+    console.log('[Admin] Admin authenticated - loading data');
     loadData();
   }, [status, session, router]);
 
