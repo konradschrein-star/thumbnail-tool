@@ -269,6 +269,30 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
           size="large"
         >
           <div className="preview-container">
+            <div className="preview-image-wrapper glass">
+              <img
+                src={job.outputUrl}
+                alt="Generated thumbnail"
+                className="preview-image"
+              />
+              <div className="image-actions">
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    const filename = generateProfessionalFilename(
+                      job.channel?.name || 'Channel',
+                      job.archetype?.category || 'General',
+                      job.metadata?.isVariant ? `${job.videoTopic}_${(job.metadata as any)?.language}` : job.videoTopic,
+                      1
+                    );
+                    downloadRemoteImage(job.outputUrl!, filename);
+                  }}
+                >
+                  <Download size={16} style={{ marginRight: '0.5rem' }} /> Download HD
+                </Button>
+              </div>
+            </div>
+
             <div className="preview-info glass">
               <div className="info-item">
                 <span className="info-label">Video Topic</span>
@@ -298,30 +322,6 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
                   </div>
                 </>
               )}
-            </div>
-
-            <div className="preview-image-wrapper glass">
-              <img
-                src={job.outputUrl}
-                alt="Generated thumbnail"
-                className="preview-image"
-              />
-              <div className="image-actions">
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    const filename = generateProfessionalFilename(
-                      job.channel?.name || 'Channel',
-                      job.archetype?.category || 'General',
-                      job.metadata?.isVariant ? `${job.videoTopic}_${(job.metadata as any)?.language}` : job.videoTopic,
-                      1
-                    );
-                    downloadRemoteImage(job.outputUrl!, filename);
-                  }}
-                >
-                  <Download size={16} style={{ marginRight: '0.5rem' }} /> Download HD
-                </Button>
-              </div>
             </div>
           </div>
         </Modal>
@@ -512,6 +512,8 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
+          max-height: 80vh;
+          overflow-y: auto;
         }
 
         .preview-info {
@@ -541,11 +543,14 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
         }
 
         .preview-image-wrapper {
-          position: relative;
+          position: sticky;
+          top: 0;
+          z-index: 10;
           width: 100%;
           border-radius: 12px;
           overflow: hidden;
           background: #020617;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .preview-image {
