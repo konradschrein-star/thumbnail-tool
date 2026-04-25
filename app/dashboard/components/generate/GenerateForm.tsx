@@ -376,7 +376,12 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
                           rows={6}
                           disabled={loading}
                         />
-                        <p className="field-hint">You can manually tweak the AI's instructions here before generating.</p>
+                        <p className="field-hint">
+                          You can manually tweak the AI's instructions here before generating.
+                          <span style={{ marginLeft: '8px', color: draftPrompt.length > 3800 ? '#ef4444' : '#71717a' }}>
+                            Character count: {draftPrompt.length} / 3800
+                          </span>
+                        </p>
 
                         <div className="advanced-toggles-grid">
                           <label className="checkbox-label">
@@ -485,7 +490,7 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
                       type="submit"
                       disabled={loading}
                       className="submit-btn"
-                      background="#ffffff"
+                      background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                     >
                       <Sparkles size={18} style={{ marginRight: '0.6rem' }} />
                       {loading ? 'Creating Batch...' : `Generate ${versionCount} Version${versionCount > 1 ? 's' : ''}`}
