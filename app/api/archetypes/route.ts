@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       return true;
     });
 
-    return NextResponse.json({ archetypes: filteredArchetypes });
+    return NextResponse.json(filteredArchetypes);
   } catch (error: any) {
     console.error('Database error in GET /api/archetypes:', error);
     return NextResponse.json(

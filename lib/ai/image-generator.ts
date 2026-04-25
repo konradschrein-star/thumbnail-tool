@@ -62,8 +62,14 @@ export class UnifiedImageGenerator {
   async generateImage(request: GoogleImageGenerationRequest): Promise<GenerationResult> {
     console.log('🎨 Starting image generation with fallback strategy...');
 
-    // Try AI33 first if available
-    if (this.useAI33 && this.ai33Client) {
+    // Skip AI33 if reference images are provided (AI33 doesn't support them)
+    const hasReferenceImages = !!(request.referenceImageUrl || request.personaImageUrl || request.logoImageUrl);
+    if (hasReferenceImages) {
+      console.log('   ⚠️ Reference images detected - skipping AI33, using Google Gemini directly');
+    }
+
+    // Try AI33 first if available and no reference images
+    if (this.useAI33 && this.ai33Client && !hasReferenceImages) {
       try {
         console.log('   → Attempting AI33 generation (low-cost provider)...');
         const buffer = await this.ai33Client.generateImage({

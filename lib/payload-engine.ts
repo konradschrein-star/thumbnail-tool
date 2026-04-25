@@ -245,7 +245,7 @@ export function buildFullPrompt(
     : '';
 
   // Concise, focused prompt
-  return `Create a YouTube thumbnail matching the reference image style.
+  return `Create a YouTube thumbnail matching the reference image style, layout and feel.
 Topic: "${topic}"
 Text to display: "${text}"
 Style: ${styleHint}
