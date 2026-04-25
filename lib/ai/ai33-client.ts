@@ -1,6 +1,6 @@
 /**
  * AI33 Image Generation Client (Updated for ai33.pro API)
- * Provides low-cost image generation using ByteDance SeeDream model
+ * Provides image generation using Google Gemini Nano Banana 2 (gemini-3.1-flash-image-preview)
  *
  * API Flow:
  * 1. POST /v1i/task/generate-image → get task_id
@@ -45,7 +45,7 @@ interface AI33StatusResponse {
 }
 
 /**
- * AI33 Client for text-to-image generation using ByteDance SeeDream
+ * AI33 Client for text-to-image generation using Nano Banana 2 (Gemini 3.1 Flash)
  */
 export class AI33Client {
   private apiKey: string;
@@ -131,7 +131,7 @@ export class AI33Client {
       }
 
       formData.append('prompt', finalPrompt);
-      formData.append('model_id', 'bytedance-seedream-4.5');
+      formData.append('model_id', 'gemini-3.1-flash-image-preview'); // Nano Banana 2
       formData.append('generations_count', '1');
       formData.append('model_parameters', JSON.stringify({
         aspect_ratio: params.aspectRatio,

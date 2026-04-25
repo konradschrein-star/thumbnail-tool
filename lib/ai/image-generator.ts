@@ -1,10 +1,10 @@
 /**
  * Unified Image Generator
- * Provides automatic fallback from AI33 (low-cost) to Google Gemini (reliable)
+ * Provides automatic fallback from Google Gemini to AI33
  *
  * Strategy:
- * 1. Try AI33 first (lowest cost at $0.01/image with 1K resolution)
- * 2. Fall back to Google Gemini if AI33 fails (most reliable)
+ * 1. Try Google Gemini first (Nano Banana 2 - most reliable, high quality)
+ * 2. Fall back to AI33 if Google fails (low-cost alternative)
  * 3. Transparent error handling with detailed logging
  */
 
