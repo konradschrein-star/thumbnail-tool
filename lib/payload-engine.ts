@@ -228,24 +228,32 @@ export function buildFullPrompt(
   includeBrandColors: boolean = true, // Deprecated, not used in new template
   includePersona: boolean = true
 ): string {
-  const topic = sanitizePrompt(job.videoTopic, 120);
-  const text = sanitizePrompt(job.thumbnailText, 60);
+  const topic = sanitizePrompt(job.videoTopic, 150);
+  const text = sanitizePrompt(job.thumbnailText, 80);
 
-  // Build persona section (condensed to 400 chars for credit efficiency)
+  // Build persona section (max 1500 chars for full detail)
   const personaText = includePersona && channel.personaDescription
-    ? sanitizePrompt(channel.personaDescription, 400)
+    ? sanitizePrompt(channel.personaDescription, 1500)
     : '';
 
-  // Ultra-concise prompt optimized for low credit usage
-  let prompt = `Match reference style. Main text: "${text}". Topic: "${topic}".`;
+  // Simplified, shorter prompt optimized for character limits
+  let prompt = `Create a YouTube thumbnail matching the reference image's visual style, layout, and composition.
+
+Replace ONLY the main text in the reference thumbnail with "${text}". Adjust everything else (logos, secondary text,...) to match the new topic: "${topic}". Completely disregard and replace the unrelated topic from the reference thumbnail.`;
 
   // Add character replacement if persona is available
   if (personaText) {
-    prompt += ` Character: ${personaText}`;
+    prompt += `\nReplace any character in the reference image with this: ${personaText}. Match their pose and position.`;
   }
 
-  // Minimal style instructions
-  prompt += ` Premium aesthetic, vibrant colors, high contrast.`;
+  // Add style instructions
+  prompt += `
+
+If there are style instructions in the reference image, follow them and don't keep them.
+
+Style: Ensure an extremely premium, high-end visual aesthetic. It should look highly curated, flawless, and exclusive.
+
+Match the reference image's composition, lighting, color scheme (topic adjusted), and visual energy. Use vibrant colors and high contrast.`;
 
   return prompt.trim();
 }

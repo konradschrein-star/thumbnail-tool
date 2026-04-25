@@ -123,8 +123,12 @@ export class AI33Client {
     try {
       const formData = new FormData();
 
-      // Use prompt as-is - buildFullPrompt already handles reference image instructions
+      // Build prompt with @img references matching the number of assets
       let finalPrompt = params.prompt;
+      if (params.referenceImages && params.referenceImages.length > 0) {
+        // Add @img1 reference for archetype
+        finalPrompt = `Create a YouTube thumbnail matching the style and layout of @img1. ${params.prompt}`;
+      }
 
       formData.append('prompt', finalPrompt);
       formData.append('model_id', 'gemini-3.1-flash-image-preview'); // Nano Banana 2
