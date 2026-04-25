@@ -123,7 +123,7 @@ export class AI33Client {
     try {
       const formData = new FormData();
 
-      // Build prompt with @img references if reference images are provided
+      // Build prompt with @img references matching the number of assets
       let finalPrompt = params.prompt;
       if (params.referenceImages && params.referenceImages.length > 0) {
         // Add @img1 reference for archetype
@@ -138,14 +138,16 @@ export class AI33Client {
         resolution: '2K',
       }));
 
-      // Attach reference images as assets
+      // Attach reference images as separate 'assets' fields
       if (params.referenceImages && params.referenceImages.length > 0) {
         const fs = await import('fs');
-        for (const imagePath of params.referenceImages) {
+        for (let i = 0; i < params.referenceImages.length; i++) {
+          const imagePath = params.referenceImages[i];
           const imageBuffer = fs.readFileSync(imagePath);
           const blob = new Blob([imageBuffer], { type: 'image/png' });
-          formData.append('assets', blob, 'reference.png');
-          console.log(`   📎 Attached reference image: ${imagePath}`);
+          // Each asset is a separate 'assets' field as per API spec
+          formData.append('assets', blob, `reference-${i + 1}.png`);
+          console.log(`   📎 Attached reference @img${i + 1}: ${imagePath}`);
         }
       }
 

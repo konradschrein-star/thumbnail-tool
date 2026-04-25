@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Sidebar, { type TabType } from './Sidebar';
+import { useCredits } from '../../hooks/useCredits';
+import { Coins } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('channels');
+  const { credits, loading } = useCredits();
 
   useEffect(() => {
     const tab = (searchParams.get('tab') as TabType) || 'channels';
@@ -49,6 +52,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="header-right">
               <div className="date-display">
                 {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </div>
+              <div className="divider"></div>
+              <div className="credits-badge">
+                <Coins size={18} className="credits-icon" />
+                <span className="credits-amount">
+                  {loading ? '...' : (credits !== null ? credits.toLocaleString() : '0')}
+                </span>
               </div>
               <div className="divider"></div>
               <div className="user-profile">
@@ -148,6 +158,36 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           width: 1px;
           height: 24px;
           background: rgba(255, 255, 255, 0.08);
+        }
+
+        .credits-badge {
+          display: flex;
+          align-items: center;
+          gap: 0.625rem;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          padding: 0.5rem 1rem;
+          border-radius: 12px;
+          transition: all 0.2s ease;
+        }
+
+        .credits-badge:hover {
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.15) 100%);
+          border-color: rgba(59, 130, 246, 0.4);
+          transform: translateY(-1px);
+        }
+
+        .credits-icon {
+          color: #60a5fa;
+          flex-shrink: 0;
+        }
+
+        .credits-amount {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #ffffff;
+          font-variant-numeric: tabular-nums;
+          line-height: 1;
         }
 
         .user-profile {
