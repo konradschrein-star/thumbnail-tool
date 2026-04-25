@@ -320,28 +320,32 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
                         className="search-input"
                       />
                     </div>
-                    <select
-                      value={archetypeId}
-                      onChange={(e) => setArchetypeId(e.target.value)}
-                      disabled={!selectedChannelId || loading}
-                      className={`form-select ${validationErrors.archetypeId ? 'has-error' : ''}`}
-                      title="Select Archetype"
-                    >
-                      <option value="">
-                        {selectedChannelId
-                          ? archetypes.length > 0
-                            ? 'Select an archetype'
-                            : 'No archetypes for this channel'
-                          : 'Select a channel first'}
-                      </option>
-                      {archetypes
-                        .filter((a: any) => a.name.toLowerCase().includes(archetypeSearch.toLowerCase()) || a.category?.toLowerCase().includes(archetypeSearch.toLowerCase()))
-                        .map((archetype: any) => (
-                          <option key={archetype.id} value={archetype.id}>
-                            [{archetype.category || 'General'}] {archetype.name}
-                          </option>
-                        ))}
-                    </select>
+                    <div className={`archetype-grid ${!selectedChannelId || loading ? 'disabled' : ''} ${validationErrors.archetypeId ? 'has-error' : ''}`}>
+                      {!selectedChannelId ? (
+                        <div className="archetype-placeholder">Select a channel first</div>
+                      ) : archetypes.length === 0 ? (
+                        <div className="archetype-placeholder">No archetypes for this channel</div>
+                      ) : (
+                        archetypes
+                          .filter((a: any) => a.name.toLowerCase().includes(archetypeSearch.toLowerCase()) || a.category?.toLowerCase().includes(archetypeSearch.toLowerCase()))
+                          .map((archetype: any) => (
+                            <div
+                              key={archetype.id}
+                              className={`archetype-option ${archetypeId === archetype.id ? 'selected' : ''}`}
+                              onClick={() => !loading && setArchetypeId(archetype.id)}
+                              title={`${archetype.name} - ${archetype.layoutInstructions}`}
+                            >
+                              <div className="archetype-option-image">
+                                <img src={archetype.imageUrl} alt={archetype.name} />
+                              </div>
+                              <div className="archetype-option-content">
+                                <div className="archetype-option-category">{archetype.category || 'General'}</div>
+                                <div className="archetype-option-name">{archetype.name}</div>
+                              </div>
+                            </div>
+                          ))
+                      )}
+                    </div>
                     {archetypeId && (
                       <div className="archetype-preview-card glass-dark">
                         <img
