@@ -5,6 +5,7 @@ import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Loader2, Eye, Downlo
 import Papa from 'papaparse';
 import { useRouter } from 'next/navigation';
 import { UploadGuide } from './UploadGuide';
+import { ChannelArchetypeReference } from './ChannelArchetypeReference';
 
 interface UploadRow {
   channelId: string;
@@ -326,6 +327,9 @@ export function ManualUpload() {
 
       {/* Comprehensive Upload Guide */}
       <UploadGuide />
+
+      {/* Channel & Archetype IDs Reference */}
+      <ChannelArchetypeReference />
 
       <style jsx>{`
         .card {

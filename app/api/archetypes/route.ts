@@ -59,6 +59,9 @@ export async function GET(request: NextRequest) {
     const archetypes = await prisma.archetypes.findMany({
       where,
       include: {
+        channel: {
+          select: { id: true, name: true },
+        },
         channel_archetypes: {
           include: {
             channels: {
