@@ -112,9 +112,23 @@ export async function callNanoBanana(
 
     const imageParts: Array<{ inlineData?: { mimeType: string; data: string }; fileData?: { mimeType: string; fileUri: string } }> = [];
 
+    // DEBUG: Log what reference images we're using
+    console.log('   📎 Reference images:');
+    if (request.referenceImageUrl) {
+      console.log(`      - Archetype: ${request.referenceImageUrl}`);
+    }
+    if (request.personaImageUrl) {
+      console.log(`      - Persona: ${request.personaImageUrl}`);
+    }
+    if (request.logoImageUrl) {
+      console.log(`      - Logo: ${request.logoImageUrl}`);
+    }
+
     // Convert reference images (URLs or local paths) to appropriate format
     if (request.referenceImageUrl) {
-      imageParts.push(convertToImagePart(request.referenceImageUrl));
+      const part = convertToImagePart(request.referenceImageUrl);
+      console.log(`      ✓ Archetype loaded: ${part.inlineData ? `${(part.inlineData.data.length / 1024).toFixed(1)}KB base64` : 'URL reference'}`);
+      imageParts.push(part);
     }
     if (request.personaImageUrl) {
       imageParts.push(convertToImagePart(request.personaImageUrl));
@@ -122,6 +136,10 @@ export async function callNanoBanana(
     if (request.logoImageUrl) {
       imageParts.push(convertToImagePart(request.logoImageUrl));
     }
+
+    // DEBUG: Log prompt
+    console.log(`   📝 Prompt: ${request.prompt.substring(0, 150)}...`);
+    console.log(`   🖼️  Total image parts attached: ${imageParts.length}`);
 
     // Unified multi-part content (RELEVANT: Gemini preview models often fail if parts are split across messages)
     const primaryContent = {
