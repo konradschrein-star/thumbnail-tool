@@ -420,6 +420,10 @@ export default function JobDetailView({ jobId }: JobDetailViewProps) {
           border-radius: 12px;
           padding: 1rem;
           border: 1px solid rgba(255, 255, 255, 0.05);
+          position: sticky;
+          top: 1rem;
+          z-index: 10;
+          align-self: flex-start;
         }
 
         .large-thumbnail {
