@@ -55,9 +55,9 @@ export function sanitizePrompt(text: string, maxLength: number): string {
 
 /**
  * Validates prompt length to prevent API errors
- * Google Nano Banana typically has a ~2000-3000 character limit for prompts
+ * Google Nano Banana has a 3800 character limit for prompts (verified via testing)
  */
-export function validatePromptLength(prompt: string, maxLength: number = 2000): { valid: boolean; length: number; error?: string } {
+export function validatePromptLength(prompt: string, maxLength: number = 3800): { valid: boolean; length: number; error?: string } {
   const length = prompt.length;
   if (length > maxLength) {
     return {

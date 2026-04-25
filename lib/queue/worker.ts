@@ -96,7 +96,7 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
     }
 
     // Validate prompt length before attempting generation
-    const validation = validatePromptLength(fullPrompt, 2000);
+    const validation = validatePromptLength(fullPrompt, 3800);
     if (!validation.valid) {
       throw new Error(validation.error);
     }

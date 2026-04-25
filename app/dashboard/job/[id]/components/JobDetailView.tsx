@@ -325,7 +325,7 @@ export default function JobDetailView({ jobId }: JobDetailViewProps) {
               rows={6}
               placeholder="Leave empty to use default prompt..."
             />
-            <small>Character count: {customPrompt.length} / 2000</small>
+            <small>Character count: {customPrompt.length} / 3800</small>
           </div>
 
           {/* Action Buttons */}

@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
         testPrompt += `\n\nAdditional Style Instructions: ${row.customPrompt.trim()}`;
       }
 
-      const validation = validatePromptLength(testPrompt, 2000);
+      const validation = validatePromptLength(testPrompt, 3800);
       if (!validation.valid) {
         promptValidationErrors.push({
           row: i + 1,
@@ -321,7 +321,7 @@ export async function POST(request: NextRequest) {
         {
           error: `${promptValidationErrors.length} row(s) have prompts that are too long`,
           details: errorDetails + (promptValidationErrors.length > 5 ? `... and ${promptValidationErrors.length - 5} more` : ''),
-          suggestion: 'Shorten video topics, thumbnail text, or remove custom prompts. Maximum prompt length: 2000 characters.'
+          suggestion: 'Shorten video topics, thumbnail text, or remove custom prompts. Maximum prompt length: 3800 characters.'
         },
         { status: 400 }
       );

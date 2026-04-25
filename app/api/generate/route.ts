@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       testPrompt += `\n\nAdditional Style Instructions: ${customPrompt.trim()}`;
     }
 
-    const promptValidation = validatePromptLength(testPrompt, 2000);
+    const promptValidation = validatePromptLength(testPrompt, 3800);
     if (!promptValidation.valid) {
       return NextResponse.json(
         {
