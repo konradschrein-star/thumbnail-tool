@@ -328,6 +328,14 @@ export function createWorker() {
   );
 
   // Event handlers
+  worker.on('ready', () => {
+    console.log('✓ Worker is ready and listening for jobs');
+  });
+
+  worker.on('active', (job: Job<ThumbnailJobData>) => {
+    console.log(`▶ Job started: ${job.id}`);
+  });
+
   worker.on('completed', (job: Job<ThumbnailJobData>) => {
     console.log(`✓ Job completed: ${job.id}`);
   });
@@ -338,6 +346,10 @@ export function createWorker() {
 
   worker.on('error', (err: Error) => {
     console.error('Worker error:', err);
+  });
+
+  worker.on('stalled', (jobId: string) => {
+    console.warn(`⚠ Job stalled: ${jobId}`);
   });
 
   console.log('✓ Thumbnail worker initialized');
