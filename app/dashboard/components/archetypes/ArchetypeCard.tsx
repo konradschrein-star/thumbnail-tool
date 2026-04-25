@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Button from '../shared/Button';
 import type { Archetype } from '../../hooks/useArchetypes';
-import { Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon, Copy, Check } from 'lucide-react';
 
 interface ArchetypeCardProps {
   archetype: Archetype;
@@ -13,10 +13,21 @@ interface ArchetypeCardProps {
 
 export default function ArchetypeCard({ archetype, onEdit, onDelete }: ArchetypeCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
 
   const truncateText = (text: string, maxLength: number = 80): string => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(archetype.id);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   return (
@@ -62,6 +73,19 @@ export default function ArchetypeCard({ archetype, onEdit, onDelete }: Archetype
             <Button size="small" variant="ghost" className="delete-btn" onClick={onDelete}>
               Delete
             </Button>
+            <button className="copy-id-btn" onClick={copyToClipboard} title="Copy Archetype ID">
+              {copiedId ? (
+                <>
+                  <Check size={14} />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={14} />
+                  <span>Copy ID</span>
+                </>
+              )}
+            </button>
             <Button size="small" onClick={onEdit}>
               Edit Details
             </Button>
@@ -169,9 +193,35 @@ export default function ArchetypeCard({ archetype, onEdit, onDelete }: Archetype
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 0.5rem;
           margin-top: 0.5rem;
           padding-top: 1.25rem;
           border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .copy-id-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          padding: 0.375rem 0.75rem;
+          background: rgba(59, 130, 246, 0.1);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+          border-radius: 6px;
+          color: #3b82f6;
+          font-size: 0.75rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .copy-id-btn:hover {
+          background: rgba(59, 130, 246, 0.15);
+          border-color: rgba(59, 130, 246, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .copy-id-btn:active {
+          transform: translateY(0);
         }
 
         :global(.delete-btn:hover) {

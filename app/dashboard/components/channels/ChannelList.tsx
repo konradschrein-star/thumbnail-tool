@@ -8,7 +8,7 @@ import ErrorMessage from '../shared/ErrorMessage';
 import ChannelForm from './ChannelForm';
 import useChannels, { type Channel } from '../../hooks/useChannels';
 import { BlurFade } from '../ui/blur-fade';
-import { Tv } from 'lucide-react';
+import { Tv, Copy, Check } from 'lucide-react';
 
 export default function ChannelList() {
   const { channels, loading, error, createChannel, updateChannel, deleteChannel } = useChannels();
@@ -16,6 +16,7 @@ export default function ChannelList() {
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [deletingChannel, setDeletingChannel] = useState<Channel | null>(null);
   const [actionError, setActionError] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCreate = async (data: any) => {
     try {
@@ -54,6 +55,16 @@ export default function ChannelList() {
     return text.substring(0, maxLength) + '...';
   };
 
+  const copyToClipboard = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   const columns = [
     { header: 'Name', key: 'name', width: '25%' },
     {
@@ -74,6 +85,30 @@ export default function ChannelList() {
       key: 'jobsCount',
       width: '10%',
       render: (_: any, row: Channel) => row._count?.generationJobs || 0,
+    },
+    {
+      header: 'ID',
+      key: 'id',
+      width: '120px',
+      render: (_: any, row: Channel) => (
+        <button
+          className="copy-id-btn"
+          onClick={() => copyToClipboard(row.id)}
+          title="Copy Channel ID"
+        >
+          {copiedId === row.id ? (
+            <>
+              <Check size={14} />
+              <span>Copied!</span>
+            </>
+          ) : (
+            <>
+              <Copy size={14} />
+              <span>Copy ID</span>
+            </>
+          )}
+        </button>
+      ),
     },
     {
       header: 'Actions',
@@ -232,6 +267,31 @@ export default function ChannelList() {
         .action-btns {
           display: flex;
           gap: 0.5rem;
+        }
+
+        .copy-id-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          padding: 0.375rem 0.75rem;
+          background: rgba(59, 130, 246, 0.1);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+          border-radius: 6px;
+          color: #3b82f6;
+          font-size: 0.75rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .copy-id-btn:hover {
+          background: rgba(59, 130, 246, 0.15);
+          border-color: rgba(59, 130, 246, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .copy-id-btn:active {
+          transform: translateY(0);
         }
 
         :global(.delete-btn:hover) {

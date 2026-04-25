@@ -4,18 +4,15 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '../dashboard/components/layout/DashboardLayout';
-import { GoogleSheetsConnect } from './components/GoogleSheetsConnect';
-import { SheetPreview } from './components/SheetPreview';
 import { BatchProgress } from './components/BatchProgress';
 import { ManualUpload } from './components/ManualUpload';
 import { BatchList } from './components/BatchList';
-import { Layers, FileSpreadsheet, Upload, History } from 'lucide-react';
+import { Layers, Upload, History } from 'lucide-react';
 
 export default function BulkOperationsPage() {
   const { status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'sheets' | 'manual' | 'history'>('sheets');
-  const [isConnected, setIsConnected] = useState(false);
+  const [activeTab, setActiveTab] = useState<'manual' | 'history'>('manual');
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -74,13 +71,6 @@ export default function BulkOperationsPage() {
 
       <div className="tab-nav">
         <button
-          onClick={() => setActiveTab('sheets')}
-          className={`tab-button ${activeTab === 'sheets' ? 'active' : ''}`}
-        >
-          <FileSpreadsheet size={18} />
-          <span>Google Sheets</span>
-        </button>
-        <button
           onClick={() => setActiveTab('manual')}
           className={`tab-button ${activeTab === 'manual' ? 'active' : ''}`}
         >
@@ -97,24 +87,6 @@ export default function BulkOperationsPage() {
       </div>
 
       <div className="tab-content">
-        {activeTab === 'sheets' && (
-          <div className="content-section">
-            <GoogleSheetsConnect
-              isConnected={isConnected}
-              onConnected={() => setIsConnected(true)}
-            />
-            {isConnected && (
-              <>
-                <SheetPreview onBatchCreated={(batchId) => {
-                  setSelectedBatchId(batchId);
-                  setActiveTab('history');
-                }} />
-                <BatchProgress batchId={selectedBatchId} />
-              </>
-            )}
-          </div>
-        )}
-
         {activeTab === 'manual' && (
           <div className="content-section">
             <ManualUpload />
