@@ -92,11 +92,29 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
 
     console.log(`   → Generating image... (prompt: ${validation.length} chars)`);
 
-    // Generate image with archetype reference URL
-    const generationResult = await generator.generateImage({
-      prompt: fullPrompt,
-      referenceImageUrl: archetype.imageUrl,
-    });
+    // Generate image with archetype reference URL - WRAP IN TRY-CATCH
+    let generationResult;
+    try {
+      generationResult = await generator.generateImage({
+        prompt: fullPrompt,
+        referenceImageUrl: archetype.imageUrl,
+      });
+    } catch (genError) {
+      // Extract meaningful error message from API response
+      const errorMessage = genError instanceof Error ? genError.message : String(genError);
+      console.error(`   ✗ Image generation failed: ${errorMessage}`);
+
+      // Check for specific error patterns
+      if (errorMessage.includes('prompt') && errorMessage.includes('long')) {
+        throw new Error(`Prompt too long (${validation.length} characters). Please shorten your video topic, thumbnail text, or persona description.`);
+      } else if (errorMessage.includes('safety') || errorMessage.includes('blocked')) {
+        throw new Error('Generation blocked by safety filters. Please try different content or phrasing.');
+      } else if (errorMessage.includes('INVALID_ARGUMENT')) {
+        throw new Error(`Invalid request: ${errorMessage}`);
+      } else {
+        throw new Error(`Image generation failed: ${errorMessage}`);
+      }
+    }
 
     // Save thumbnail to local storage
     const filename = `${jobId}.png`;
