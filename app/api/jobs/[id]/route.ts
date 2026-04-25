@@ -1,40 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { getApiAuth } from '@/lib/api-auth';
 
 export async function GET(
-    request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
-    try {
-        const session = await auth();
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+  const authResult = await getApiAuth(request);
 
-        const { id } = await params;
+  if (authResult.error || !authResult.user?.id) {
+    return NextResponse.json(
+      { error: authResult.error || 'Unauthorized' },
+      { status: authResult.status || 401 }
+    );
+  }
 
-        const job = await prisma.generation_jobs.findUnique({
-            where: { id, userId: session.user.id } as any,
-            include: {
-                channels: true,
-                archetypes: true,
-            },
-        });
+  const userId = authResult.user.id;
+  const userRole = authResult.user.role || 'USER';
+  const jobId = params.id;
 
-        if (!job) {
-            return NextResponse.json({ error: 'Job not found' }, { status: 404 });
-        }
+  try {
+    const job = await prisma.generation_jobs.findUnique({
+      where: { id: jobId },
+      include: {
+        channel: true,
+        archetype: true,
+      },
+    });
 
-        return NextResponse.json(job);
-    } catch (error: any) {
-        console.error('Job Fetch Error:', error);
-        const errorMessage = error instanceof Error
-            ? error.message
-            : 'An unexpected error occurred while fetching the job';
-        return NextResponse.json(
-            { error: errorMessage },
-            { status: 500 }
-        );
+    if (!job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
+
+    // Check ownership (admin can view all jobs)
+    if (userRole !== 'ADMIN' && job.userId !== userId) {
+      return NextResponse.json({ error: 'Forbidden: Access denied' }, { status: 403 });
+    }
+
+    return NextResponse.json(job);
+  } catch (error) {
+    console.error('Get job error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch job' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const authResult = await getApiAuth(request);
+
+  if (authResult.error || !authResult.user?.id) {
+    return NextResponse.json(
+      { error: authResult.error || 'Unauthorized' },
+      { status: authResult.status || 401 }
+    );
+  }
+
+  const userId = authResult.user.id;
+  const userRole = authResult.user.role || 'USER';
+  const jobId = params.id;
+
+  try {
+    // Check if job exists and user owns it
+    const job = await prisma.generation_jobs.findUnique({
+      where: { id: jobId },
+      select: { id: true, userId: true },
+    });
+
+    if (!job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    // Check ownership (admin can delete all jobs)
+    if (userRole !== 'ADMIN' && job.userId !== userId) {
+      return NextResponse.json({ error: 'Forbidden: You do not own this job' }, { status: 403 });
+    }
+
+    // Delete the job (cascading will handle related variant_jobs)
+    await prisma.generation_jobs.delete({
+      where: { id: jobId },
+    });
+
+    return NextResponse.json({
+      success: true,
+      deletedCount: 1,
+    });
+  } catch (error) {
+    console.error('Delete job error:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete job' },
+      { status: 500 }
+    );
+  }
 }
