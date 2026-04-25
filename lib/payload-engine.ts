@@ -219,13 +219,14 @@ export function buildCondensedPrompt(
 
 /**
  * Builds a concise prompt for image generation (optimized for API limits)
+ * Note: includeBrandColors parameter is deprecated but kept for backwards compatibility
  */
 export function buildFullPrompt(
   channel: any,
   archetype: any,
   job: JobConfig,
-  includeBrandColors: boolean,
-  includePersona: boolean
+  includeBrandColors: boolean = true, // Deprecated, not used in new template
+  includePersona: boolean = true
 ): string {
   const topic = sanitizePrompt(job.videoTopic, 150);
   const text = sanitizePrompt(job.thumbnailText, 80);
