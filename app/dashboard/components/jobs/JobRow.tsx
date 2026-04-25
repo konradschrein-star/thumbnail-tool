@@ -16,10 +16,14 @@ import {
   Globe,
   Layers,
   Sparkles,
-  Trash2
+  Trash2,
+  Copy,
+  FileText,
+  MessageSquare
 } from 'lucide-react';
 import { HistoryJob } from '@/app/dashboard/hooks/useHistory';
 import { generateProfessionalFilename, downloadRemoteImage } from '@/lib/download-utils';
+import { copyImageToClipboard, copyTextToClipboard, formatJobDetails } from '@/lib/clipboard-utils';
 
 interface JobRowProps {
   job: HistoryJob;
@@ -133,25 +137,74 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
         <td className="job-cell actions">
           <div className="action-wrapper">
             {job.status === 'completed' && (
+              <>
+                <Button
+                  size="small"
+                  variant="ghost"
+                  onClick={() => {
+                    const filename = generateProfessionalFilename(
+                      job.channel?.name || 'Channel',
+                      job.archetype?.category || 'General',
+                      job.metadata?.isVariant ? `${job.videoTopic}_${(job.metadata as any)?.language}` : job.videoTopic,
+                      1
+                    );
+                    downloadRemoteImage(job.outputUrl!, filename);
+                  }}
+                  title="Download"
+                >
+                  <Download size={14} />
+                </Button>
+                <Button
+                  size="small"
+                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      await copyImageToClipboard(job.outputUrl!);
+                      alert('Image copied to clipboard!');
+                    } catch (error) {
+                      alert('Failed to copy image. Please try downloading instead.');
+                    }
+                  }}
+                  title="Copy Image"
+                >
+                  <Copy size={14} />
+                </Button>
+                <Button size="small" variant="secondary" onClick={() => setShowPreviewModal(true)}>
+                  <Eye size={14} className="action-icon" /> View
+                </Button>
+              </>
+            )}
+            <Button
+              size="small"
+              variant="ghost"
+              onClick={async () => {
+                try {
+                  const details = formatJobDetails(job);
+                  await copyTextToClipboard(details);
+                  alert('Job details copied to clipboard!');
+                } catch (error) {
+                  alert('Failed to copy details');
+                }
+              }}
+              title="Copy Details"
+            >
+              <FileText size={14} />
+            </Button>
+            {job.promptUsed && (
               <Button
                 size="small"
                 variant="ghost"
-                onClick={() => {
-                  const filename = generateProfessionalFilename(
-                    job.channel?.name || 'Channel',
-                    job.archetype?.category || 'General',
-                    job.metadata?.isVariant ? `${job.videoTopic}_${(job.metadata as any)?.language}` : job.videoTopic,
-                    1
-                  );
-                  downloadRemoteImage(job.outputUrl!, filename);
+                onClick={async () => {
+                  try {
+                    await copyTextToClipboard(job.promptUsed!);
+                    alert('Prompt copied to clipboard!');
+                  } catch (error) {
+                    alert('Failed to copy prompt');
+                  }
                 }}
+                title="Copy Prompt"
               >
-                <Download size={14} />
-              </Button>
-            )}
-            {job.status === 'completed' && (
-              <Button size="small" variant="secondary" onClick={() => setShowPreviewModal(true)}>
-                <Eye size={14} className="action-icon" /> View
+                <MessageSquare size={14} />
               </Button>
             )}
             <Button
