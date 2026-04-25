@@ -356,6 +356,8 @@ export async function POST(request: NextRequest) {
             videoTopic: row.videoTopic,
             thumbnailText: row.thumbnailText,
             customPrompt: row.customPrompt,
+            includeBrandColors: true, // Default to true for batch jobs
+            includePersona: true, // Default to true for batch jobs
           },
           {
             jobId: generationJob.id,

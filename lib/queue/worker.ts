@@ -76,12 +76,17 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
 
     // Build prompt using simplified prompt builder
     const { buildFullPrompt, validatePromptLength } = require('../payload-engine');
+
+    // Use job data flags if provided, otherwise default to true
+    const includeBrandColors = job.data.includeBrandColors !== undefined ? job.data.includeBrandColors : true;
+    const includePersona = job.data.includePersona !== undefined ? job.data.includePersona : true;
+
     const fullPrompt = customPrompt || buildFullPrompt(
       channel,
       archetype,
       { videoTopic, thumbnailText, customPrompt },
-      true, // includeBrandColors
-      true  // includePersona
+      includeBrandColors,
+      includePersona
     );
 
     // Validate prompt length before attempting generation
