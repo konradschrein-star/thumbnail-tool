@@ -55,6 +55,67 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
     status: statusFilter || undefined,
   });
 
+  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Selection handlers
+  const handleToggleJob = (jobId: string) => {
+    const newSelection = new Set(selectedJobIds);
+    if (newSelection.has(jobId)) {
+      newSelection.delete(jobId);
+    } else {
+      newSelection.add(jobId);
+    }
+    setSelectedJobIds(newSelection);
+  };
+
+  const handleToggleAll = () => {
+    if (selectedJobIds.size === filteredJobs.length && filteredJobs.length > 0) {
+      // Deselect all
+      setSelectedJobIds(new Set());
+    } else {
+      // Select all visible jobs
+      const allIds = new Set(filteredJobs.map(job => job.id));
+      setSelectedJobIds(allIds);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedJobIds(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/jobs/bulk', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobIds: Array.from(selectedJobIds) }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete jobs');
+      }
+
+      const result = await response.json();
+
+      // Show success message
+      alert(`Successfully deleted ${result.deletedCount} job(s)`);
+
+      // Clear selection and refetch
+      setSelectedJobIds(new Set());
+      setShowDeleteModal(false);
+      await refetch();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete jobs');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Auto-refresh when jobs are pending or processing
   useEffect(() => {
     const hasActiveJobs = jobs.some(
@@ -192,6 +253,15 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
                     <table className="job-table">
                       <thead>
                         <tr>
+                          <th style={{ width: '40px' }}>
+                            <input
+                              type="checkbox"
+                              checked={selectedJobIds.size === filteredJobs.length && filteredJobs.length > 0}
+                              onChange={handleToggleAll}
+                              aria-label="Select all jobs"
+                              style={{ cursor: 'pointer' }}
+                            />
+                          </th>
                           <th>Preview</th>
                           <th>Timestamp</th>
                           <th>Channel</th>
@@ -207,6 +277,27 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
                             key={job.id}
                             job={job}
                             onRedo={onRedo}
+                            isSelected={selectedJobIds.has(job.id)}
+                            onToggleSelect={() => handleToggleJob(job.id)}
+                            onDelete={async () => {
+                              // Handle individual delete
+                              try {
+                                const response = await fetch(`/api/jobs/${job.id}`, {
+                                  method: 'DELETE',
+                                });
+
+                                if (!response.ok) {
+                                  const error = await response.json();
+                                  throw new Error(error.error || 'Failed to delete job');
+                                }
+
+                                await refetch();
+                                alert('Job deleted successfully');
+                              } catch (error) {
+                                console.error('Delete error:', error);
+                                alert(error instanceof Error ? error.message : 'Failed to delete job');
+                              }
+                            }}
                           />
                         ))}
                       </tbody>
@@ -215,6 +306,55 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Bulk Action Bar */}
+        {selectedJobIds.size > 0 && (
+          <div className="bulk-action-bar glass">
+            <span className="selection-count">
+              {selectedJobIds.size} job{selectedJobIds.size !== 1 ? 's' : ''} selected
+            </span>
+            <div className="bulk-actions">
+              <button
+                onClick={handleClearSelection}
+                className="btn-secondary"
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="btn-danger"
+              >
+                Delete Selected
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="modal-overlay" onClick={() => !isDeleting && setShowDeleteModal(false)}>
+            <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
+              <h3>Delete {selectedJobIds.size} Job{selectedJobIds.size !== 1 ? 's' : ''}?</h3>
+              <p>This action cannot be undone. All selected jobs and their data will be permanently deleted.</p>
+              <div className="modal-actions">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="btn-secondary"
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  className="btn-danger"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -393,6 +533,108 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
               flex-direction: column;
               align-items: stretch;
             }
+          }
+
+          .bulk-action-bar {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+          }
+
+          .selection-count {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #fafafa;
+          }
+
+          .bulk-actions {
+            display: flex;
+            gap: 1rem;
+          }
+
+          .btn-secondary {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fafafa;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+
+          .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+          }
+
+          .btn-danger {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+
+          .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fef2f2;
+          }
+
+          .btn-danger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+
+          .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+          }
+
+          .modal-content {
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+          }
+
+          .modal-content h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            color: #fafafa;
+          }
+
+          .modal-content p {
+            margin: 0 0 1.5rem 0;
+            color: #94a3b8;
+            line-height: 1.6;
+          }
+
+          .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
           }
         `}</style>
       </div>
