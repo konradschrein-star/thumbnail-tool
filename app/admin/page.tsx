@@ -213,30 +213,50 @@ export default function EnhancedAdminPage() {
     setError(null);
 
     try {
-      const [statsRes, usersRes, channelsRes, jobsRes] = await Promise.all([
-        fetch('/api/admin/stats'),
-        fetch(`/api/admin/users?limit=50${userSearchEmail ? `&email=${userSearchEmail}` : ''}`),
-        fetch('/api/admin/channels/transfer'),
-        fetch('/api/admin/jobs?limit=50'),
-      ]);
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-      if (!statsRes.ok || !usersRes.ok || !channelsRes.ok || !jobsRes.ok) {
-        throw new Error('Failed to load admin data');
+      try {
+        const [statsRes, usersRes, channelsRes, jobsRes] = await Promise.all([
+          fetch('/api/admin/stats', { signal: controller.signal }),
+          fetch(`/api/admin/users?limit=50${userSearchEmail ? `&email=${userSearchEmail}` : ''}`, { signal: controller.signal }),
+          fetch('/api/admin/channels/transfer', { signal: controller.signal }),
+          fetch('/api/admin/jobs?limit=50', { signal: controller.signal }),
+        ]);
+
+        clearTimeout(timeoutId);
+
+        if (!statsRes.ok || !usersRes.ok || !channelsRes.ok || !jobsRes.ok) {
+          const errors = [];
+          if (!statsRes.ok) errors.push(`Stats: ${statsRes.status}`);
+          if (!usersRes.ok) errors.push(`Users: ${usersRes.status}`);
+          if (!channelsRes.ok) errors.push(`Channels: ${channelsRes.status}`);
+          if (!jobsRes.ok) errors.push(`Jobs: ${jobsRes.status}`);
+          throw new Error(`Failed to load admin data: ${errors.join(', ')}`);
+        }
+
+        const [statsData, usersData, channelsData, jobsData] = await Promise.all([
+          statsRes.json(),
+          usersRes.json(),
+          channelsRes.json(),
+          jobsRes.json(),
+        ]);
+
+        setStats(statsData.stats);
+        setUsers(usersData.users);
+        setChannels(channelsData.channels);
+        setJobs(jobsData.jobs);
+      } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+          throw new Error('Request timed out after 30 seconds. Please try again or contact support.');
+        }
+        throw fetchErr;
       }
-
-      const [statsData, usersData, channelsData, jobsData] = await Promise.all([
-        statsRes.json(),
-        usersRes.json(),
-        channelsRes.json(),
-        jobsRes.json(),
-      ]);
-
-      setStats(statsData.stats);
-      setUsers(usersData.users);
-      setChannels(channelsData.channels);
-      setJobs(jobsData.jobs);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error('Admin data load error:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error loading admin data');
     } finally {
       setLoading(false);
     }
