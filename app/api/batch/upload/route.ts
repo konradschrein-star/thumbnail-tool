@@ -13,6 +13,8 @@ import { prisma } from '@/lib/prisma';
 import { thumbnailQueue } from '@/lib/queue/thumbnail-queue';
 import { auth } from '@/lib/auth';
 import Papa from 'papaparse';
+import * as CreditService from '@/lib/credit-service';
+import { getUserLimiter } from '@/lib/rate-limiter';
 
 export interface UploadRow {
   channelId: string;
@@ -38,6 +40,29 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.id as string;
+    const userRole = (session.user as any).role || 'USER';
+
+    // Rate limiting: 10 batch uploads per hour per user
+    const limiter = getUserLimiter(userId, 10, 'hour');
+    const remainingTokens = await limiter.removeTokens(1);
+
+    if (remainingTokens < 0) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded. Maximum 10 batch uploads per hour.',
+          retryAfter: 3600
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': '3600',
+            'X-RateLimit-Limit': '10',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + 3600)
+          }
+        }
+      );
+    }
 
     // Parse multipart form data
     const formData = await request.formData();
@@ -147,6 +172,33 @@ export async function POST(request: NextRequest) {
 
     console.log(`\n📦 Processing upload: ${rows.length} rows as batch: ${batchName}`);
 
+    // Credit system: Non-admins must have sufficient credits
+    const isAdmin = userRole === 'ADMIN';
+    let creditsRemaining: number | null = null;
+
+    if (!isAdmin) {
+      try {
+        const userCredits = await CreditService.getUserCredits(userId);
+        if (userCredits < rows.length) {
+          return NextResponse.json(
+            {
+              error: 'Insufficient credits',
+              creditsRequired: rows.length,
+              creditsAvailable: userCredits,
+              message: `You need ${rows.length} credits to create this batch. You have ${userCredits}.`
+            },
+            { status: 402 }
+          );
+        }
+      } catch (error) {
+        console.error('Credit check failed:', error);
+        return NextResponse.json(
+          { error: 'Failed to check credit balance' },
+          { status: 500 }
+        );
+      }
+    }
+
     // Validate all rows have required fields
     const invalidRows: number[] = [];
     const missingFields: { [key: number]: string[] } = {};
@@ -156,7 +208,8 @@ export async function POST(request: NextRequest) {
       if (!row.channelId) missing.push('channelId');
       if (!row.archetypeId) missing.push('archetypeId');
       if (!row.videoTopic) missing.push('videoTopic');
-      if (!row.thumbnailText) missing.push('thumbnailText');
+      // thumbnailText is optional - empty text means "remove text from reference"
+      // Don't validate thumbnailText as required
 
       if (missing.length > 0) {
         invalidRows.push(index + 1);
@@ -223,17 +276,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create batch job
-    const batchJob = await prisma.batch_jobs.create({
-      data: {
-        name: batchName,
-        userId,
-        status: 'PENDING',
-        totalJobs: rows.length,
-      },
-    });
+    // Create batch job and deduct credits atomically (for non-admins)
+    let batchJob;
 
-    console.log(`✓ Created batch job: ${batchJob.id}`);
+    if (isAdmin) {
+      // Admin: Create batch without deducting credits
+      batchJob = await prisma.batch_jobs.create({
+        data: {
+          name: batchName,
+          userId,
+          status: 'PENDING',
+          totalJobs: rows.length,
+          credits_deducted: null, // Admins don't consume credits
+        },
+      });
+      console.log(`✓ Created batch job (admin bypass): ${batchJob.id}`);
+    } else {
+      // Non-admin: Deduct credits atomically with batch creation
+      try {
+        const result = await CreditService.deductCreditsForBatch(
+          userId,
+          rows.length,
+          batchName,
+          `Deducted ${rows.length} credits for batch: ${batchName}`
+        );
+        batchJob = result.batchJob;
+        creditsRemaining = result.creditsRemaining;
+        console.log(`✓ Created batch job: ${batchJob.id} (${creditsRemaining} credits remaining)`);
+      } catch (error) {
+        console.error('Credit deduction failed:', error);
+
+        if (error instanceof CreditService.InsufficientCreditsError) {
+          return NextResponse.json(
+            {
+              error: 'Insufficient credits',
+              creditsRequired: error.required,
+              creditsAvailable: error.available,
+              message: `You need ${error.required} credits to create this batch. You have ${error.available}.`
+            },
+            { status: 402 }
+          );
+        }
+
+        return NextResponse.json(
+          { error: 'Failed to deduct credits' },
+          { status: 500 }
+        );
+      }
+    }
 
     // Create generation jobs and queue them
     const jobIds: string[] = [];
@@ -298,12 +388,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    const response: any = {
       success: true,
       batchJobId: batchJob.id,
       jobCount: jobIds.length,
       message: `Queued ${jobIds.length} thumbnail generation jobs`,
-    });
+    };
+
+    // Include credit info for non-admins
+    if (!isAdmin && creditsRemaining !== null) {
+      response.creditsRemaining = creditsRemaining;
+      response.creditsDeducted = rows.length;
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Upload error:', error);
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';

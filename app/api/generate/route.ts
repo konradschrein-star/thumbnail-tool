@@ -55,10 +55,10 @@ export async function POST(request: NextRequest) {
       includePersona = true
     } = body;
 
-    // Strict validation
-    if (!channelId || !archetypeId || !videoTopic || !thumbnailText) {
+    // Strict validation (thumbnailText is optional - empty means remove text)
+    if (!channelId || !archetypeId || !videoTopic) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: channelId, archetypeId, videoTopic' },
         { status: 400 }
       );
     }
