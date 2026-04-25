@@ -29,7 +29,10 @@ export async function GET(request: NextRequest) {
   try {
     const user = await prisma.users.findUnique({
       where: { id: authResult.user.id },
-      select: { preferences: true }
+      select: {
+        preferences: true,
+        credits: true
+      }
     });
 
     // Return default empty preferences if none exist
@@ -37,7 +40,10 @@ export async function GET(request: NextRequest) {
       customLanguages: []
     };
 
-    return NextResponse.json({ preferences }, { status: 200 });
+    return NextResponse.json({
+      preferences,
+      credits: user?.credits || 0
+    }, { status: 200 });
   } catch (error: any) {
     console.error('Failed to fetch user preferences:', error);
     return NextResponse.json(
