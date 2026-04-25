@@ -7,7 +7,7 @@ interface Channel {
   id: string;
   name: string;
   _count?: {
-    archetypes: number;
+    channel_archetypes: number;
   };
 }
 
@@ -129,7 +129,7 @@ export function ChannelArchetypeReference() {
                 <div className="item-info">
                   <div className="item-name">{channel.name}</div>
                   <div className="item-meta">
-                    {channel._count?.archetypes || 0} archetype{channel._count?.archetypes !== 1 ? 's' : ''}
+                    {channel._count?.channel_archetypes || 0} archetype{channel._count?.channel_archetypes !== 1 ? 's' : ''}
                   </div>
                 </div>
                 <button
