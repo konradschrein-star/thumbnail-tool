@@ -8,6 +8,9 @@
  * Or: node --loader ts-node/esm worker.ts
  */
 
+// Load environment variables from .env file FIRST
+import 'dotenv/config';
+
 import { createWorker, shutdownWorker } from './lib/queue/worker';
 
 async function main() {
