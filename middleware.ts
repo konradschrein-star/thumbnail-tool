@@ -1,10 +1,6 @@
-import { auth } from "@/lib/auth"
-
-export default auth
+// Middleware temporarily disabled due to Edge runtime compatibility issues
+// TODO: Re-enable after fixing NextAuth + Edge runtime issue
 
 export const config = {
-    matcher: [
-        "/dashboard/:path*",
-        "/api/((?!auth|cron).*)",
-    ]
+    matcher: []
 }
