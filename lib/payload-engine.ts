@@ -227,40 +227,34 @@ export function buildFullPrompt(
   includeBrandColors: boolean,
   includePersona: boolean
 ): string {
-  const topic = sanitizePrompt(job.videoTopic, 100);
-  const text = sanitizePrompt(job.thumbnailText, 50);
-  const brand = getBrandingContext(job.videoTopic, channel);
+  const topic = sanitizePrompt(job.videoTopic, 150);
+  const text = sanitizePrompt(job.thumbnailText, 80);
 
-  // Build concise style instruction (max 200 chars from archetype)
-  const styleHint = sanitizePrompt(archetype.basePrompt || archetype.layoutInstructions || 'modern YouTube thumbnail style', 200);
-
-  // Build persona section (max 300 chars)
-  const personaSection = includePersona && channel.personaDescription
-    ? `Character: ${sanitizePrompt(channel.personaDescription, 300)}.`
+  // Build persona section (max 500 chars for better detail)
+  const personaText = includePersona && channel.personaDescription
+    ? sanitizePrompt(channel.personaDescription, 500)
     : '';
 
-  // Build color section
-  const colorSection = includeBrandColors
-    ? `Colors: ${brand.primaryColor} and ${brand.secondaryColor}.`
-    : '';
+  // Simplified, shorter prompt optimized for character limits
+  let prompt = `Create a YouTube thumbnail matching the reference image's visual style, layout, and composition.
 
-  // Handle empty text field - if no text provided, remove all text from reference
-  const textRule = text && text.trim().length > 0
-    ? `Replace ONLY the main headline text in the reference thumbnail with "${text}". Adjust logos and secondary text to match the new topic.`
-    : 'Remove all headline and title text from the reference thumbnail. Adjust logos and UI elements to match the new topic.';
+Replace ONLY the main text in the reference thumbnail with "${text}". Adjust everything else (logos, secondary text,...) to match the new topic: "${topic}". Completely disregard and replace the unrelated topic from the reference thumbnail.`;
 
-  // Concise, focused prompt with strict rules to prevent unwanted behavior
-  return `Create a YouTube thumbnail matching the reference image's visual style, layout, and composition.
+  // Add character replacement if persona is available
+  if (personaText) {
+    prompt += `\nReplace any character in the reference image with this: ${personaText}. Match their pose and position.`;
+  }
 
-CRITICAL RULES:
-1. TEXT REPLACEMENT: ${textRule}
-2. TOPIC CHANGE: The thumbnail is about "${topic}". Completely disregard and replace any unrelated subject or topic from the reference thumbnail.
-3. CHARACTER REPLACEMENT: ${includePersona && channel.personaDescription ? `Replace any character in the reference image with this character: ${sanitizePrompt(channel.personaDescription, 300)}. Match their pose and position.` : 'If the reference has a character, keep the same pose and style but update to match the new topic. If no character exists, do not add one.'}
-4. PLACEHOLDERS & INSTRUCTIONS: If there are instructions in the reference image, follow them. Replace placeholder text with actual content matching the topic. Do NOT copy placeholder text literally.
+  // Add style instructions
+  prompt += `
+
+If there are style instructions in the reference image, follow them and don't keep them.
 
 Style: Ensure an extremely premium, high-end visual aesthetic. It should look highly curated, flawless, and exclusive.
 
-Match the reference image's composition, lighting, color scheme (topic adjusted), and visual energy. Use vibrant colors and high contrast.`.trim();
+Match the reference image's composition, lighting, color scheme (topic adjusted), and visual energy. Use vibrant colors and high contrast.`;
+
+  return prompt.trim();
 }
 
 /**
