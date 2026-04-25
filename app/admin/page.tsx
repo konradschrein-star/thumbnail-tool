@@ -213,47 +213,86 @@ export default function EnhancedAdminPage() {
     setError(null);
 
     try {
-      // Add timeout to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      // Load endpoints with individual timeouts to identify which one is slow
+      const timeout = 10000; // 10 second timeout per endpoint
 
+      // Stats endpoint
+      console.log('[Admin] Loading stats...');
+      const statsController = new AbortController();
+      const statsTimeout = setTimeout(() => statsController.abort(), timeout);
       try {
-        const [statsRes, usersRes, channelsRes, jobsRes] = await Promise.all([
-          fetch('/api/admin/stats', { signal: controller.signal }),
-          fetch(`/api/admin/users?limit=50${userSearchEmail ? `&email=${userSearchEmail}` : ''}`, { signal: controller.signal }),
-          fetch('/api/admin/channels/transfer', { signal: controller.signal }),
-          fetch('/api/admin/jobs?limit=50', { signal: controller.signal }),
-        ]);
-
-        clearTimeout(timeoutId);
-
-        if (!statsRes.ok || !usersRes.ok || !channelsRes.ok || !jobsRes.ok) {
-          const errors = [];
-          if (!statsRes.ok) errors.push(`Stats: ${statsRes.status}`);
-          if (!usersRes.ok) errors.push(`Users: ${usersRes.status}`);
-          if (!channelsRes.ok) errors.push(`Channels: ${channelsRes.status}`);
-          if (!jobsRes.ok) errors.push(`Jobs: ${jobsRes.status}`);
-          throw new Error(`Failed to load admin data: ${errors.join(', ')}`);
-        }
-
-        const [statsData, usersData, channelsData, jobsData] = await Promise.all([
-          statsRes.json(),
-          usersRes.json(),
-          channelsRes.json(),
-          jobsRes.json(),
-        ]);
-
+        const statsRes = await fetch('/api/admin/stats', { signal: statsController.signal });
+        clearTimeout(statsTimeout);
+        if (!statsRes.ok) throw new Error(`Stats failed: ${statsRes.status}`);
+        const statsData = await statsRes.json();
         setStats(statsData.stats);
-        setUsers(usersData.users);
-        setChannels(channelsData.channels);
-        setJobs(jobsData.jobs);
-      } catch (fetchErr) {
-        clearTimeout(timeoutId);
-        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
-          throw new Error('Request timed out after 30 seconds. Please try again or contact support.');
-        }
-        throw fetchErr;
+        console.log('[Admin] ✓ Stats loaded');
+      } catch (err) {
+        clearTimeout(statsTimeout);
+        const msg = err instanceof Error && err.name === 'AbortError'
+          ? 'Stats endpoint timed out after 10s'
+          : `Stats failed: ${err instanceof Error ? err.message : String(err)}`;
+        throw new Error(msg);
       }
+
+      // Users endpoint
+      console.log('[Admin] Loading users...');
+      const usersController = new AbortController();
+      const usersTimeout = setTimeout(() => usersController.abort(), timeout);
+      try {
+        const usersRes = await fetch(`/api/admin/users?limit=50${userSearchEmail ? `&email=${userSearchEmail}` : ''}`, { signal: usersController.signal });
+        clearTimeout(usersTimeout);
+        if (!usersRes.ok) throw new Error(`Users failed: ${usersRes.status}`);
+        const usersData = await usersRes.json();
+        setUsers(usersData.users);
+        console.log('[Admin] ✓ Users loaded');
+      } catch (err) {
+        clearTimeout(usersTimeout);
+        const msg = err instanceof Error && err.name === 'AbortError'
+          ? 'Users endpoint timed out after 10s'
+          : `Users failed: ${err instanceof Error ? err.message : String(err)}`;
+        throw new Error(msg);
+      }
+
+      // Channels endpoint
+      console.log('[Admin] Loading channels...');
+      const channelsController = new AbortController();
+      const channelsTimeout = setTimeout(() => channelsController.abort(), timeout);
+      try {
+        const channelsRes = await fetch('/api/admin/channels/transfer', { signal: channelsController.signal });
+        clearTimeout(channelsTimeout);
+        if (!channelsRes.ok) throw new Error(`Channels failed: ${channelsRes.status}`);
+        const channelsData = await channelsRes.json();
+        setChannels(channelsData.channels);
+        console.log('[Admin] ✓ Channels loaded');
+      } catch (err) {
+        clearTimeout(channelsTimeout);
+        const msg = err instanceof Error && err.name === 'AbortError'
+          ? 'Channels endpoint timed out after 10s'
+          : `Channels failed: ${err instanceof Error ? err.message : String(err)}`;
+        throw new Error(msg);
+      }
+
+      // Jobs endpoint
+      console.log('[Admin] Loading jobs...');
+      const jobsController = new AbortController();
+      const jobsTimeout = setTimeout(() => jobsController.abort(), timeout);
+      try {
+        const jobsRes = await fetch('/api/admin/jobs?limit=50', { signal: jobsController.signal });
+        clearTimeout(jobsTimeout);
+        if (!jobsRes.ok) throw new Error(`Jobs failed: ${jobsRes.status}`);
+        const jobsData = await jobsRes.json();
+        setJobs(jobsData.jobs);
+        console.log('[Admin] ✓ Jobs loaded');
+      } catch (err) {
+        clearTimeout(jobsTimeout);
+        const msg = err instanceof Error && err.name === 'AbortError'
+          ? 'Jobs endpoint timed out after 10s'
+          : `Jobs failed: ${err instanceof Error ? err.message : String(err)}`;
+        throw new Error(msg);
+      }
+
+      console.log('[Admin] ✓ All data loaded successfully');
     } catch (err) {
       console.error('Admin data load error:', err);
       setError(err instanceof Error ? err.message : 'Unknown error loading admin data');
