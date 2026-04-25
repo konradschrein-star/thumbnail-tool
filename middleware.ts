@@ -5,6 +5,6 @@ export default auth
 export const config = {
     matcher: [
         "/dashboard/:path*",
-        "/api/:path*",
+        "/api/((?!auth|cron).*)",
     ]
 }
