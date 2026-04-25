@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import React from 'react';
 import Button from '../shared/Button';
 import Modal from '../shared/Modal';
 import {
@@ -36,6 +37,7 @@ interface JobRowProps {
 export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDelete }: JobRowProps) {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const rowRef = React.useRef<HTMLTableRowElement>(null);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -96,9 +98,18 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
     return text.substring(0, maxLength) + '...';
   };
 
+  const handleOpenPreview = () => {
+    setShowPreviewModal(true);
+    // Scroll the row into view smoothly when opening preview
+    setTimeout(() => {
+      rowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
   return (
     <>
       <tr
+        ref={rowRef}
         className="job-row"
         onDoubleClick={(e) => {
           // Don't navigate if clicking on a button or checkbox
@@ -125,7 +136,7 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
         </td>
         <td className="job-cell preview">
           {job.status === 'completed' && job.outputUrl ? (
-            <div className="thumbnail-preview-mini glass-dark" onClick={() => setShowPreviewModal(true)}>
+            <div className="thumbnail-preview-mini glass-dark" onClick={handleOpenPreview}>
               <img src={job.outputUrl} alt="Thumbnail preview" />
             </div>
           ) : (
@@ -184,7 +195,7 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
                 >
                   <Copy size={14} />
                 </Button>
-                <Button size="small" variant="secondary" onClick={() => setShowPreviewModal(true)}>
+                <Button size="small" variant="secondary" onClick={handleOpenPreview}>
                   <Eye size={14} className="action-icon" /> View
                 </Button>
               </>
