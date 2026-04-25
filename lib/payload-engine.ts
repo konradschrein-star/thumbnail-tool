@@ -231,9 +231,9 @@ export function buildFullPrompt(
   const topic = sanitizePrompt(job.videoTopic, 150);
   const text = sanitizePrompt(job.thumbnailText, 80);
 
-  // Build persona section (max 500 chars for better detail)
+  // Build persona section (max 1500 chars for full detail)
   const personaText = includePersona && channel.personaDescription
-    ? sanitizePrompt(channel.personaDescription, 500)
+    ? sanitizePrompt(channel.personaDescription, 1500)
     : '';
 
   // Simplified, shorter prompt optimized for character limits
