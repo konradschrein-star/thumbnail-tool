@@ -246,8 +246,8 @@ export function buildFullPrompt(
 
   // Handle empty text field - if no text provided, remove all text from reference
   const textRule = text && text.trim().length > 0
-    ? `Replace ONLY the main headline text in the reference thumbnail with "${text}". Keep logos, UI elements, and secondary text unchanged.`
-    : 'Remove all headline and title text from the reference thumbnail. Keep logos and UI elements unchanged.';
+    ? `Replace ONLY the main headline text in the reference thumbnail with "${text}". Adjust logos and secondary text to match the new topic.`
+    : 'Remove all headline and title text from the reference thumbnail. Adjust logos and UI elements to match the new topic.';
 
   // Concise, focused prompt with strict rules to prevent unwanted behavior
   return `Create a YouTube thumbnail matching the reference image's visual style, layout, and composition.

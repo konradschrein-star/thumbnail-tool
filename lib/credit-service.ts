@@ -229,6 +229,117 @@ export async function deductCreditsForJob(
 }
 
 /**
+ * Deducts credits for a batch operation and creates the batch_jobs record atomically.
+ * This prevents race conditions where multiple concurrent batch uploads could overdraw credits.
+ *
+ * @param userId - User ID to deduct credits from
+ * @param batchSize - Number of jobs in the batch (= credits to deduct)
+ * @param batchName - Name of the batch for the batch_jobs record
+ * @param reason - Reason for deduction
+ * @returns Object with created batch job and remaining credits
+ * @throws InsufficientCreditsError if user doesn't have enough credits
+ */
+export async function deductCreditsForBatch(
+  userId: string,
+  batchSize: number,
+  batchName: string,
+  reason: string
+): Promise<{
+  batchJob: any;
+  creditsRemaining: number;
+}> {
+  if (batchSize <= 0) {
+    throw new CreditServiceError('Batch size must be positive');
+  }
+
+  try {
+    const result = await prisma.$transaction(
+      async (tx) => {
+        // Lock the user row and get current balance
+        const user = await tx.users.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            credits: true,
+            total_credits_consumed: true,
+            role: true
+          },
+        });
+
+        if (!user) {
+          throw new CreditServiceError('User not found');
+        }
+
+        // Check if user has sufficient credits
+        if (user.credits < batchSize) {
+          throw new InsufficientCreditsError(batchSize, user.credits);
+        }
+
+        const balance_before = user.credits;
+        const balance_after = balance_before - batchSize;
+
+        // Deduct credits
+        await tx.users.update({
+          where: { id: userId },
+          data: {
+            credits: balance_after,
+            total_credits_consumed: {
+              increment: batchSize,
+            },
+          },
+        });
+
+        // Create batch_jobs record
+        const batchJob = await tx.batch_jobs.create({
+          data: {
+            name: batchName,
+            userId,
+            status: 'PENDING',
+            totalJobs: batchSize,
+            credits_deducted: batchSize,
+          },
+        });
+
+        // Log the transaction
+        await tx.credit_transactions.create({
+          data: {
+            id: require("crypto").randomUUID(),
+            user_id: userId,
+            transaction_type: 'deduct',
+            amount: -batchSize,
+            balance_before,
+            balance_after,
+            reason,
+            related_batch_id: batchJob.id,
+          },
+        });
+
+        return {
+          batchJob,
+          creditsRemaining: balance_after,
+        };
+      },
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        timeout: 10000, // 10 second timeout
+      }
+    );
+
+    return result;
+  } catch (error) {
+    if (error instanceof InsufficientCreditsError) {
+      throw error;
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new CreditServiceError(`Database error: ${error.message}`);
+    }
+    throw new CreditServiceError(
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+  }
+}
+
+/**
  * Grants credits to a user (admin function).
  *
  * @param userId - User ID to grant credits to

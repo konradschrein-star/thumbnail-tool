@@ -126,18 +126,19 @@ model generation_jobs {
 }
 
 model batch_jobs {
-  id              String            @id @default(cuid())
-  name            String
-  userId          String
-  status          String            @default("PENDING")
-  totalJobs       Int
-  completedJobs   Int               @default(0)
-  failedJobs      Int               @default(0)
-  outputZipUrl    String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  users           users             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  generation_jobs generation_jobs[]
+  id               String            @id @default(cuid())
+  name             String
+  userId           String
+  status           String            @default("PENDING")
+  totalJobs        Int
+  completedJobs    Int               @default(0)
+  failedJobs       Int               @default(0)
+  outputZipUrl     String?
+  credits_deducted Int?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  users            users             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generation_jobs  generation_jobs[]
 
   @@index([userId])
   @@index([status])

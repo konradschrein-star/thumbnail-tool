@@ -10,6 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import * as CreditService from '@/lib/credit-service';
+import { getUserLimiter } from '@/lib/rate-limiter';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +26,29 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.id as string;
+    const userRole = (session.user as any).role || 'USER';
+
+    // Rate limiting: 20 batch translations per hour per user
+    const limiter = getUserLimiter(userId, 20, 'hour');
+    const remainingTokens = await limiter.removeTokens(1);
+
+    if (remainingTokens < 0) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded. Maximum 20 batch translations per hour.',
+          retryAfter: 3600
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': '3600',
+            'X-RateLimit-Limit': '20',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + 3600)
+          }
+        }
+      );
+    }
 
     // Parse request body
     const body = await request.json();
@@ -87,10 +112,69 @@ export async function POST(request: NextRequest) {
 
     console.log(`\n🌐 Translating batch ${batchJobId} (${completedJobs.length} thumbnails) to ${targetLanguages.length} languages`);
 
-    // Warn if large batch
+    // Calculate required credits
     const totalTranslations = completedJobs.length * targetLanguages.length;
     if (totalTranslations > 100) {
       console.warn(`⚠️  Large batch translation: ${totalTranslations} total translation jobs will be created`);
+    }
+
+    // Credit system: Non-admins must have sufficient credits
+    const isAdmin = userRole === 'ADMIN';
+    let creditsRemaining: number | null = null;
+
+    if (!isAdmin) {
+      try {
+        const userCredits = await CreditService.getUserCredits(userId);
+        if (userCredits < totalTranslations) {
+          return NextResponse.json(
+            {
+              error: 'Insufficient credits',
+              creditsRequired: totalTranslations,
+              creditsAvailable: userCredits,
+              message: `Creating ${targetLanguages.length} translation(s) for ${completedJobs.length} thumbnails requires ${totalTranslations} credits. You have ${userCredits}.`
+            },
+            { status: 402 }
+          );
+        }
+      } catch (error) {
+        console.error('Credit check failed:', error);
+        return NextResponse.json(
+          { error: 'Failed to check credit balance' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Deduct credits upfront for non-admins
+    if (!isAdmin) {
+      try {
+        creditsRemaining = await CreditService.deductCreditsForJob(
+          userId,
+          totalTranslations,
+          `Deducted ${totalTranslations} credits for batch translation: ${targetLanguages.length} languages × ${completedJobs.length} thumbnails`,
+          null
+        );
+        console.log(`✓ Deducted ${totalTranslations} credits (${creditsRemaining} remaining)`);
+      } catch (error) {
+        console.error('Credit deduction failed:', error);
+
+        if (error instanceof CreditService.InsufficientCreditsError) {
+          return NextResponse.json(
+            {
+              error: 'Insufficient credits',
+              creditsRequired: error.required,
+              creditsAvailable: error.available,
+              message: `Creating ${targetLanguages.length} translation(s) for ${completedJobs.length} thumbnails requires ${error.required} credits. You have ${error.available}.`
+            },
+            { status: 402 }
+          );
+        }
+
+        return NextResponse.json(
+          { error: 'Failed to deduct credits' },
+          { status: 500 }
+        );
+      }
     }
 
     // Create variant jobs for each completed job × each target language
@@ -132,13 +216,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
+    const response: any = {
       success: true,
       translationCount,
       sourceJobCount: completedJobs.length,
       targetLanguages,
       message: `Queued ${translationCount} translation jobs (${completedJobs.length} thumbnails × ${targetLanguages.length} languages)`,
-    });
+    };
+
+    // Include credit info for non-admins
+    if (!isAdmin && creditsRemaining !== null) {
+      response.creditsRemaining = creditsRemaining;
+      response.creditsDeducted = totalTranslations;
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Batch translation error:', error);
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
