@@ -25,6 +25,7 @@ module.exports = {
         NODE_ENV: 'production',
         WORKER_CONCURRENCY: 2, // Process 2 jobs concurrently
       },
+      env_file: '.env',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -35,6 +36,8 @@ module.exports = {
       min_uptime: '10s',
       max_restarts: 10,
       restart_delay: 5000,
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      merge_logs: true,
     },
   ],
 };
