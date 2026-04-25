@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import * as r2Service from '@/lib/r2-service';
 import { fileTypeFromBuffer } from 'file-type';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 
-// POST /api/upload - Handle file uploads directly to R2
+// POST /api/upload - Handle file uploads to local storage
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -44,7 +45,6 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filename = `${timestamp}-${originalName}`;
-    const r2Key = `${folder}/${filename}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -59,8 +59,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to R2 (Mandatory) - use detected MIME type, not client-provided
-    const url = await r2Service.uploadToR2(buffer, r2Key, detectedType.mime);
+    // Save to local storage
+    const uploadDir = join(process.cwd(), 'public', folder);
+    await fs.mkdir(uploadDir, { recursive: true });
+    const filePath = join(uploadDir, filename);
+    await fs.writeFile(filePath, buffer);
+    const url = `/${folder}/${filename}`;
 
     return NextResponse.json({
       success: true,

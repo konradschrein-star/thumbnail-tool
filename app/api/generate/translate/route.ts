@@ -4,7 +4,8 @@ import { getApiAuth } from '@/lib/api-auth';
 import * as translationService from '@/lib/translation-service';
 import * as payloadEngine from '@/lib/payload-engine';
 import * as generationService from '@/lib/generation-service';
-import * as r2Service from '@/lib/r2-service';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 
 /**
  * POST /api/generate/translate
@@ -202,16 +203,14 @@ async function handleMasterJobTranslation(
         process.env.GOOGLE_API_KEY!
       );
 
-      // Upload to R2
+      // Save to local storage
       const filename = `variant_${variant.id}.png`;
-      const outputUrl = await r2Service.uploadToR2(
-        imageBuffer,
-        filename,
-        'image/png',
-        authResult.user.email || 'system'
-      );
+      const storagePath = join(process.cwd(), 'public', 'generated', filename);
+      await fs.mkdir(join(process.cwd(), 'public', 'generated'), { recursive: true });
+      await fs.writeFile(storagePath, imageBuffer);
+      const outputUrl = `/generated/${filename}`;
 
-      console.log(`   ✓ Uploaded to: ${outputUrl}`);
+      console.log(`   ✓ Saved to: ${outputUrl}`);
 
       // Update variant job
       const updatedVariant = await prisma.variant_jobs.update({
@@ -386,16 +385,14 @@ If there is NO text in the original image, recreate it exactly without adding an
             process.env.GOOGLE_API_KEY!
           );
 
-          // Upload to R2
+          // Save to local storage
           const filename = `translated_${variant.id}.png`;
-          const outputUrl = await r2Service.uploadToR2(
-            imageBuffer,
-            filename,
-            'image/png',
-            authResult.user.email || 'system'
-          );
+          const storagePath = join(process.cwd(), 'public', 'generated', filename);
+          await fs.mkdir(join(process.cwd(), 'public', 'generated'), { recursive: true });
+          await fs.writeFile(storagePath, imageBuffer);
+          const outputUrl = `/generated/${filename}`;
 
-          console.log(`     ✓ Uploaded to: ${outputUrl}`);
+          console.log(`     ✓ Saved to: ${outputUrl}`);
 
           // Update variant
           const updatedVariant = await prisma.variant_jobs.update({

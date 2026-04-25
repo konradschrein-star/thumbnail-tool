@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import * as r2Service from '@/lib/r2-service';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 
 // This route should be called by a CRON job (e.g. Vercel Cron)
 // Protected by a secret token in the header or URL params
@@ -42,19 +43,19 @@ export async function POST(request: NextRequest) {
 
             if (jobsToDelete.length > 0) {
                 for (const job of jobsToDelete) {
-                    // Delete from R2 if URL exists
+                    // Delete from local storage if URL exists
                     if (job.outputUrl) {
                         try {
-                            // Extract the key from the URL
-                            // Robust extraction: get everything after the domain
-                            const url = new URL(job.outputUrl);
-                            const key = url.pathname.startsWith('/') ? url.pathname.substring(1) : url.pathname;
-
-                            if (key && key !== '/') {
-                                await r2Service.deleteFromR2(key);
+                            // Extract filename from URL (e.g., /generated/jobid.png)
+                            const filename = job.outputUrl.split('/').pop();
+                            if (filename) {
+                                const filePath = join(process.cwd(), 'public', 'generated', filename);
+                                await fs.unlink(filePath).catch(() => {
+                                    // Ignore if file doesn't exist
+                                });
                             }
-                        } catch (r2Error) {
-                            console.error(`Failed to delete R2 asset for job ${job.id}:`, r2Error);
+                        } catch (deleteError) {
+                            console.error(`Failed to delete local file for job ${job.id}:`, deleteError);
                         }
                     }
 
