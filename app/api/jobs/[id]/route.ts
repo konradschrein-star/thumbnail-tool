@@ -4,7 +4,7 @@ import { getApiAuth } from '@/lib/api-auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const authResult = await getApiAuth(request);
 
@@ -17,6 +17,7 @@ export async function GET(
 
   const userId = authResult.user.id;
   const userRole = authResult.user.role || 'USER';
+  const params = await context.params;
   const jobId = params.id;
 
   try {
@@ -49,7 +50,7 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const authResult = await getApiAuth(request);
 
@@ -62,6 +63,7 @@ export async function DELETE(
 
   const userId = authResult.user.id;
   const userRole = authResult.user.role || 'USER';
+  const params = await context.params;
   const jobId = params.id;
 
   try {
