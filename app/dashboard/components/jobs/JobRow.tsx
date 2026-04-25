@@ -15,7 +15,8 @@ import {
   Image as ImageIcon,
   Globe,
   Layers,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 import { HistoryJob } from '@/app/dashboard/hooks/useHistory';
 import { generateProfessionalFilename, downloadRemoteImage } from '@/lib/download-utils';
@@ -23,9 +24,12 @@ import { generateProfessionalFilename, downloadRemoteImage } from '@/lib/downloa
 interface JobRowProps {
   job: HistoryJob;
   onRedo?: (job: HistoryJob) => void;
+  isSelected: boolean;
+  onToggleSelect: () => void;
+  onDelete: () => void;
 }
 
-export default function JobRow({ job, onRedo }: JobRowProps) {
+export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDelete }: JobRowProps) {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
@@ -91,6 +95,15 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
   return (
     <>
       <tr className="job-row">
+        <td className="checkbox-cell">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={onToggleSelect}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Select job ${job.id}`}
+          />
+        </td>
         <td className="job-cell preview">
           {job.status === 'completed' && job.outputUrl ? (
             <div className="thumbnail-preview-mini glass-dark" onClick={() => setShowPreviewModal(true)}>
@@ -155,6 +168,18 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
             >
               <RotateCcw size={14} />
             </Button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm('Delete this job? This action cannot be undone.')) {
+                  onDelete();
+                }
+              }}
+              className="delete-btn"
+              title="Delete job"
+            >
+              <Trash2 size={16} />
+            </button>
             {job.status === 'failed' && (
               <Button size="small" variant="ghost" className="error-btn" onClick={() => setShowErrorModal(true)}>
                 Error
@@ -545,6 +570,35 @@ export default function JobRow({ job, onRedo }: JobRowProps) {
 
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+
+        .checkbox-cell {
+          padding: 0.75rem;
+          text-align: center;
+        }
+
+        .checkbox-cell input[type="checkbox"] {
+          cursor: pointer;
+          width: 16px;
+          height: 16px;
+        }
+
+        .delete-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem;
+          border: none;
+          background: rgba(239, 68, 68, 0.1);
+          color: #ef4444;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+          background: rgba(239, 68, 68, 0.2);
+          color: #fca5a5;
         }
       `}</style>
     </>
