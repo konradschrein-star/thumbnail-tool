@@ -168,13 +168,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate prompt length before queueing jobs
-    const testPrompt = customPrompt || buildFullPrompt(
+    // Always build the full smart prompt, then append custom instructions if provided
+    let testPrompt = buildFullPrompt(
       channel,
       archetype,
       { videoTopic, thumbnailText, customPrompt },
       includeBrandColors,
       includePersona
     );
+
+    // If custom prompt is provided, append it as additional instructions
+    if (customPrompt && customPrompt.trim()) {
+      testPrompt += `\n\nAdditional Style Instructions: ${customPrompt.trim()}`;
+    }
 
     const promptValidation = validatePromptLength(testPrompt, 2000);
     if (!promptValidation.valid) {

@@ -81,13 +81,19 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
     const includeBrandColors = job.data.includeBrandColors !== undefined ? job.data.includeBrandColors : true;
     const includePersona = job.data.includePersona !== undefined ? job.data.includePersona : true;
 
-    const fullPrompt = customPrompt || buildFullPrompt(
+    // Always build the full prompt with persona, colors, etc.
+    let fullPrompt = buildFullPrompt(
       channel,
       archetype,
       { videoTopic, thumbnailText, customPrompt },
       includeBrandColors,
       includePersona
     );
+
+    // If custom prompt is provided, append it as additional instructions
+    if (customPrompt && customPrompt.trim()) {
+      fullPrompt += `\n\nAdditional Style Instructions: ${customPrompt.trim()}`;
+    }
 
     // Validate prompt length before attempting generation
     const validation = validatePromptLength(fullPrompt, 2000);
