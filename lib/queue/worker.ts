@@ -92,12 +92,28 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
 
     console.log(`   → Generating image... (prompt: ${validation.length} chars)`);
 
+    // Encode archetype image to base64 using payload engine (handles R2, local files, URLs)
+    const { encodeImageToBase64 } = require('../payload-engine');
+    console.log(`   → Loading archetype reference: ${archetype.imageUrl}`);
+    const archetypeImage = await encodeImageToBase64(archetype.imageUrl);
+
+    if (!archetypeImage.data) {
+      throw new Error(`Failed to load archetype reference image: ${archetype.imageUrl}`);
+    }
+    console.log(`   ✓ Archetype image loaded: ${(archetypeImage.data.length / 1024).toFixed(1)}KB base64`);
+
+    // Create temporary file with base64 data for Google client
+    const { writeFileSync, unlinkSync } = require('fs');
+    const { join } = require('path');
+    const tempImagePath = join(process.env.STORAGE_PATH || '/tmp', `temp-archetype-${jobId}.${archetypeImage.mimeType.split('/')[1]}`);
+    writeFileSync(tempImagePath, Buffer.from(archetypeImage.data, 'base64'));
+
     // Generate image with archetype reference URL - WRAP IN TRY-CATCH
     let generationResult;
     try {
       generationResult = await generator.generateImage({
         prompt: fullPrompt,
-        referenceImageUrl: archetype.imageUrl,
+        referenceImageUrl: tempImagePath,
       });
     } catch (genError) {
       // Extract meaningful error message from API response
@@ -113,6 +129,14 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
         throw new Error(`Invalid request: ${errorMessage}`);
       } else {
         throw new Error(`Image generation failed: ${errorMessage}`);
+      }
+    } finally {
+      // Always clean up temp file
+      try {
+        const { unlinkSync } = require('fs');
+        unlinkSync(tempImagePath);
+      } catch (e) {
+        // Ignore cleanup errors
       }
     }
 
