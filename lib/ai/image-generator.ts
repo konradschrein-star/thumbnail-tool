@@ -101,8 +101,25 @@ export class UnifiedImageGenerator {
         };
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
-        console.warn(`   ⚠️ AI33 generation failed: ${errorMsg}`);
-        console.log('   → Falling back to Google Gemini...');
+
+        // Only fall back to Google for SUBSTANTIAL failures (404, auth errors, etc)
+        // DO NOT fall back for timeouts, temporary network issues, or rate limits
+        const isSubstantialFailure =
+          errorMsg.includes('404') ||
+          errorMsg.includes('401') ||
+          errorMsg.includes('403') ||
+          errorMsg.includes('Invalid API key') ||
+          errorMsg.includes('insufficient credits');
+
+        if (!isSubstantialFailure) {
+          // Transient error - throw to caller, don't fall back
+          console.error(`   ✗ AI33 generation failed (transient): ${errorMsg}`);
+          throw new Error(`AI33 generation failed: ${errorMsg}`);
+        }
+
+        // Substantial failure - fall back to Google
+        console.warn(`   ⚠️ AI33 generation failed (substantial): ${errorMsg}`);
+        console.log('   → Falling back to Google Gemini due to substantial AI33 failure...');
       }
     }
 
