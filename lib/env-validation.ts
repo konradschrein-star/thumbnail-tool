@@ -17,21 +17,12 @@ export function validateEnv(): EnvValidationResult {
         'NEXTAUTH_URL',
     ];
 
-    const secondary = [
-        'R2_ACCESS_KEY_ID',
-        'R2_SECRET_ACCESS_KEY',
-        'R2_ENDPOINT',
-        'R2_BUCKET_NAME',
-        'R2_PUBLIC_URL',
-    ];
-
     const missing = required.filter(key => !process.env[key]);
-    const warningMissing = secondary.filter(key => !process.env[key]);
 
     return {
         isValid: missing.length === 0,
         missing,
-        warnings: warningMissing,
+        warnings: [],
     };
 }
 
