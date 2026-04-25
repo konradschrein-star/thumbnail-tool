@@ -244,14 +244,18 @@ export function buildFullPrompt(
     ? `Colors: ${brand.primaryColor} and ${brand.secondaryColor}.`
     : '';
 
-  // Concise, focused prompt
-  return `Create a YouTube thumbnail matching the reference image style, layout and feel.
-Topic: "${topic}"
-Text to display: "${text}"
+  // Concise, focused prompt with strict rules to prevent unwanted behavior
+  return `Create a YouTube thumbnail matching the reference image's visual style, layout, and composition.
+
+CRITICAL RULES:
+1. TEXT REPLACEMENT: Replace ONLY the main headline text in the reference thumbnail with "${text}". Keep logos, UI elements, and secondary text unchanged.
+2. TOPIC CHANGE: The thumbnail is about "${topic}". Completely disregard and replace any subject or topic from the reference thumbnail.
+3. CHARACTER REPLACEMENT: ${includePersona && channel.personaDescription ? `Replace any character in the reference image with this character: ${sanitizePrompt(channel.personaDescription, 300)}. Match their pose and position.` : 'If the reference has a character, keep the same pose and style but update to match the new topic. If no character exists, do not add one.'}
+
 Style: ${styleHint}
-${personaSection}
 ${colorSection}
-Match the reference image's composition, lighting, and visual style. Use vibrant colors and high contrast.`.trim();
+
+Match the reference image's composition, lighting, color scheme, and visual energy. Use vibrant colors and high contrast.`.trim();
 }
 
 /**
