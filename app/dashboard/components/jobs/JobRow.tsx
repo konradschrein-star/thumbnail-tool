@@ -395,8 +395,8 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
         }
 
         .thumbnail-preview-mini {
-          width: 60px;
-          height: 34px;
+          width: 120px;
+          height: 68px;
           border-radius: 4px;
           overflow: hidden;
           cursor: zoom-in;
@@ -416,8 +416,8 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
         }
 
         .thumbnail-placeholder-mini {
-          width: 60px;
-          height: 34px;
+          width: 120px;
+          height: 68px;
           border-radius: 4px;
           display: flex;
           align-items: center;
