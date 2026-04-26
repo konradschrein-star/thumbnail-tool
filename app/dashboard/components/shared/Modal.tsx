@@ -89,7 +89,7 @@ export default function Modal({
         .modal-content {
           width: 100%;
           max-width: ${getMaxWidth()};
-          max-height: 90vh;
+          max-height: 95vh;
           overflow: hidden;
           border-radius: var(--radius);
           display: flex;

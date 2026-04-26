@@ -277,7 +277,7 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
           isOpen={showPreviewModal}
           onClose={() => setShowPreviewModal(false)}
           title="Thumbnail Preview"
-          size="large"
+          size="xl"
         >
           <div className="preview-container">
             <div className="preview-image-wrapper glass">
