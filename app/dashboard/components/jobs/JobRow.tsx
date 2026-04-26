@@ -523,8 +523,6 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
-          max-height: 80vh;
-          overflow-y: auto;
         }
 
         .preview-info {
@@ -554,21 +552,19 @@ export default function JobRow({ job, onRedo, isSelected, onToggleSelect, onDele
         }
 
         .preview-image-wrapper {
-          position: sticky;
-          top: 0;
-          z-index: 10;
           width: 100%;
           border-radius: 12px;
-          overflow: hidden;
           background: #020617;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          position: relative;
         }
 
         .preview-image {
           width: 100%;
-          aspect-ratio: 16 / 9;
+          height: auto;
           object-fit: contain;
           display: block;
+          border-radius: 12px;
         }
 
         .image-actions {
