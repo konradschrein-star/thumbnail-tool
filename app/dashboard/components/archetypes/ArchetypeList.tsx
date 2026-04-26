@@ -243,6 +243,7 @@ export default function ArchetypeList() {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 2rem;
+          min-height: calc(100vh - 400px);
         }
 
         .loading {

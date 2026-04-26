@@ -320,30 +320,36 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
                         className="search-input"
                       />
                     </div>
-                    <div className={`archetype-grid ${!selectedChannelId || loading ? 'disabled' : ''} ${validationErrors.archetypeId ? 'has-error' : ''}`}>
+                    <div className={`archetype-list-container ${!selectedChannelId || loading ? 'disabled' : ''} ${validationErrors.archetypeId ? 'has-error' : ''}`}>
                       {!selectedChannelId ? (
                         <div className="archetype-placeholder">Select a channel first</div>
                       ) : archetypes.length === 0 ? (
                         <div className="archetype-placeholder">No archetypes for this channel</div>
                       ) : (
-                        archetypes
-                          .filter((a: any) => a.name.toLowerCase().includes(archetypeSearch.toLowerCase()) || a.category?.toLowerCase().includes(archetypeSearch.toLowerCase()))
-                          .map((archetype: any) => (
-                            <div
-                              key={archetype.id}
-                              className={`archetype-option ${archetypeId === archetype.id ? 'selected' : ''}`}
-                              onClick={() => !loading && setArchetypeId(archetype.id)}
-                              title={`${archetype.name} - ${archetype.layoutInstructions}`}
-                            >
-                              <div className="archetype-option-image">
-                                <img src={archetype.imageUrl} alt={archetype.name} />
+                        <div className="archetype-list">
+                          {archetypes
+                            .filter((a: any) => a.name.toLowerCase().includes(archetypeSearch.toLowerCase()) || a.category?.toLowerCase().includes(archetypeSearch.toLowerCase()))
+                            .map((archetype: any) => (
+                              <div
+                                key={archetype.id}
+                                className={`archetype-list-item ${archetypeId === archetype.id ? 'selected' : ''}`}
+                                onClick={() => !loading && setArchetypeId(archetype.id)}
+                                title={archetype.layoutInstructions}
+                              >
+                                <div className="archetype-list-thumbnail">
+                                  <img src={archetype.imageUrl} alt={archetype.name} />
+                                </div>
+                                <div className="archetype-list-content">
+                                  <div className="archetype-list-name">{archetype.name}</div>
+                                  <div className="archetype-list-category">{archetype.category || 'General'}</div>
+                                </div>
+                                {archetypeId === archetype.id && (
+                                  <div className="archetype-list-check">✓</div>
+                                )}
                               </div>
-                              <div className="archetype-option-content">
-                                <div className="archetype-option-category">{archetype.category || 'General'}</div>
-                                <div className="archetype-option-name">{archetype.name}</div>
-                              </div>
-                            </div>
-                          ))
+                            ))
+                          }
+                        </div>
                       )}
                     </div>
                     {archetypeId && (

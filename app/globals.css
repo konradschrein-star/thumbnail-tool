@@ -151,64 +151,97 @@ select:focus {
     border-color: var(--ring);
 }
 
-/* Archetype Grid Selector */
-.archetype-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    max-height: 400px;
-    overflow-y: auto;
-    padding: 8px;
+/* Archetype List Selector */
+.archetype-list-container {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
+    overflow: hidden;
 }
 
-.archetype-grid.disabled {
+.archetype-list-container.disabled {
     opacity: 0.5;
     pointer-events: none;
 }
 
-.archetype-grid.has-error {
+.archetype-list-container.has-error {
     border-color: var(--color-red-500);
 }
 
+.archetype-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
 .archetype-placeholder {
-    grid-column: 1 / -1;
     text-align: center;
     padding: 40px 20px;
     color: var(--color-gray-500);
     font-size: 14px;
 }
 
-.archetype-option {
-    position: relative;
-    background: rgba(255, 255, 255, 0.03);
-    border: 2px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    overflow: hidden;
+.archetype-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 }
 
-.archetype-option:hover {
-    border-color: rgba(103, 126, 234, 0.5);
+.archetype-list-item:hover {
     background: rgba(255, 255, 255, 0.05);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: rgba(103, 126, 234, 0.3);
 }
 
-.archetype-option.selected {
-    border-color: #667eea;
-    background: rgba(102, 126, 234, 0.1);
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+.archetype-list-item.selected {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.5);
 }
 
-.archetype-option.selected::after {
-    content: '✓';
-    position: absolute;
-    top: 8px;
-    right: 8px;
+.archetype-list-thumbnail {
+    flex-shrink: 0;
+    width: 80px;
+    height: 45px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.archetype-list-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.archetype-list-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.archetype-list-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-100);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.archetype-list-category {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #667eea;
+}
+
+.archetype-list-check {
+    flex-shrink: 0;
     width: 24px;
     height: 24px;
     background: #667eea;
@@ -219,48 +252,4 @@ select:focus {
     justify-content: center;
     font-size: 14px;
     font-weight: bold;
-    z-index: 10;
-}
-
-.archetype-option-image {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    background: rgba(0, 0, 0, 0.3);
-}
-
-.archetype-option-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.2s ease;
-}
-
-.archetype-option:hover .archetype-option-image img {
-    transform: scale(1.05);
-}
-
-.archetype-option-content {
-    padding: 10px 12px;
-}
-
-.archetype-option-category {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #667eea;
-    margin-bottom: 4px;
-}
-
-.archetype-option-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-gray-100);
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
