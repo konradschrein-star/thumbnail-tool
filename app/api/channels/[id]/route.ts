@@ -30,8 +30,11 @@ export async function GET(
       );
     }
 
-    // Check ownership
-    if (channel.userId !== session.user.id) {
+    // Check ownership (admins bypass this check)
+    const role = (session.user as any)?.role;
+    const isAdmin = role === 'ADMIN';
+
+    if (!isAdmin && channel.userId !== session.user.id) {
       return NextResponse.json(
         { error: 'Forbidden: You do not own this channel' },
         { status: 403 }
@@ -91,7 +94,11 @@ export async function PATCH(
       );
     }
 
-    if (existingChannel.userId !== session.user.id) {
+    // Check ownership (admins bypass this check)
+    const role = (session.user as any)?.role;
+    const isAdmin = role === 'ADMIN';
+
+    if (!isAdmin && existingChannel.userId !== session.user.id) {
       return NextResponse.json(
         { error: 'Forbidden: You do not own this channel' },
         { status: 403 }
@@ -144,7 +151,11 @@ export async function DELETE(
       );
     }
 
-    if (existingChannel.userId !== session.user.id) {
+    // Check ownership (admins bypass this check)
+    const role = (session.user as any)?.role;
+    const isAdmin = role === 'ADMIN';
+
+    if (!isAdmin && existingChannel.userId !== session.user.id) {
       return NextResponse.json(
         { error: 'Forbidden: You do not own this channel' },
         { status: 403 }
