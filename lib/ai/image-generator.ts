@@ -90,12 +90,19 @@ export class UnifiedImageGenerator {
 
         console.log('✓ AI33 generation successful');
 
+        // Cost calculation: 1 credit base + 1 credit per reference image
+        // - No reference images: 1 credit
+        // - 1 reference (archetype): 1 credit
+        // - 2 references (archetype + persona): 2 credits
+        // - 3 references (archetype + persona + logo): 3 credits
+        const creditCost = referenceImages.length > 0 ? referenceImages.length : 1;
+
         return {
           buffer,
           provider: 'ai33',
           fallbackUsed: false,
           cost: {
-            amount: 0.01,
+            amount: creditCost * 0.01, // Cost in USD (1 credit = $0.01)
             currency: 'USD',
           },
         };
