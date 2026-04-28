@@ -4,15 +4,32 @@ import { fileTypeFromBuffer } from 'file-type';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 
+// Configure route to handle larger payloads for file uploads
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // POST /api/upload - Handle file uploads to local storage
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.error('Upload failed: No session found');
+      return NextResponse.json({ error: 'Unauthorized - Please sign in again' }, { status: 401 });
     }
 
-    const formData = await request.formData();
+    console.log('Upload request received from user:', session.user?.email);
+
+    let formData;
+    try {
+      formData = await request.formData();
+    } catch (parseError) {
+      console.error('FormData parsing error:', parseError);
+      return NextResponse.json(
+        { error: 'Failed to parse upload data. Please try again.' },
+        { status: 400 }
+      );
+    }
+
     const file = formData.get('file') as File;
     const folder = (formData.get('folder') as string) || 'archetypes';
 
