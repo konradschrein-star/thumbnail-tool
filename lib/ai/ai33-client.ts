@@ -126,8 +126,19 @@ export class AI33Client {
       // Build prompt with @img references matching the number of assets
       let finalPrompt = params.prompt;
       if (params.referenceImages && params.referenceImages.length > 0) {
-        // Add @img1 reference for archetype
-        finalPrompt = `Create a YouTube thumbnail matching the style and layout of @img1. ${params.prompt}`;
+        // Reference all uploaded images in the prompt (AI33 requires each asset to be referenced)
+        const imageRefs = params.referenceImages.map((_, i) => `@img${i + 1}`).join(', ');
+
+        if (params.referenceImages.length === 1) {
+          // Only archetype
+          finalPrompt = `Create a YouTube thumbnail matching the style and layout of @img1. ${params.prompt}`;
+        } else if (params.referenceImages.length === 2) {
+          // Archetype + persona
+          finalPrompt = `Create a YouTube thumbnail matching the style and layout of @img1. Replace any character with the person shown in @img2, matching their appearance, pose, and position. ${params.prompt}`;
+        } else if (params.referenceImages.length === 3) {
+          // Archetype + persona + logo
+          finalPrompt = `Create a YouTube thumbnail matching the style and layout of @img1. Replace any character with the person shown in @img2. Replace any software logo with the branding shown in @img3. ${params.prompt}`;
+        }
       }
 
       formData.append('prompt', finalPrompt);
