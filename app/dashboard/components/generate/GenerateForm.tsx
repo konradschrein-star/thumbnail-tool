@@ -35,6 +35,29 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
   const { channels } = useChannels();
   const [selectedChannelId, setSelectedChannelId] = useState(initialData?.channelId || '');
   const { archetypes } = useArchetypes(selectedChannelId);
+
+  // Debug: Log channels data
+  useEffect(() => {
+    if (channels.length > 0) {
+      console.log('Channels loaded:', channels.map(c => ({
+        id: c.id,
+        name: c.name,
+        personaAssetPath: c.personaAssetPath
+      })));
+    }
+  }, [channels]);
+
+  // Debug: Log selected channel
+  useEffect(() => {
+    if (selectedChannelId) {
+      const channel = channels.find((c: any) => c.id === selectedChannelId);
+      console.log('Selected channel:', {
+        id: selectedChannelId,
+        found: !!channel,
+        personaAssetPath: channel?.personaAssetPath
+      });
+    }
+  }, [selectedChannelId, channels]);
   const { loading, error, success, result, generateThumbnail, reset } = useGenerate();
 
   const searchParams = useSearchParams();
