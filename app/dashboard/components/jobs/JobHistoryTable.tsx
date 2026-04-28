@@ -58,6 +58,8 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [isAutoRefreshing, setIsAutoRefreshing] = useState(false);
 
   // Selection handlers
   const handleToggleJob = (jobId: string) => {
@@ -122,29 +124,39 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
       (job) => job.status === 'pending' || job.status === 'processing'
     );
 
+    setIsAutoRefreshing(hasActiveJobs);
+
     if (!hasActiveJobs) return;
 
     // Only poll when page is visible
     const handleVisibilityChange = () => {
       if (!document.hidden && hasActiveJobs) {
         refetch();
+        setLastRefresh(new Date());
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Poll every 10 seconds
+    // Poll every 3 seconds for active jobs (faster refresh)
     const interval = setInterval(() => {
       if (!document.hidden) {
         refetch();
+        setLastRefresh(new Date());
       }
-    }, 10000);
+    }, 3000);
 
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [jobs, refetch]);
+
+  // Manual refresh handler
+  const handleManualRefresh = async () => {
+    await refetch();
+    setLastRefresh(new Date());
+  };
 
   if (loading && jobs.length === 0) {
     return <div className="loading">Loading generation history...</div>;
@@ -227,6 +239,34 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
               <option value="completed">Completed</option>
               <option value="failed">Failed</option>
             </select>
+          </div>
+
+          <div className="filter-group refresh-group">
+            <button
+              onClick={handleManualRefresh}
+              className="refresh-button"
+              title="Refresh now"
+              disabled={loading}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className={loading ? 'spinning' : ''}
+              >
+                <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
+              </svg>
+              Refresh
+            </button>
+            {isAutoRefreshing && (
+              <div className="auto-refresh-indicator">
+                <span className="pulse-dot"></span>
+                <span className="auto-refresh-text">Auto-refreshing</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -417,6 +457,77 @@ export default function JobHistoryTable({ onRedo }: JobHistoryTableProps) {
             flex-direction: column;
             gap: 0.5rem;
             min-width: 200px;
+          }
+
+          .refresh-group {
+            min-width: auto;
+            flex-direction: row;
+            align-items: center;
+            gap: 1rem;
+            margin-left: auto;
+          }
+
+          .refresh-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            color: #ffffff;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .refresh-button:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+          }
+
+          .refresh-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+
+          .refresh-button svg {
+            flex-shrink: 0;
+          }
+
+          .spinning {
+            animation: spin 1s linear infinite;
+          }
+
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+
+          .auto-refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: #52d47f;
+          }
+
+          .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #52d47f;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+          }
+
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+          }
+
+          .auto-refresh-text {
+            white-space: nowrap;
           }
 
           .filter-label {
