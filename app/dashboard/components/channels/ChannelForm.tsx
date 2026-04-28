@@ -68,7 +68,7 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
       await onSubmit({
         name: name.trim(),
         personaDescription: personaDescription.trim(),
-        personaAssetPath: personaAssetPath || undefined,
+        personaAssetPath: personaAssetPath || null, // Send null to remove image
         primaryColor,
         secondaryColor,
         tags: tags.join(','), // Always serialize out as comma-separated string
