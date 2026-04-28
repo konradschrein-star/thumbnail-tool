@@ -3,14 +3,16 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import dynamic from 'next/dynamic';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { type TabType } from './components/layout/Sidebar';
 import ChannelList from './components/channels/ChannelList';
 import ArchetypeList from './components/archetypes/ArchetypeList';
 import GenerateForm from './components/generate/GenerateForm';
 import JobHistoryTable from './components/jobs/JobHistoryTable';
-import TranslatePage from './translate/page';
-import APIDocsPage from './api-docs/page';
+
+const TranslatePage = dynamic(() => import('./translate/page'), { ssr: false });
+const APIDocsPage = dynamic(() => import('./api-docs/page'), { ssr: false });
 
 function DashboardContent() {
   const searchParams = useSearchParams();
