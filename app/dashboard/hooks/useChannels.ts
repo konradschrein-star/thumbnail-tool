@@ -22,7 +22,7 @@ export interface Channel {
 export interface CreateChannelData {
   name: string;
   personaDescription: string;
-  personaAssetPath?: string;
+  personaAssetPath?: string | null;
   logoAssetPath?: string;
   primaryColor?: string;
   secondaryColor?: string;
@@ -32,7 +32,7 @@ export interface CreateChannelData {
 export interface UpdateChannelData {
   name?: string;
   personaDescription?: string;
-  personaAssetPath?: string;
+  personaAssetPath?: string | null;
   logoAssetPath?: string;
   primaryColor?: string;
   secondaryColor?: string;
