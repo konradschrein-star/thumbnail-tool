@@ -17,7 +17,7 @@ export interface ThumbnailJobData {
 export const thumbnailQueue = new Queue<ThumbnailJobData>('thumbnail-generation', {
   connection: redisConnection,
   defaultJobOptions: {
-    attempts: 3,
+    attempts: 2, // 1 original attempt + 1 retry (changed from 3 to save credits)
     backoff: {
       type: 'exponential',
       delay: 2000,
