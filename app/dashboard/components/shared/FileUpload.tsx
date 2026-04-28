@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, Loader2, Image as ImageIcon, X } from 'lucide-react';
 import Button from './Button';
 
@@ -32,6 +32,11 @@ export default function FileUpload({
   const [preview, setPreview] = useState<string>(value || '');
   const [error, setError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync preview with value prop changes
+  useEffect(() => {
+    setPreview(value || '');
+  }, [value]);
 
   const validateFile = (file: File): string | null => {
     // Check file type

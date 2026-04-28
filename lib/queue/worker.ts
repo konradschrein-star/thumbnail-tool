@@ -149,8 +149,14 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
       // Check for specific error patterns
       if (errorMessage.includes('prompt') && errorMessage.includes('long')) {
         throw new Error(`Prompt too long (${validation.length} characters). Please shorten your video topic, thumbnail text, or persona description.`);
-      } else if (errorMessage.includes('safety') || errorMessage.includes('blocked')) {
-        throw new Error('Generation blocked by safety filters. Please try different content or phrasing.');
+      } else if (errorMessage.includes('safety') || errorMessage.includes('blocked') || errorMessage.includes('BLOCKED_REASON') || errorMessage.includes('SAFETY')) {
+        // Safety filter triggered - likely due to reference images containing people/faces
+        const hasPersonaImage = !!tempPersonaPath;
+        if (hasPersonaImage) {
+          throw new Error('Generation blocked by safety filters. Your persona reference image may contain identifiable people or faces. Please try: (1) Using a different persona reference image without clear faces, or (2) Removing the persona image and relying on text description only, or (3) Using an illustrated/cartoon reference instead of a photo.');
+        } else {
+          throw new Error('Generation blocked by safety filters. Your archetype reference image may be triggering content policies. Please try: (1) Using a different archetype reference image, or (2) Modifying your prompt text to avoid sensitive terms.');
+        }
       } else if (errorMessage.includes('INVALID_ARGUMENT')) {
         throw new Error(`Invalid request: ${errorMessage}`);
       } else {

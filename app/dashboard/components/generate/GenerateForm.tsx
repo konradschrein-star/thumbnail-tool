@@ -311,6 +311,19 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
                         </option>
                       ))}
                     </select>
+                    {selectedChannelId && channels.find((c: any) => c.id === selectedChannelId)?.personaAssetPath && (
+                      <div className="persona-preview-card glass-dark" style={{ marginTop: '0.75rem' }}>
+                        <img
+                          src={channels.find((c: any) => c.id === selectedChannelId)?.personaAssetPath}
+                          alt="Persona reference"
+                          className="persona-preview-img"
+                        />
+                        <div className="persona-preview-info">
+                          <span className="persona-preview-tag">Character Reference</span>
+                          <p className="persona-preview-text">Visual reference for character consistency</p>
+                        </div>
+                      </div>
+                    )}
                     {validationErrors.channelId && (
                       <div className="error-text">{validationErrors.channelId}</div>
                     )}
@@ -714,6 +727,49 @@ export default function GenerateForm({ initialData }: GenerateFormProps) {
 
         .archetype-preview-info {
           padding: 1rem;
+        }
+
+        .persona-preview-card {
+          border-radius: var(--radius);
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border);
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem;
+        }
+
+        .persona-preview-img {
+          width: 60px;
+          height: 60px;
+          object-fit: cover;
+          border-radius: calc(var(--radius) * 0.5);
+          border: 1px solid var(--border);
+          flex-shrink: 0;
+        }
+
+        .persona-preview-info {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .persona-preview-tag {
+          display: inline-block;
+          font-size: 0.6875rem;
+          font-weight: 500;
+          color: var(--muted-foreground);
+          background: rgba(255, 255, 255, 0.05);
+          padding: 0.125rem 0.5rem;
+          border-radius: 0.25rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .persona-preview-text {
+          font-size: 0.75rem;
+          color: var(--muted-foreground);
+          margin: 0;
+          line-height: 1.4;
         }
 
         .archetype-preview-tag {
