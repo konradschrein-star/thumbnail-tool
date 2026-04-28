@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { channelId, archetypeId, videoTopic, thumbnailText, includeBrandColors = true, includePersona = true } = body;
+    const { channelId, archetypeId, videoTopic, thumbnailText, includeBrandColors = true, includePersona = true, softwareSubject } = body;
 
     if (!channelId || !archetypeId || !videoTopic) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     const jobConfig = { videoTopic, thumbnailText };
-    const prompt = payloadEngine.buildFullPrompt(channel, archetype, jobConfig, includeBrandColors, includePersona);
+    const prompt = payloadEngine.buildFullPrompt(channel, archetype, jobConfig, includeBrandColors, includePersona, softwareSubject?.trim());
 
     return NextResponse.json({ prompt });
 

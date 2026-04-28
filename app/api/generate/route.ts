@@ -52,7 +52,8 @@ export async function POST(request: NextRequest) {
       customPrompt,
       versionCount = 1,
       includeBrandColors = true,
-      includePersona = true
+      includePersona = true,
+      softwareSubject
     } = body;
 
     // Strict validation (thumbnailText is optional - empty means remove text)
@@ -174,7 +175,8 @@ export async function POST(request: NextRequest) {
       archetype,
       { videoTopic, thumbnailText, customPrompt },
       includeBrandColors,
-      includePersona
+      includePersona,
+      softwareSubject?.trim()
     );
 
     // If custom prompt is provided, append it as additional instructions
@@ -182,7 +184,7 @@ export async function POST(request: NextRequest) {
       testPrompt += `\n\nAdditional Style Instructions: ${customPrompt.trim()}`;
     }
 
-    const promptValidation = validatePromptLength(testPrompt, 3800);
+    const promptValidation = validatePromptLength(testPrompt, 5000);
     if (!promptValidation.valid) {
       return NextResponse.json(
         {
@@ -245,6 +247,7 @@ export async function POST(request: NextRequest) {
             videoTopic,
             thumbnailText,
             customPrompt,
+            softwareSubject: softwareSubject?.trim() || null,
             isManual: true,
             status: 'pending',
             credits_deducted: shouldDeductCredits ? 1 : null,
@@ -261,6 +264,7 @@ export async function POST(request: NextRequest) {
             videoTopic,
             thumbnailText,
             customPrompt,
+            softwareSubject: softwareSubject?.trim(),
             includeBrandColors,
             includePersona,
           },

@@ -9,6 +9,7 @@ export interface ThumbnailJobData {
   videoTopic: string;
   thumbnailText: string;
   customPrompt?: string;
+  softwareSubject?: string;
   includeBrandColors?: boolean;
   includePersona?: boolean;
 }

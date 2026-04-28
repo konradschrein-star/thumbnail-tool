@@ -69,7 +69,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, imageUrl, layoutInstructions, basePrompt, channelIds } = body;
+    const { name, imageUrl, layoutInstructions, basePrompt, channelIds, featuresLogo } = body;
 
     // Check if user is admin
     const userRole = (session.user as any)?.role || 'USER';
@@ -81,6 +81,7 @@ export async function PATCH(
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
     if (layoutInstructions !== undefined) updateData.layoutInstructions = layoutInstructions;
     if (basePrompt !== undefined) updateData.basePrompt = basePrompt;
+    if (featuresLogo !== undefined) updateData.featuresLogo = featuresLogo;
 
     if (Object.keys(updateData).length === 0 && channelIds === undefined) {
       return NextResponse.json(

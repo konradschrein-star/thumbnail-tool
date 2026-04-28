@@ -8,6 +8,7 @@ export interface Archetype {
   imageUrl: string;
   layoutInstructions: string;
   basePrompt?: string | null;
+  featuresLogo?: boolean;
   category?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -34,6 +35,7 @@ export interface CreateArchetypeData {
   imageUrl: string;
   layoutInstructions: string;
   basePrompt?: string;
+  featuresLogo?: boolean;
 }
 
 export interface UpdateArchetypeData {
@@ -41,6 +43,7 @@ export interface UpdateArchetypeData {
   imageUrl?: string;
   layoutInstructions?: string;
   basePrompt?: string | null;
+  featuresLogo?: boolean;
   channelIds?: string[];
 }
 

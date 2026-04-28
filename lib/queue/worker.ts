@@ -43,7 +43,7 @@ function initializeServices() {
  * Process a single thumbnail generation job
  */
 async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-generation'>) {
-  const { jobId, batchJobId, channelId, archetypeId, videoTopic, thumbnailText, customPrompt } = job.data;
+  const { jobId, batchJobId, channelId, archetypeId, videoTopic, thumbnailText, customPrompt, softwareSubject } = job.data;
 
   console.log(`\n📸 Processing thumbnail job: ${jobId}`);
   console.log(`   Channel: ${channelId}, Archetype: ${archetypeId}`);
@@ -87,7 +87,8 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
       archetype,
       { videoTopic, thumbnailText, customPrompt },
       includeBrandColors,
-      includePersona
+      includePersona,
+      softwareSubject?.trim()
     );
 
     // If custom prompt is provided, append it as additional instructions
@@ -96,7 +97,7 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
     }
 
     // Validate prompt length before attempting generation
-    const validation = validatePromptLength(fullPrompt, 3800);
+    const validation = validatePromptLength(fullPrompt, 5000);
     if (!validation.valid) {
       throw new Error(validation.error);
     }
@@ -116,15 +117,29 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
     // Create temporary file with base64 data for Google client
     const { writeFileSync, unlinkSync } = require('fs');
     const { join } = require('path');
-    const tempImagePath = join(process.env.STORAGE_PATH || '/tmp', `temp-archetype-${jobId}.${archetypeImage.mimeType.split('/')[1]}`);
-    writeFileSync(tempImagePath, Buffer.from(archetypeImage.data, 'base64'));
+    const tempArchetypePath = join(process.env.STORAGE_PATH || '/tmp', `temp-archetype-${jobId}.${archetypeImage.mimeType.split('/')[1]}`);
+    writeFileSync(tempArchetypePath, Buffer.from(archetypeImage.data, 'base64'));
 
-    // Generate image with archetype reference URL - WRAP IN TRY-CATCH
+    // Encode persona image if available
+    let tempPersonaPath: string | undefined;
+    if (channel.personaAssetPath) {
+      console.log(`   → Loading persona reference: ${channel.personaAssetPath}`);
+      const personaImage = await encodeImageToBase64(channel.personaAssetPath);
+
+      if (personaImage.data) {
+        tempPersonaPath = join(process.env.STORAGE_PATH || '/tmp', `temp-persona-${jobId}.${personaImage.mimeType.split('/')[1]}`);
+        writeFileSync(tempPersonaPath, Buffer.from(personaImage.data, 'base64'));
+        console.log(`   ✓ Persona image loaded: ${(personaImage.data.length / 1024).toFixed(1)}KB base64`);
+      }
+    }
+
+    // Generate image with archetype + optional persona reference - WRAP IN TRY-CATCH
     let generationResult;
     try {
       generationResult = await generator.generateImage({
         prompt: fullPrompt,
-        referenceImageUrl: tempImagePath,
+        referenceImageUrl: tempArchetypePath,
+        personaImageUrl: tempPersonaPath,
       });
     } catch (genError) {
       // Extract meaningful error message from API response
@@ -142,10 +157,11 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
         throw new Error(`Image generation failed: ${errorMessage}`);
       }
     } finally {
-      // Always clean up temp file
+      // Always clean up temp files
       try {
         const { unlinkSync } = require('fs');
-        unlinkSync(tempImagePath);
+        unlinkSync(tempArchetypePath);
+        if (tempPersonaPath) unlinkSync(tempPersonaPath);
       } catch (e) {
         // Ignore cleanup errors
       }

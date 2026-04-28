@@ -88,7 +88,7 @@ ITERATION REQUEST: ${changeRequest}
 Use the reference image as the base and apply ONLY the requested changes. Keep everything else the same.`;
 
     // Validate prompt length
-    const validation = validatePromptLength(iterationPrompt, 3800);
+    const validation = validatePromptLength(iterationPrompt, 5000);
     if (!validation.valid) {
       return NextResponse.json(
         {

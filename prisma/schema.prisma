@@ -28,6 +28,7 @@ model archetypes {
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
   basePrompt         String?
+  featuresLogo       Boolean              @default(false)
   userId             String?
   users              users?               @relation(fields: [userId], references: [id])
   channel_archetypes channel_archetypes[]
@@ -109,6 +110,7 @@ model generation_jobs {
   completedAt      DateTime?
   credits_deducted Int?
   batchJobId       String?
+  softwareSubject  String?
   archetypes       archetypes     @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
   batch_jobs       batch_jobs?    @relation(fields: [batchJobId], references: [id], onDelete: Cascade)
   channels         channels       @relation(fields: [channelId], references: [id], onDelete: Cascade)

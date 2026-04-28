@@ -40,6 +40,7 @@ export default function ArchetypeForm({
   const [basePrompt, setBasePrompt] = useState(
     initialData?.basePrompt || ''
   );
+  const [featuresLogo, setFeaturesLogo] = useState(initialData?.featuresLogo || false);
   const [errors, setErrors] = useState<{
     name?: string;
     channels?: string;
@@ -67,6 +68,7 @@ export default function ArchetypeForm({
       setImageUrl(initialData.imageUrl ?? '');
       setLayoutInstructions(initialData.layoutInstructions ?? '');
       setBasePrompt(initialData.basePrompt ?? '');
+      setFeaturesLogo(initialData.featuresLogo || false);
       // Extract channel IDs from initial data
       if (initialData.channels && Array.isArray(initialData.channels)) {
         const ids = initialData.channels.map((c: any) => c.channel?.id || c.channelId).filter(Boolean);
@@ -110,6 +112,7 @@ export default function ArchetypeForm({
         imageUrl: imageUrl.trim(),
         layoutInstructions: layoutInstructions.trim(),
         basePrompt: basePrompt.trim(),
+        featuresLogo: featuresLogo,
         channelIds: channelIds, // Always send channelIds array
       };
 
@@ -209,6 +212,22 @@ export default function ArchetypeForm({
             rows={4}
             disabled={isSubmitting}
           />
+
+          <div className="checkbox-container">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={featuresLogo}
+                onChange={(e) => setFeaturesLogo(e.target.checked)}
+                disabled={isSubmitting}
+                className="custom-checkbox"
+              />
+              <span className="checkbox-text">Features Replaceable Logo</span>
+            </label>
+            <p className="help-text">
+              Check if this archetype includes a software/platform logo that should be replaced based on video topic
+            </p>
+          </div>
         </div>
 
         <div className="form-column">

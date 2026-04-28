@@ -13,6 +13,7 @@ interface FileUploadProps {
   accept?: string;
   maxSizeMB?: number;
   required?: boolean;
+  helperText?: string;
 }
 
 export default function FileUpload({
@@ -24,6 +25,7 @@ export default function FileUpload({
   accept = 'image/jpeg,image/jpg,image/png,image/webp',
   maxSizeMB = 5,
   required = false,
+  helperText,
 }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -236,6 +238,7 @@ export default function FileUpload({
         </div>
       )}
 
+      {helperText && <div className="helper-text">{helperText}</div>}
       {error && <div className="error-text">{error}</div>}
 
       <style jsx>{`
@@ -343,6 +346,12 @@ export default function FileUpload({
 
         .hidden-input {
           display: none;
+        }
+
+        .helper-text {
+          margin-top: 0.5rem;
+          color: var(--muted-foreground);
+          font-size: 0.75rem;
         }
 
         .error-text {

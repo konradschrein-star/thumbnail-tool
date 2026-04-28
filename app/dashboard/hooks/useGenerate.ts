@@ -7,6 +7,7 @@ export interface GeneratePayload {
   archetypeId: string;
   videoTopic: string;
   thumbnailText: string;
+  softwareSubject?: string;
   customPrompt?: string;
   versionCount?: number;
   includeBrandColors?: boolean;

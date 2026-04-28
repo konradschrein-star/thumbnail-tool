@@ -55,9 +55,9 @@ export function sanitizePrompt(text: string, maxLength: number): string {
 
 /**
  * Validates prompt length to prevent API errors
- * Google Nano Banana has a 3800 character limit for prompts (verified via testing)
+ * Google Nano Banana has a 5000 character limit for prompts (verified via testing)
  */
-export function validatePromptLength(prompt: string, maxLength: number = 3800): { valid: boolean; length: number; error?: string } {
+export function validatePromptLength(prompt: string, maxLength: number = 5000): { valid: boolean; length: number; error?: string } {
   const length = prompt.length;
   if (length > maxLength) {
     return {
@@ -226,7 +226,8 @@ export function buildFullPrompt(
   archetype: any,
   job: JobConfig,
   includeBrandColors: boolean = true, // Deprecated, not used in new template
-  includePersona: boolean = true
+  includePersona: boolean = true,
+  softwareSubject?: string
 ): string {
   const topic = sanitizePrompt(job.videoTopic, 150);
   const text = sanitizePrompt(job.thumbnailText, 80);
@@ -244,6 +245,11 @@ Replace ONLY the main text in the reference thumbnail with "${text}". Adjust eve
   // Add character replacement if persona is available
   if (personaText) {
     prompt += `\nReplace any character in the reference image with this: ${personaText}. Match their pose and position.`;
+  }
+
+  // Add logo replacement if archetype supports it and subject is provided
+  if (archetype.featuresLogo && softwareSubject?.trim()) {
+    prompt += `\nReplace any software logo or branding in the reference image with ${softwareSubject}'s official logo, colors, and branding. Make it clearly recognizable as ${softwareSubject}.`;
   }
 
   // Add style instructions

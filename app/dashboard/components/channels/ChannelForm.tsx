@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Lightbulb } from 'lucide-react';
 import Input from '../shared/Input';
 import Button from '../shared/Button';
+import FileUpload from '../shared/FileUpload';
 import type { Channel, CreateChannelData, UpdateChannelData } from '../../hooks/useChannels';
 
 interface ChannelFormProps {
@@ -16,9 +17,10 @@ interface ChannelFormProps {
 export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: ChannelFormProps) {
   const [name, setName] = useState(initialData?.name || '');
   const [personaDescription, setPersonaDescription] = useState(initialData?.personaDescription || '');
+  const [personaAssetPath, setPersonaAssetPath] = useState(initialData?.personaAssetPath || '');
   const [primaryColor, setPrimaryColor] = useState(initialData?.primaryColor || '#ffffff');
   const [secondaryColor, setSecondaryColor] = useState(initialData?.secondaryColor || '#000000');
-  // We store tags as an array internally to work with the UI, 
+  // We store tags as an array internally to work with the UI,
   // but it may come from the DB as a comma-separated string.
   const [tags, setTags] = useState<string[]>(
     initialData?.tags
@@ -33,6 +35,7 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
     if (initialData) {
       setName(initialData.name);
       setPersonaDescription(initialData.personaDescription);
+      setPersonaAssetPath(initialData.personaAssetPath || '');
       setPrimaryColor(initialData.primaryColor || '#ffffff');
       setSecondaryColor(initialData.secondaryColor || '#000000');
       setTags(initialData.tags ? (typeof initialData.tags === 'string' ? initialData.tags.split(',') : initialData.tags) : []);
@@ -68,6 +71,7 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
       await onSubmit({
         name: name.trim(),
         personaDescription: personaDescription.trim(),
+        personaAssetPath: personaAssetPath || undefined,
         primaryColor,
         secondaryColor,
         tags: tags.join(','), // Always serialize out as comma-separated string
@@ -103,6 +107,15 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
         error={errors.personaDescription}
         disabled={isSubmitting}
         minLength={50}
+      />
+
+      <FileUpload
+        label="Persona Reference Image (Optional)"
+        value={personaAssetPath}
+        onChange={setPersonaAssetPath}
+        folder="personas"
+        onError={(error) => console.error('Persona upload error:', error)}
+        helperText="Upload a reference photo to improve character consistency. This image is sent to the AI alongside the text description."
       />
 
       <div className="branding-section">

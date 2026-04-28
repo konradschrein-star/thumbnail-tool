@@ -60,12 +60,13 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, personaDescription, primaryColor, secondaryColor, tags } = body;
+    const { name, personaDescription, personaAssetPath, primaryColor, secondaryColor, tags } = body;
 
     // Build update data object with only provided fields
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (personaDescription !== undefined) updateData.personaDescription = personaDescription;
+    if (personaAssetPath !== undefined) updateData.personaAssetPath = personaAssetPath;
     if (primaryColor !== undefined) updateData.primaryColor = primaryColor;
     if (secondaryColor !== undefined) updateData.secondaryColor = secondaryColor;
     if (tags !== undefined) updateData.tags = typeof tags === 'string' ? (tags.trim() || null) : (Array.isArray(tags) && tags.length > 0 ? tags.join(',') : null);

@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
         testPrompt += `\n\nAdditional Style Instructions: ${row.customPrompt.trim()}`;
       }
 
-      const validation = validatePromptLength(testPrompt, 3800);
+      const validation = validatePromptLength(testPrompt, 5000);
       if (!validation.valid) {
         promptValidationErrors.push({
           row: i + 1,

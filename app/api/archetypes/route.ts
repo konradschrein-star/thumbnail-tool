@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, channelIds, imageUrl, layoutInstructions, category, basePrompt, isAdminOnly } = body;
+    const { name, channelIds, imageUrl, layoutInstructions, category, basePrompt, isAdminOnly, featuresLogo } = body;
 
     const userRole = (session.user as any)?.role;
     const userEmail = session.user?.email || '';
@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
         imageUrl,
         layoutInstructions: layoutInstructions || '',
         basePrompt: basePrompt || null,
+        featuresLogo: featuresLogo || false,
         category: category || 'General',
         isAdminOnly: isAdmin ? (isAdminOnly || false) : false,
         userId: session.user.id,
