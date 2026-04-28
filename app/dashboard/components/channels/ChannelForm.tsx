@@ -49,11 +49,8 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
       newErrors.name = 'Channel name is required';
     }
 
-    if (!personaDescription.trim()) {
-      newErrors.personaDescription = 'Persona description is required';
-    } else if (personaDescription.trim().length < 1000) {
-      newErrors.personaDescription = 'Persona description must be at least 200 words (~1000 characters) with 15+ specific physical attributes for consistent character generation';
-    }
+    // Persona description is now optional
+    // If empty, the persona in the reference thumbnail will be used instead
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -97,16 +94,15 @@ export default function ChannelForm({ mode, initialData, onSubmit, onCancel }: C
       />
 
       <Input
-        label="Persona Description"
+        label="Persona Description (Optional)"
         value={personaDescription}
         onChange={setPersonaDescription}
-        placeholder="Detailed character description (minimum 50 characters, recommended 200+ words)"
+        placeholder="Optional: Detailed character description for text-based persona. Leave empty if persona is in reference thumbnail."
         multiline
         rows={8}
-        required
         error={errors.personaDescription}
         disabled={isSubmitting}
-        minLength={50}
+        description="If empty, the AI will use the character from your reference thumbnail. Add text description for additional consistency."
       />
 
       <FileUpload
