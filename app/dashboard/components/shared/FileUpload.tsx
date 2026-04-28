@@ -80,6 +80,7 @@ export default function FileUpload({
 
         setPreview(data.url);
         onChange(data.url);
+        setIsUploading(false);
         return; // Success - exit retry loop
       } catch (err: any) {
         lastError = err;
