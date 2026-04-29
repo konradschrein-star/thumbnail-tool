@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 
+// Force dynamic rendering to avoid useSearchParams SSR issues
+export const dynamic = 'force-dynamic';
+
 interface Preferences {
   preferredResolution?: '512' | '1K' | '2K';
   stableMode?: boolean;
