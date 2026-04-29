@@ -92,7 +92,94 @@ function convertToImagePart(pathOrUrl: string): { inlineData?: { mimeType: strin
 }
 
 /**
- * Calls the Nano Banana (gemini-3-pro-image-preview) model to generate a thumbnail image
+ * Parses Google API errors and returns user-friendly messages
+ */
+function parseGoogleAPIError(error: any): { code: number; userMessage: string; originalError: any } {
+  const msg = error.message || String(error);
+  const status = error.status || error.statusCode || error.code;
+
+  // 400 INVALID_ARGUMENT
+  if (status === 400 || msg.includes('INVALID_ARGUMENT')) {
+    return {
+      code: 400,
+      userMessage: 'Invalid request format. Please check your prompt and image inputs.',
+      originalError: error
+    };
+  }
+
+  // 403 PERMISSION_DENIED
+  if (status === 403 || msg.includes('PERMISSION_DENIED') || msg.includes('API key')) {
+    return {
+      code: 403,
+      userMessage: 'API key permission denied. Please check your Google API key configuration.',
+      originalError: error
+    };
+  }
+
+  // 404 NOT_FOUND
+  if (status === 404 || msg.includes('NOT_FOUND')) {
+    return {
+      code: 404,
+      userMessage: 'Resource not found. One of your reference images may be missing.',
+      originalError: error
+    };
+  }
+
+  // 429 RESOURCE_EXHAUSTED (Rate limit)
+  if (status === 429 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota')) {
+    return {
+      code: 429,
+      userMessage: 'Rate limit exceeded. Too many requests to the Gemini API. Please wait a moment and try again.',
+      originalError: error
+    };
+  }
+
+  // 500 INTERNAL (Google server error)
+  if (status === 500 || msg.includes('INTERNAL') || msg.includes('500')) {
+    return {
+      code: 500,
+      userMessage: 'Google API internal error. This is a temporary issue on Google\'s side. Please try again in a few moments.',
+      originalError: error
+    };
+  }
+
+  // 503 UNAVAILABLE (High traffic / overloaded)
+  if (status === 503 || msg.includes('UNAVAILABLE') || msg.includes('503') || msg.includes('high demand')) {
+    return {
+      code: 503,
+      userMessage: 'Gemini API is experiencing high traffic and is temporarily unavailable. Please try again in a few minutes.',
+      originalError: error
+    };
+  }
+
+  // 504 DEADLINE_EXCEEDED (Timeout)
+  if (status === 504 || msg.includes('DEADLINE_EXCEEDED') || msg.includes('timeout')) {
+    return {
+      code: 504,
+      userMessage: 'Request timeout. Your prompt may be too complex or the API is slow. Try simplifying your request.',
+      originalError: error
+    };
+  }
+
+  // Safety/Content policy errors
+  if (msg.includes('safety') || msg.includes('blocked') || msg.includes('BLOCKED_REASON') || msg.includes('SAFETY')) {
+    return {
+      code: 400,
+      userMessage: 'Content blocked by safety filters. Your prompt or images may violate Google\'s content policies.',
+      originalError: error
+    };
+  }
+
+  // Default unknown error
+  return {
+    code: 500,
+    userMessage: `Gemini API error: ${msg}`,
+    originalError: error
+  };
+}
+
+/**
+ * Calls the Nano Banana (gemini-3.1-flash-image-preview) model to generate a thumbnail image
  *
  * Nano Banana is a multimodal Gemini model that supports multi-image fusion and character consistency.
  * It uses generateContent (not generateImages) with responseModalities: ["IMAGE"].
@@ -107,7 +194,7 @@ function convertToImagePart(pathOrUrl: string): { inlineData?: { mimeType: strin
 export async function callNanoBanana(
   request: GoogleImageGenerationRequest,
   apiKey: string
-): Promise<{ buffer: Buffer; fallbackUsed: boolean; fallbackMessage?: string }> {
+): Promise<{ buffer: Buffer }> {
   try {
     const ai = new GoogleGenAI({ apiKey });
 
@@ -175,73 +262,25 @@ export async function callNanoBanana(
       });
     };
 
+    // Use only Flash model with minimal thinking - no fallbacks
+    const modelId = 'gemini-3.1-flash-image-preview';
+    const modelName = 'Gemini 3.1 Flash Image';
+
     let response;
-    let fallbackUsed = false;
-    let fallbackMessage = "";
+    const startTime = Date.now();
 
-    // Fallback chain: Nano Banana 2 → Nano Banana Pro → Nano Banana OG (GA)
-    // NB2 is PRIMARY for 50% cost savings ($0.0672 vs $0.134 per image)
-    const models = [
-      { id: 'gemini-3.1-flash-image-preview', name: 'Nano Banana 2 (Flash)' },
-      { id: 'gemini-3.1-pro-image-preview', name: 'Nano Banana Pro' },
-      { id: 'gemini-2.5-flash-image', name: 'Nano Banana OG (Stable)' },
-    ];
+    try {
+      console.log(`   ⏱️  Calling ${modelName}...`);
+      response = await callWithPayload(primaryContent, modelId);
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.log(`   ✅ ${modelName} completed in ${duration}s`);
+    } catch (error: any) {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.error(`   ❌ ${modelName} failed after ${duration}s`);
 
-    const isServerError = (error: any): boolean => {
-      const msg = error.message || "";
-      const status = error.status || error.statusCode || error.code;
-      return msg.includes("503") || msg.includes("UNAVAILABLE") || status === 503 || msg.includes("high demand")
-        || msg.includes("500") || msg.includes("INTERNAL") || status === 500
-        || msg.includes("502") || status === 502;
-    };
-
-    for (let i = 0; i < models.length; i++) {
-      const model = models[i];
-      try {
-        const startTime = Date.now();
-        console.log(`   ⏱️  Calling ${model.name} (${model.id})...`);
-        response = await callWithPayload(primaryContent, model.id);
-        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        console.log(`   ✅ ${model.name} completed in ${duration}s`);
-        if (i > 0) {
-          fallbackUsed = true;
-          fallbackMessage = `${models[0].name} was unavailable. Generated successfully with ${model.name}.`;
-        }
-        break; // Success — exit the loop
-      } catch (error: any) {
-        const msg = error.message || "";
-
-        // On image processing errors with multi-image payload, retry same model with archetype only
-        if (msg.includes("Unable to process input image") && imageParts.length > 1 && i === 0) {
-          console.warn(`   ⚠️ Multi-image payload failed on ${model.name}. Retrying with Archetype ONLY...`);
-          const firstImagePart = imageParts[0].inlineData
-            ? { inlineData: imageParts[0].inlineData }
-            : { fileData: imageParts[0].fileData! };
-          const fallbackContent = {
-            role: 'user',
-            parts: [
-              { text: request.prompt },
-              firstImagePart
-            ]
-          };
-          try {
-            response = await callWithPayload(fallbackContent, model.id);
-            break; // Success
-          } catch (retryError: any) {
-            if (!isServerError(retryError)) throw retryError;
-            // If still a server error, continue to next model
-          }
-        }
-
-        // If server error and there's a next model to try, continue the loop
-        if (isServerError(error) && i < models.length - 1) {
-          console.warn(`   ⚠️ ${model.name} returned server error. Trying next fallback...`);
-          continue;
-        }
-
-        // Last model or non-server error — throw
-        throw error;
-      }
+      // Parse and throw proper error
+      const apiError = parseGoogleAPIError(error);
+      throw new Error(apiError.userMessage);
     }
 
     if (!response) {
@@ -288,7 +327,7 @@ export async function callNanoBanana(
 
     console.log(`   ✓ Received image data: ${base64Data.length} chars (${(buffer.length / 1024).toFixed(1)}KB)`);
 
-    return { buffer, fallbackUsed, fallbackMessage };
+    return { buffer };
   } catch (error) {
     const apiError = handleAPIError(error);
 

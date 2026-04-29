@@ -208,30 +208,29 @@ export class UnifiedImageGenerator {
       }
     }
 
-    // Fall back to Google Gemini (reliable backup)
+    // Use Google Gemini
     try {
       console.log('   → Generating with Google Gemini...');
-      const { buffer, fallbackUsed, fallbackMessage } = await callNanoBanana(request, this.googleApiKey);
+      const { buffer } = await callNanoBanana(request, this.googleApiKey);
 
       console.log('✓ Google Gemini generation successful');
 
       return {
         buffer,
         provider: 'google',
-        fallbackUsed: true,
-        fallbackMessage: this.useAI33
-          ? 'AI33 timeout/error - used Google Gemini as backup'
-          : fallbackMessage,
+        fallbackUsed: this.useAI33, // true if we fell back from AI33, false if direct
+        fallbackMessage: this.useAI33 ? 'AI33 timeout/error - used Google Gemini' : undefined,
         lateAI33Available: false,
         cost: {
-          amount: 0.0672, // Google Gemini cost
+          amount: 0.0672, // Google Gemini cost (approximate)
           currency: 'USD',
         },
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error('✗ Google Gemini generation failed');
-      throw new Error(`Image generation failed: ${errorMsg}`);
+      // Re-throw the error with the proper message from google-client
+      throw error;
     }
   }
 }
