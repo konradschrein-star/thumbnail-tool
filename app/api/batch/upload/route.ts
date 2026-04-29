@@ -42,6 +42,22 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id as string;
     const userRole = (session.user as any).role || 'USER';
 
+    // Fetch user preferences for resolution and stable mode
+    let preferredResolution: '512' | '1K' | '2K' = '1K';
+    let stableMode = true; // Default to stable mode
+    try {
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: { preferences: true }
+      });
+      const preferences = (user?.preferences as any) || {};
+      preferredResolution = preferences.preferredResolution || '1K';
+      stableMode = preferences.stableMode !== undefined ? preferences.stableMode : true;
+    } catch (error) {
+      console.error('Failed to fetch user preferences:', error);
+      // Continue with defaults
+    }
+
     // Rate limiting: 10 batch uploads per hour per user
     const limiter = getUserLimiter(userId, 10, 'hour');
     const remainingTokens = await limiter.removeTokens(1);
@@ -173,19 +189,25 @@ export async function POST(request: NextRequest) {
     console.log(`\n📦 Processing upload: ${rows.length} rows as batch: ${batchName}`);
 
     // Credit system: Non-admins must have sufficient credits
+    // Calculate credits based on resolution and stable mode
+    // Resolution base costs: 512=1, 1K=2, 2K=3
+    const resolutionBaseCredits = preferredResolution === '512' ? 1 : preferredResolution === '1K' ? 2 : 3;
+    const creditsPerJob = resolutionBaseCredits * (stableMode ? 2 : 1);
+    const totalCreditsRequired = rows.length * creditsPerJob;
+
     const isAdmin = userRole === 'ADMIN';
     let creditsRemaining: number | null = null;
 
     if (!isAdmin) {
       try {
         const userCredits = await CreditService.getUserCredits(userId);
-        if (userCredits < rows.length) {
+        if (userCredits < totalCreditsRequired) {
           return NextResponse.json(
             {
               error: 'Insufficient credits',
-              creditsRequired: rows.length,
+              creditsRequired: totalCreditsRequired,
               creditsAvailable: userCredits,
-              message: `You need ${rows.length} credits to create this batch. You have ${userCredits}.`
+              message: `You need ${totalCreditsRequired} credits for this batch (${rows.length} jobs at ${preferredResolution} resolution). You have ${userCredits}.`
             },
             { status: 402 }
           );
@@ -347,9 +369,9 @@ export async function POST(request: NextRequest) {
       try {
         const result = await CreditService.deductCreditsForBatch(
           userId,
-          rows.length,
+          totalCreditsRequired,
           batchName,
-          `Deducted ${rows.length} credits for batch: ${batchName}`
+          `Deducted ${totalCreditsRequired} credits for batch at ${preferredResolution}: ${batchName}`
         );
         batchJob = result.batchJob;
         creditsRemaining = result.creditsRemaining;
@@ -361,9 +383,9 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             {
               error: 'Insufficient credits',
-              creditsRequired: error.required,
+              creditsRequired: totalCreditsRequired,
               creditsAvailable: error.available,
-              message: `You need ${error.required} credits to create this batch. You have ${error.available}.`
+              message: `You need ${totalCreditsRequired} credits for this batch (${rows.length} jobs at ${preferredResolution} resolution). You have ${error.available}.`
             },
             { status: 402 }
           );
@@ -409,6 +431,8 @@ export async function POST(request: NextRequest) {
             customPrompt: row.customPrompt,
             includeBrandColors: true, // Default to true for batch jobs
             includePersona: true, // Default to true for batch jobs
+            resolution: preferredResolution,
+            stableMode,
           },
           {
             jobId: generationJob.id,

@@ -9,6 +9,8 @@ interface CustomLanguage {
 
 interface UserPreferences {
   customLanguages?: CustomLanguage[];
+  preferredResolution?: '512' | '1K' | '2K';
+  stableMode?: boolean;
 }
 
 /**
@@ -37,7 +39,9 @@ export async function GET(request: NextRequest) {
 
     // Return default empty preferences if none exist
     const preferences: UserPreferences = (user?.preferences as UserPreferences) || {
-      customLanguages: []
+      customLanguages: [],
+      preferredResolution: '1K',
+      stableMode: true // Default to stable mode for maximum reliability
     };
 
     return NextResponse.json({
@@ -75,7 +79,23 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { customLanguages } = body;
+    const { customLanguages, preferredResolution, stableMode } = body;
+
+    // Validation: preferredResolution must be '512', '1K', or '2K'
+    if (preferredResolution !== undefined && !['512', '1K', '2K'].includes(preferredResolution)) {
+      return NextResponse.json(
+        { error: 'preferredResolution must be "512", "1K", or "2K"' },
+        { status: 400 }
+      );
+    }
+
+    // Validation: stableMode must be boolean
+    if (stableMode !== undefined && typeof stableMode !== 'boolean') {
+      return NextResponse.json(
+        { error: 'stableMode must be a boolean' },
+        { status: 400 }
+      );
+    }
 
     // Validation: customLanguages must be an array
     if (customLanguages !== undefined && !Array.isArray(customLanguages)) {
@@ -140,9 +160,18 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // Build new preferences object
+    // Get existing preferences to merge with
+    const existingUser = await prisma.users.findUnique({
+      where: { id: authResult.user.id },
+      select: { preferences: true }
+    });
+    const existingPrefs = (existingUser?.preferences as UserPreferences) || {};
+
+    // Build new preferences object (merge with existing)
     const newPreferences: UserPreferences = {
-      customLanguages: customLanguages || []
+      customLanguages: customLanguages !== undefined ? customLanguages : (existingPrefs.customLanguages || []),
+      preferredResolution: preferredResolution !== undefined ? preferredResolution : (existingPrefs.preferredResolution || '1K'),
+      stableMode: stableMode !== undefined ? stableMode : (existingPrefs.stableMode !== undefined ? existingPrefs.stableMode : true)
     };
 
     // Update user preferences

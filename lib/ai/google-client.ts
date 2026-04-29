@@ -19,6 +19,7 @@ export interface GoogleImageGenerationRequest {
   referenceImageUrl?: string; // URL or local path to archetype reference image
   personaImageUrl?: string;   // URL or local path to persona reference (optional)
   logoImageUrl?: string;      // URL or local path to logo (optional)
+  resolution?: '512' | '1K' | '2K';
 }
 
 /**
@@ -158,7 +159,7 @@ export async function callNanoBanana(
           responseModalities: ["IMAGE"],
           imageGenerationConfig: {
             aspectRatio: "16:9",
-            resolution: "1K" // Options: "512", "1K", "2K", "4K"
+            resolution: request.resolution || "1K" // Options: "512", "1K", "2K", "4K"
           }
         } as any
       });

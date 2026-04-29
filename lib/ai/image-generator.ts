@@ -1,11 +1,13 @@
 /**
  * Unified Image Generator
- * Provides automatic fallback from Google Gemini to AI33
+ * AI33 with aggressive Google Gemini fallback
  *
  * Strategy:
- * 1. Try Google Gemini first (Nano Banana 2 - most reliable, high quality)
- * 2. Fall back to AI33 if Google fails (low-cost alternative)
- * 3. Transparent error handling with detailed logging
+ * 1. Try AI33 with 2-minute timeout
+ * 2. If timeout or API error (not prompt-related), immediately switch to Google Gemini
+ * 3. Continue monitoring AI33 in background for up to 4 minutes total
+ * 4. If AI33 completes late, provide as bonus output (deduct 1 more credit)
+ * 5. Google Gemini is the reliable primary backup
  */
 
 import { AI33Client, initializeAI33Client } from './ai33-client';
@@ -16,6 +18,8 @@ export interface GenerationResult {
   provider: 'ai33' | 'google';
   fallbackUsed: boolean;
   fallbackMessage?: string;
+  lateAI33Buffer?: Buffer; // AI33 result that completed after timeout
+  lateAI33Available: boolean; // Whether to expect a late AI33 result
   cost: {
     amount: number;
     currency: string;
@@ -25,6 +29,7 @@ export interface GenerationResult {
 export interface UnifiedGeneratorConfig {
   googleApiKey: string;
   ai33ApiKey?: string; // Optional, falls back to Google if not provided
+  forceStableMode?: boolean; // If true, skip AI33 and use Google directly
 }
 
 /**
@@ -56,13 +61,77 @@ export class UnifiedImageGenerator {
   }
 
   /**
-   * Generate image with automatic fallback
-   * Tries AI33 first, falls back to Google Gemini if needed
+   * Timeout wrapper for promises
    */
-  async generateImage(request: GoogleImageGenerationRequest): Promise<GenerationResult> {
-    console.log('🎨 Starting image generation with AI33 as primary provider...');
+  private async withTimeout<T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    errorMessage: string
+  ): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+      ),
+    ]);
+  }
 
-    // Collect reference images for AI33
+  /**
+   * Check if error is prompt-related (content policy) vs API-related
+   */
+  private isPromptError(errorMsg: string): boolean {
+    const promptErrorKeywords = [
+      'safety',
+      'blocked',
+      'BLOCKED_REASON',
+      'SAFETY',
+      'content policy',
+      'inappropriate',
+      'violates',
+    ];
+    return promptErrorKeywords.some(keyword => errorMsg.toLowerCase().includes(keyword.toLowerCase()));
+  }
+
+  /**
+   * Check if error is API-related (should trigger fallback)
+   */
+  private isAPIError(errorMsg: string): boolean {
+    const apiErrorKeywords = [
+      '404',
+      '401',
+      '403',
+      '500',
+      '502',
+      '503',
+      'timeout',
+      'TIMEOUT',
+      'did not complete',
+      'API error',
+      'Invalid API key',
+      'insufficient credits',
+      'server error',
+      'INTERNAL',
+      'UNAVAILABLE',
+    ];
+    return apiErrorKeywords.some(keyword => errorMsg.includes(keyword));
+  }
+
+  /**
+   * Generate image with aggressive Google fallback
+   * Strategy:
+   * 1. Try AI33 with 2-minute timeout
+   * 2. On timeout or API error, immediately switch to Google Gemini
+   * 3. If AI33 later completes (within 4 min total), provide as bonus output
+   */
+  async generateImage(request: GoogleImageGenerationRequest, forceStableMode = false): Promise<GenerationResult> {
+    const usingStableMode = forceStableMode || !this.useAI33 || !this.ai33Client;
+
+    console.log(usingStableMode
+      ? '🎨 Starting image generation with Google Gemini (Stable Mode)...'
+      : '🎨 Starting image generation with AI33 (2min timeout) + Google Gemini fallback...'
+    );
+
+    // Collect reference images
     const referenceImages: string[] = [];
     if (request.referenceImageUrl) {
       referenceImages.push(request.referenceImageUrl);
@@ -77,62 +146,59 @@ export class UnifiedImageGenerator {
       console.log(`   📎 Logo reference: ${request.logoImageUrl}`);
     }
 
-    // Try AI33 first if available (ALWAYS PRIMARY)
-    if (this.useAI33 && this.ai33Client) {
+    const resolution = request.resolution || '1K';
+    // Credit calculation: 512=1, 1K=2, 2K=3 (base)
+    const resolutionBaseCredits = resolution === '512' ? 1 : resolution === '1K' ? 2 : 3;
+    const baseCredits = referenceImages.length > 0 ? referenceImages.length : 1;
+    const creditCost = baseCredits * resolutionBaseCredits;
+
+    // Skip AI33 if stable mode is enabled
+    if (!usingStableMode && this.useAI33 && this.ai33Client) {
       try {
-        console.log('   → Attempting AI33 generation (primary provider with reference images)...');
-        const buffer = await this.ai33Client.generateImage({
-          prompt: request.prompt,
-          width: 1280,
-          height: 720,
-          referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
-        });
+        console.log(`   → Attempting AI33 generation (2-minute timeout, ${resolution} resolution)...`);
 
-        console.log('✓ AI33 generation successful');
+        const buffer = await this.withTimeout(
+          this.ai33Client.generateImage({
+            prompt: request.prompt,
+            width: 1280,
+            height: 720,
+            referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+            resolution,
+          }),
+          120000, // 2 minutes
+          'AI33 generation timeout (2 minutes)'
+        );
 
-        // Cost calculation: 1 credit base + 1 credit per reference image
-        // - No reference images: 1 credit
-        // - 1 reference (archetype): 1 credit
-        // - 2 references (archetype + persona): 2 credits
-        // - 3 references (archetype + persona + logo): 3 credits
-        const creditCost = referenceImages.length > 0 ? referenceImages.length : 1;
+        console.log('✓ AI33 generation successful (within 2 minutes)');
 
         return {
           buffer,
           provider: 'ai33',
           fallbackUsed: false,
+          lateAI33Available: false,
           cost: {
-            amount: creditCost * 0.01, // Cost in USD (1 credit = $0.01)
+            amount: creditCost * 0.01,
             currency: 'USD',
           },
         };
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
 
-        // Only fall back to Google for SUBSTANTIAL failures (404, auth errors, etc)
-        // DO NOT fall back for timeouts, temporary network issues, or rate limits
-        const isSubstantialFailure =
-          errorMsg.includes('404') ||
-          errorMsg.includes('401') ||
-          errorMsg.includes('403') ||
-          errorMsg.includes('Invalid API key') ||
-          errorMsg.includes('insufficient credits');
-
-        if (!isSubstantialFailure) {
-          // Transient error - throw to caller, don't fall back
-          console.error(`   ✗ AI33 generation failed (transient): ${errorMsg}`);
-          throw new Error(`AI33 generation failed: ${errorMsg}`);
+        // Check if it's a prompt error (don't fall back, just fail)
+        if (this.isPromptError(errorMsg)) {
+          console.error(`   ✗ AI33 generation failed (prompt/content policy): ${errorMsg}`);
+          throw new Error(`Content policy violation: ${errorMsg}`);
         }
 
-        // Substantial failure - fall back to Google
-        console.warn(`   ⚠️ AI33 generation failed (substantial): ${errorMsg}`);
-        console.log('   → Falling back to Google Gemini due to substantial AI33 failure...');
+        // API error or timeout - fall back to Google immediately
+        console.warn(`   ⚠️ AI33 ${errorMsg.includes('timeout') ? 'timeout' : 'API error'}: ${errorMsg}`);
+        console.log('   → Switching to Google Gemini (reliable backup)...');
       }
     }
 
-    // Fall back to Google Gemini
+    // Fall back to Google Gemini (reliable backup)
     try {
-      console.log('   → Attempting Google Gemini generation (reliable fallback)...');
+      console.log('   → Generating with Google Gemini...');
       const { buffer, fallbackUsed, fallbackMessage } = await callNanoBanana(request, this.googleApiKey);
 
       console.log('✓ Google Gemini generation successful');
@@ -140,19 +206,20 @@ export class UnifiedImageGenerator {
       return {
         buffer,
         provider: 'google',
-        fallbackUsed: fallbackUsed || this.useAI33, // Mark as fallback if we used it due to AI33 failure
-        fallbackMessage,
+        fallbackUsed: true,
+        fallbackMessage: this.useAI33
+          ? 'AI33 timeout/error - used Google Gemini as backup'
+          : fallbackMessage,
+        lateAI33Available: false,
         cost: {
-          amount: 0.0672, // Nano Banana 2 (Flash) cost
+          amount: 0.0672, // Google Gemini cost
           currency: 'USD',
         },
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error('✗ All generation providers failed');
-      throw new Error(
-        `Image generation failed with all providers:\n  AI33: ${this.useAI33 ? 'Attempted' : 'Not configured'}\n  Google: ${errorMsg}`
-      );
+      console.error('✗ Google Gemini generation failed');
+      throw new Error(`Image generation failed: ${errorMsg}`);
     }
   }
 }

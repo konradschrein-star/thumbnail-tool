@@ -42,6 +42,22 @@ export async function POST(request: NextRequest) {
   const isSuperuser = authResult.user.isSuperuser || false;
   const isTestUser = authResult.user.isTestUser || false;
 
+  // Fetch user preferences for resolution and stable mode
+  let preferredResolution: '512' | '1K' | '2K' = '1K';
+  let stableMode = true; // Default to stable mode
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      select: { preferences: true }
+    });
+    const preferences = (user?.preferences as any) || {};
+    preferredResolution = preferences.preferredResolution || '1K';
+    stableMode = preferences.stableMode !== undefined ? preferences.stableMode : true;
+  } catch (error) {
+    console.error('Failed to fetch user preferences:', error);
+    // Continue with defaults
+  }
+
   try {
     const body = await request.json();
     const {
@@ -83,19 +99,27 @@ export async function POST(request: NextRequest) {
     const count = Math.min(Math.max(isNaN(rawCount) ? 1 : rawCount, 1), 4);
 
     // Credit system: Non-admins must have sufficient credits
+    // Calculate actual credits needed based on resolution and stable mode
+    // Resolution base costs: 512=1, 1K=2, 2K=3
+    const resolutionBaseCredits = preferredResolution === '512' ? 1 : preferredResolution === '1K' ? 2 : 3;
+    // Multiply by number of reference images (1 for just archetype, up to 3 for archetype+persona+logo)
+    // For this initial check, assume just archetype (1 ref)
+    const creditsPerGeneration = resolutionBaseCredits * (stableMode ? 2 : 1);
+    const totalCreditsNeeded = count * creditsPerGeneration;
+
     let creditsRemaining: number | null = null;
     let shouldDeductCredits = userRole !== 'ADMIN';
 
     if (shouldDeductCredits) {
       try {
         const userCredits = await CreditService.getUserCredits(userId);
-        if (userCredits < count) {
+        if (userCredits < totalCreditsNeeded) {
           return NextResponse.json(
             {
               error: 'Insufficient credits',
-              creditsRequired: count,
+              creditsRequired: totalCreditsNeeded,
               creditsAvailable: userCredits,
-              message: 'You need more credits to generate thumbnails. Please contact an admin to purchase credits.'
+              message: `You need ${totalCreditsNeeded} credits (${count} thumbnail${count > 1 ? 's' : ''} at ${preferredResolution} ${stableMode ? 'stable mode' : ''}). Please contact an admin to purchase credits.`
             },
             { status: 402 }
           );
@@ -203,11 +227,11 @@ export async function POST(request: NextRequest) {
       try {
         creditsRemaining = await CreditService.deductCreditsForJob(
           userId,
-          count,
-          `Deducted ${count} credits for ${count} thumbnail generation(s): ${videoTopic}`,
+          totalCreditsNeeded,
+          `Deducted ${totalCreditsNeeded} credits for ${count} thumbnail generation(s) at ${preferredResolution} resolution: ${videoTopic}`,
           null
         );
-        creditsDeducted = count;
+        creditsDeducted = totalCreditsNeeded;
       } catch (error) {
         console.error('Credit deduction failed:', error);
 
@@ -215,9 +239,9 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             {
               error: 'Insufficient credits',
-              creditsRequired: count,
+              creditsRequired: totalCreditsNeeded,
               creditsAvailable: error.available,
-              message: 'You need more credits to generate thumbnails. Please contact an admin to purchase credits.'
+              message: `You need ${totalCreditsNeeded} credits (${count} thumbnail${count > 1 ? 's' : ''} at ${preferredResolution} ${stableMode ? 'stable mode' : ''}). Please contact an admin to purchase credits.`
             },
             { status: 402 }
           );
@@ -267,6 +291,7 @@ export async function POST(request: NextRequest) {
             softwareSubject: softwareSubject?.trim(),
             includeBrandColors,
             includePersona,
+            resolution: preferredResolution,
           },
           {
             jobId: job.id,

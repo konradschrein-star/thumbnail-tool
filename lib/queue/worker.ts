@@ -134,13 +134,18 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
     }
 
     // Generate image with archetype + optional persona reference - WRAP IN TRY-CATCH
+    const resolution = job.data.resolution || '1K';
+    const stableMode = job.data.stableMode !== undefined ? job.data.stableMode : true; // Default to stable mode
+    console.log(`   → Using resolution: ${resolution} ${stableMode ? '(Stable Mode - Google Gemini)' : '(AI33 with Google fallback)'}`);
+
     let generationResult;
     try {
       generationResult = await generator.generateImage({
         prompt: fullPrompt,
         referenceImageUrl: tempArchetypePath,
         personaImageUrl: tempPersonaPath,
-      });
+        resolution,
+      }, stableMode);
     } catch (genError) {
       // Extract meaningful error message from API response
       const errorMessage = genError instanceof Error ? genError.message : String(genError);
@@ -187,7 +192,10 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
         completedAt: new Date(),
         metadata: {
           cost: generationResult.cost,
-          resolution: '1024x1024',
+          resolution: resolution === '2K' ? '2560x1440' : '1280x720',
+          provider: generationResult.provider,
+          fallbackUsed: generationResult.fallbackUsed,
+          fallbackMessage: generationResult.fallbackMessage,
         },
       },
     });

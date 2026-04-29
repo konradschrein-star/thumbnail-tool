@@ -12,6 +12,8 @@ export interface ThumbnailJobData {
   softwareSubject?: string;
   includeBrandColors?: boolean;
   includePersona?: boolean;
+  resolution?: '512' | '1K' | '2K';
+  stableMode?: boolean;
 }
 
 export const thumbnailQueue = new Queue<ThumbnailJobData>('thumbnail-generation', {

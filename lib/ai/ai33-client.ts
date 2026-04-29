@@ -13,6 +13,7 @@ export interface AI33GenerationRequest {
   width?: number;
   height?: number;
   referenceImages?: string[]; // Array of local file paths or URLs for reference images
+  resolution?: '512' | '1K' | '2K';
 }
 
 export interface AI33ClientConfig {
@@ -80,6 +81,7 @@ export class AI33Client {
       prompt: request.prompt,
       aspectRatio,
       referenceImages: request.referenceImages,
+      resolution: request.resolution || '1K',
     });
 
     console.log(`   Task ID: ${taskId}`);
@@ -119,6 +121,7 @@ export class AI33Client {
     prompt: string;
     aspectRatio: string;
     referenceImages?: string[];
+    resolution: '512' | '1K' | '2K';
   }): Promise<string> {
     try {
       const formData = new FormData();
@@ -146,7 +149,7 @@ export class AI33Client {
       formData.append('generations_count', '1');
       formData.append('model_parameters', JSON.stringify({
         aspect_ratio: params.aspectRatio,
-        resolution: '2K',
+        resolution: params.resolution,
       }));
 
       // Attach reference images as separate 'assets' fields

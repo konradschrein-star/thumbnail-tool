@@ -14,7 +14,8 @@ import {
   Languages,
   BookOpen,
   Shield,
-  Layers
+  Layers,
+  Settings
 } from 'lucide-react';
 
 export type TabType = 'channels' | 'archetypes' | 'generate' | 'history' | 'translate' | 'api-docs' | 'batch';
@@ -102,6 +103,13 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       </nav>
 
       <div className="sidebar-footer">
+        <button
+          onClick={() => router.push('/dashboard/settings')}
+          className="settings-button"
+        >
+          <Settings size={16} />
+          <span>Settings</span>
+        </button>
         <button onClick={() => router.push('/')} className="back-button">
           <ChevronLeft size={16} />
           <span>Main Menu</span>
@@ -239,8 +247,12 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         .sidebar-footer {
           padding: 1.5rem;
           border-top: 1px solid rgba(255, 255, 255, 0.05);
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
         }
 
+        .settings-button,
         .back-button {
           background: rgba(255, 255, 255, 0.03);
           border: 1px solid rgba(255, 255, 255, 0.05);
@@ -257,6 +269,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           transition: all 0.2s ease;
         }
 
+        .settings-button:hover,
         .back-button:hover {
           background: rgba(255, 255, 255, 0.05);
           color: #f8fafc;

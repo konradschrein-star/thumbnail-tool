@@ -19,6 +19,22 @@ export async function POST(request: NextRequest) {
   const userId = authResult.user.id;
   const userRole = authResult.user.role || 'USER';
 
+  // Fetch user preferences for resolution and stable mode
+  let preferredResolution: '512' | '1K' | '2K' = '1K';
+  let stableMode = true; // Default to stable mode
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      select: { preferences: true }
+    });
+    const preferences = (user?.preferences as any) || {};
+    preferredResolution = preferences.preferredResolution || '1K';
+    stableMode = preferences.stableMode !== undefined ? preferences.stableMode : true;
+  } catch (error) {
+    console.error('Failed to fetch user preferences:', error);
+    // Continue with defaults
+  }
+
   // Rate limiting: 5 iterations per minute
   const limiter = getUserLimiter(userId, 5, 'minute');
   const remainingTokens = await limiter.removeTokens(1);
@@ -100,14 +116,20 @@ Use the reference image as the base and apply ONLY the requested changes. Keep e
     }
 
     // Check and deduct credits (non-admins only)
+    // Calculate credits based on resolution and stable mode
+    // Resolution base costs: 512=1, 1K=2, 2K=3
+    const resolutionBaseCredits = preferredResolution === '512' ? 1 : preferredResolution === '1K' ? 2 : 3;
+    const creditsRequired = resolutionBaseCredits * (stableMode ? 2 : 1);
+
     if (userRole !== 'ADMIN') {
       const userCredits = await CreditService.getUserCredits(userId);
-      if (userCredits < 1) {
+      if (userCredits < creditsRequired) {
         return NextResponse.json(
           {
             error: 'Insufficient credits',
-            creditsRequired: 1,
+            creditsRequired,
             creditsAvailable: userCredits,
+            message: `You need ${creditsRequired} credit${creditsRequired > 1 ? 's' : ''} for iteration at ${preferredResolution} resolution.`,
           },
           { status: 402 }
         );
@@ -115,8 +137,8 @@ Use the reference image as the base and apply ONLY the requested changes. Keep e
 
       await CreditService.deductCreditsForJob(
         userId,
-        1,
-        `Iteration: ${changeRequest.substring(0, 50)}...`,
+        creditsRequired,
+        `Iteration at ${preferredResolution}: ${changeRequest.substring(0, 50)}...`,
         originalJobId
       );
     }
@@ -132,11 +154,12 @@ Use the reference image as the base and apply ONLY the requested changes. Keep e
         customPrompt: iterationPrompt,
         isManual: true,
         status: 'pending',
-        credits_deducted: userRole !== 'ADMIN' ? 1 : null,
+        credits_deducted: userRole !== 'ADMIN' ? creditsRequired : null,
         metadata: {
           isIteration: true,
           originalJobId,
           changeRequest,
+          resolution: preferredResolution,
         },
       },
     });
@@ -153,6 +176,8 @@ Use the reference image as the base and apply ONLY the requested changes. Keep e
         customPrompt: iterationPrompt,
         includeBrandColors: true,
         includePersona: true,
+        resolution: preferredResolution,
+        stableMode,
       },
       { jobId: job.id }
     );
