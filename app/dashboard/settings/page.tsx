@@ -1,11 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import DashboardLayout from '../components/layout/DashboardLayout';
-
-// Force dynamic rendering to avoid useSearchParams SSR issues
-export const dynamic = 'force-dynamic';
 
 interface Preferences {
   preferredResolution?: '512' | '1K' | '2K';
@@ -120,7 +117,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <DashboardLayout>
+    <Suspense fallback={<div>Loading...</div>}>
+      <DashboardLayout>
       <div className="settings-container">
         <div className="settings-header">
           <h1 className="settings-title">Settings</h1>
@@ -583,6 +581,7 @@ export default function SettingsPage() {
           }
         }
       `}</style>
-    </DashboardLayout>
+      </DashboardLayout>
+    </Suspense>
   );
 }
