@@ -151,17 +151,27 @@ export async function callNanoBanana(
       ]
     };
 
-    const callWithPayload = async (content: any, modelName: string = 'gemini-3.1-pro-image-preview') => {
+    const callWithPayload = async (content: any, modelName: string = 'gemini-3.1-flash-image-preview') => {
+      const config: any = {
+        responseModalities: ["IMAGE"],
+        imageGenerationConfig: {
+          aspectRatio: "16:9",
+          resolution: request.resolution || "1K" // Options: "512", "1K", "2K", "4K"
+        }
+      };
+
+      // For Flash model, use minimal thinking for lowest latency
+      if (modelName === 'gemini-3.1-flash-image-preview') {
+        config.thinkingConfig = {
+          thinkingLevel: "minimal",
+          includeThoughts: false
+        };
+      }
+
       return await ai.models.generateContent({
         model: modelName,
         contents: [content],
-        config: {
-          responseModalities: ["IMAGE"],
-          imageGenerationConfig: {
-            aspectRatio: "16:9",
-            resolution: request.resolution || "1K" // Options: "512", "1K", "2K", "4K"
-          }
-        } as any
+        config
       });
     };
 
@@ -188,8 +198,11 @@ export async function callNanoBanana(
     for (let i = 0; i < models.length; i++) {
       const model = models[i];
       try {
-        console.log(`   Calling ${model.name} (${model.id})...`);
+        const startTime = Date.now();
+        console.log(`   ⏱️  Calling ${model.name} (${model.id})...`);
         response = await callWithPayload(primaryContent, model.id);
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        console.log(`   ✅ ${model.name} completed in ${duration}s`);
         if (i > 0) {
           fallbackUsed = true;
           fallbackMessage = `${models[0].name} was unavailable. Generated successfully with ${model.name}.`;

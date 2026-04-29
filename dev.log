@@ -1,0 +1,10 @@
+
+> thumbnail-creator-v2@0.1.0 dev
+> next dev -p 3072
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3072
+- Network:       http://192.168.178.23:3072
+- Environments: .env
+✓ Ready in 638ms
+
