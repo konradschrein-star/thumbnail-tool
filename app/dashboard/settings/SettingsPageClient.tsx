@@ -105,15 +105,10 @@ export default function SettingsPage() {
   const currentResolution = preferences.preferredResolution || '1K';
   const stableMode = preferences.stableMode || false;
 
-  // Calculate credit costs based on resolution and stable mode
-  const getCreditRange = (resolution: '512' | '1K' | '2K') => {
+  // Static credit costs (not affected by stable mode toggle in UI)
+  const getCreditCost = (resolution: '512' | '1K' | '2K') => {
     const base = resolution === '512' ? 1 : resolution === '1K' ? 2 : 3;
-    const max = base * 3; // With archetype + persona + logo
-    const multiplier = stableMode ? 2 : 1;
-    return {
-      min: base * multiplier,
-      max: max * multiplier
-    };
+    return base; // Base cost only
   };
 
   return (
@@ -136,7 +131,7 @@ export default function SettingsPage() {
           <div className="section-header">
             <h2 className="section-title">Generation Mode</h2>
             <p className="section-description">
-              Choose between AI33 (fast, cheaper) or Google Gemini (stable, reliable)
+              Use a more stable API during downtime or for maximum reliability
             </p>
           </div>
 
@@ -153,14 +148,15 @@ export default function SettingsPage() {
                 <div className="toggle-label-main">
                   <span className="toggle-icon">{stableMode ? '🔒' : '⚡'}</span>
                   <span className="toggle-title">
-                    {stableMode ? 'Stable Mode (Google Gemini)' : 'Fast Mode (AI33)'}
+                    {stableMode ? 'Stable Mode' : 'Fast Mode'}
                   </span>
                   {stableMode && <span className="badge-active">Active</span>}
+                  {!stableMode && <span className="badge-saving">Saving 1 credit per generation</span>}
                 </div>
                 <p className="toggle-description">
                   {stableMode
-                    ? 'Uses Google Gemini directly for maximum reliability (2x cost)'
-                    : 'Tries AI33 first with 2-min timeout, falls back to Google Gemini (standard cost)'
+                    ? 'Uses a more stable API for maximum reliability (+1 credit per generation)'
+                    : 'Uses the fast API with automatic fallback to stable API if needed'
                   }
                 </p>
               </div>
@@ -174,10 +170,10 @@ export default function SettingsPage() {
             <div>
               <p className="info-title">When to use Stable Mode:</p>
               <ul className="info-list">
-                <li>When AI33 is experiencing downtime or slow performance</li>
+                <li>During API downtime or slow performance</li>
                 <li>When you need guaranteed fast generation (no waiting for timeouts)</li>
                 <li>When maximum reliability is more important than cost</li>
-                <li>Cost: 2x normal credits, but uses your $200 Google credit balance</li>
+                <li>Cost: +1 credit per generation</li>
               </ul>
             </div>
           </div>
@@ -205,13 +201,12 @@ export default function SettingsPage() {
                 )}
               </div>
               <div className="option-details">
-                <p className="option-description">Basic quality (512x512)</p>
+                <p className="option-description">Basic quality (16:9)</p>
                 <div className="option-cost">
-                  <span className="cost-label">Cost:</span>
+                  <span className="cost-label">Base cost:</span>
                   <span className="cost-value">
-                    {getCreditRange('512').min}-{getCreditRange('512').max} credits
+                    {getCreditCost('512')} credit
                   </span>
-                  {stableMode && <span className="cost-multiplier">(stable: 2x)</span>}
                 </div>
               </div>
             </button>
@@ -230,11 +225,10 @@ export default function SettingsPage() {
               <div className="option-details">
                 <p className="option-description">Standard quality (1280x720)</p>
                 <div className="option-cost">
-                  <span className="cost-label">Cost:</span>
+                  <span className="cost-label">Base cost:</span>
                   <span className="cost-value">
-                    {getCreditRange('1K').min}-{getCreditRange('1K').max} credits
+                    {getCreditCost('1K')} credits
                   </span>
-                  {stableMode && <span className="cost-multiplier">(stable: 2x)</span>}
                 </div>
               </div>
             </button>
@@ -253,11 +247,10 @@ export default function SettingsPage() {
               <div className="option-details">
                 <p className="option-description">High quality (2560x1440)</p>
                 <div className="option-cost">
-                  <span className="cost-label">Cost:</span>
+                  <span className="cost-label">Base cost:</span>
                   <span className="cost-value">
-                    {getCreditRange('2K').min}-{getCreditRange('2K').max} credits
+                    {getCreditCost('2K')} credits
                   </span>
-                  {stableMode && <span className="cost-multiplier">(stable: 2x)</span>}
                 </div>
               </div>
             </button>
@@ -270,11 +263,14 @@ export default function SettingsPage() {
             <div>
               <p className="info-title">Credit cost breakdown:</p>
               <ul className="info-list">
-                <li>512: 1 credit base (2 in stable mode)</li>
-                <li>1K: 2 credits base (4 in stable mode)</li>
-                <li>2K: 3 credits base (6 in stable mode)</li>
-                <li>+1/2/3 credits per reference image (archetype/persona/logo)</li>
-                <li>Example: 2K with 3 refs in stable mode = 6 base + 9 refs = 15 credits</li>
+                <li>512: 1 credit base</li>
+                <li>1K: 2 credits base</li>
+                <li>2K: 3 credits base</li>
+                <li>First reference image is FREE</li>
+                <li>Second reference image: +1 credit (only in Fast Mode)</li>
+                <li>Stable Mode: +1 credit (flat)</li>
+                <li>Example: 2K with 2 refs in Fast Mode = 3 base + 1 (2nd ref) = 4 credits</li>
+                <li>Example: 2K with 2 refs in Stable Mode = 3 base + 1 (stable) = 4 credits</li>
               </ul>
             </div>
           </div>
@@ -488,6 +484,15 @@ export default function SettingsPage() {
 
         .badge-active {
           background: #3b82f6;
+          color: white;
+          padding: 0.25rem 0.75rem;
+          border-radius: 0.25rem;
+          font-size: 0.75rem;
+          font-weight: 600;
+        }
+
+        .badge-saving {
+          background: #22c55e;
           color: white;
           padding: 0.25rem 0.75rem;
           border-radius: 0.25rem;

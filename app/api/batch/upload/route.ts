@@ -189,10 +189,21 @@ export async function POST(request: NextRequest) {
     console.log(`\n📦 Processing upload: ${rows.length} rows as batch: ${batchName}`);
 
     // Credit system: Non-admins must have sufficient credits
-    // Calculate credits based on resolution and stable mode
-    // Resolution base costs: 512=1, 1K=2, 2K=3
+    // Credit calculation:
+    // - Base: 512=1, 1K=2, 2K=3
+    // - First ref is FREE, additional refs: +1 each (only in normal mode)
+    // - Stable mode: +1 credit (flat)
+    // Assume max refs (archetype + persona + logo = 3 refs, so 2 additional)
     const resolutionBaseCredits = preferredResolution === '512' ? 1 : preferredResolution === '1K' ? 2 : 3;
-    const creditsPerJob = resolutionBaseCredits * (stableMode ? 2 : 1);
+    const maxAdditionalRefs = 2;
+
+    let creditsPerJob = resolutionBaseCredits;
+    if (!stableMode) {
+      creditsPerJob += maxAdditionalRefs; // Additional refs cost in normal mode
+    }
+    if (stableMode) {
+      creditsPerJob += 1; // Stable mode adds flat +1
+    }
     const totalCreditsRequired = rows.length * creditsPerJob;
 
     const isAdmin = userRole === 'ADMIN';

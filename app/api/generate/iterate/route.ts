@@ -104,7 +104,7 @@ ITERATION REQUEST: ${changeRequest}
 Use the reference image as the base and apply ONLY the requested changes. Keep everything else the same.`;
 
     // Validate prompt length
-    const validation = validatePromptLength(iterationPrompt, 5000);
+    const validation = validatePromptLength(iterationPrompt, 3800);
     if (!validation.valid) {
       return NextResponse.json(
         {
@@ -116,10 +116,21 @@ Use the reference image as the base and apply ONLY the requested changes. Keep e
     }
 
     // Check and deduct credits (non-admins only)
-    // Calculate credits based on resolution and stable mode
-    // Resolution base costs: 512=1, 1K=2, 2K=3
+    // Credit calculation:
+    // - Base: 512=1, 1K=2, 2K=3
+    // - First ref is FREE, additional refs: +1 each (only in normal mode)
+    // - Stable mode: +1 credit (flat)
+    // For iterations, assume max refs (2 additional)
     const resolutionBaseCredits = preferredResolution === '512' ? 1 : preferredResolution === '1K' ? 2 : 3;
-    const creditsRequired = resolutionBaseCredits * (stableMode ? 2 : 1);
+    const maxAdditionalRefs = 2;
+
+    let creditsRequired = resolutionBaseCredits;
+    if (!stableMode) {
+      creditsRequired += maxAdditionalRefs;
+    }
+    if (stableMode) {
+      creditsRequired += 1;
+    }
 
     if (userRole !== 'ADMIN') {
       const userCredits = await CreditService.getUserCredits(userId);

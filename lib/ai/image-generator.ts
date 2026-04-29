@@ -147,10 +147,22 @@ export class UnifiedImageGenerator {
     }
 
     const resolution = request.resolution || '1K';
-    // Credit calculation: 512=1, 1K=2, 2K=3 (base)
+    // Credit calculation:
+    // - Base: 512=1, 1K=2, 2K=3
+    // - First reference image is FREE
+    // - Second reference image: +1 credit (only in normal mode, not stable mode)
+    // - Stable mode: +1 credit (flat)
     const resolutionBaseCredits = resolution === '512' ? 1 : resolution === '1K' ? 2 : 3;
-    const baseCredits = referenceImages.length > 0 ? referenceImages.length : 1;
-    const creditCost = baseCredits * resolutionBaseCredits;
+    const numRefs = referenceImages.length;
+    const additionalRefs = numRefs > 0 ? numRefs - 1 : 0; // First ref is free
+
+    let creditCost = resolutionBaseCredits;
+    if (!usingStableMode && additionalRefs > 0) {
+      creditCost += additionalRefs; // Add cost for 2nd, 3rd refs (not in stable mode)
+    }
+    if (usingStableMode) {
+      creditCost += 1; // Stable mode adds flat +1 credit
+    }
 
     // Skip AI33 if stable mode is enabled
     if (!usingStableMode && this.useAI33 && this.ai33Client) {

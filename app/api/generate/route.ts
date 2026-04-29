@@ -99,12 +99,22 @@ export async function POST(request: NextRequest) {
     const count = Math.min(Math.max(isNaN(rawCount) ? 1 : rawCount, 1), 4);
 
     // Credit system: Non-admins must have sufficient credits
-    // Calculate actual credits needed based on resolution and stable mode
-    // Resolution base costs: 512=1, 1K=2, 2K=3
+    // Credit calculation:
+    // - Base: 512=1, 1K=2, 2K=3
+    // - First reference image is FREE
+    // - Additional refs: +1 each (only in normal mode, not stable mode)
+    // - Stable mode: +1 credit (flat)
     const resolutionBaseCredits = preferredResolution === '512' ? 1 : preferredResolution === '1K' ? 2 : 3;
-    // Multiply by number of reference images (1 for just archetype, up to 3 for archetype+persona+logo)
-    // For this initial check, assume just archetype (1 ref)
-    const creditsPerGeneration = resolutionBaseCredits * (stableMode ? 2 : 1);
+    // Assume max refs (archetype + persona + logo = 3 refs, so 2 additional)
+    const maxAdditionalRefs = 2;
+
+    let creditsPerGeneration = resolutionBaseCredits;
+    if (!stableMode) {
+      creditsPerGeneration += maxAdditionalRefs; // Additional refs cost in normal mode
+    }
+    if (stableMode) {
+      creditsPerGeneration += 1; // Stable mode adds flat +1
+    }
     const totalCreditsNeeded = count * creditsPerGeneration;
 
     let creditsRemaining: number | null = null;
@@ -208,7 +218,7 @@ export async function POST(request: NextRequest) {
       testPrompt += `\n\nAdditional Style Instructions: ${customPrompt.trim()}`;
     }
 
-    const promptValidation = validatePromptLength(testPrompt, 5000);
+    const promptValidation = validatePromptLength(testPrompt, 3800);
     if (!promptValidation.valid) {
       return NextResponse.json(
         {
@@ -292,6 +302,7 @@ export async function POST(request: NextRequest) {
             includeBrandColors,
             includePersona,
             resolution: preferredResolution,
+            stableMode,
           },
           {
             jobId: job.id,
