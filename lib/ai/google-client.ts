@@ -194,7 +194,7 @@ function parseGoogleAPIError(error: any): { code: number; userMessage: string; o
 export async function callNanoBanana(
   request: GoogleImageGenerationRequest,
   apiKey: string
-): Promise<{ buffer: Buffer }> {
+): Promise<{ buffer: Buffer; fallbackUsed: boolean; fallbackMessage?: string }> {
   try {
     const ai = new GoogleGenAI({ apiKey });
 
@@ -262,25 +262,56 @@ export async function callNanoBanana(
       });
     };
 
-    // Use only Flash model with minimal thinking - no fallbacks
-    const modelId = 'gemini-3.1-flash-image-preview';
-    const modelName = 'Gemini 3.1 Flash Image';
+    // 3-model fallback chain: Flash → Pro → Stable
+    // Flash is primary for cost ($0.0672 vs $0.134), but Pro/Stable provide resilience
+    const models = [
+      { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash Image' },
+      { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image' },
+      { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash Image (Stable)' },
+    ];
+
+    const isServerError = (error: any): boolean => {
+      const msg = error.message || "";
+      const status = error.status || error.statusCode || error.code;
+      return msg.includes("503") || msg.includes("UNAVAILABLE") || status === 503 || msg.includes("high demand")
+        || msg.includes("500") || msg.includes("INTERNAL") || status === 500
+        || msg.includes("502") || status === 502
+        || msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || status === 429;
+    };
 
     let response;
-    const startTime = Date.now();
+    let fallbackUsed = false;
+    let fallbackMessage = "";
 
-    try {
-      console.log(`   ⏱️  Calling ${modelName}...`);
-      response = await callWithPayload(primaryContent, modelId);
-      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      console.log(`   ✅ ${modelName} completed in ${duration}s`);
-    } catch (error: any) {
-      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      console.error(`   ❌ ${modelName} failed after ${duration}s`);
+    for (let i = 0; i < models.length; i++) {
+      const model = models[i];
+      const startTime = Date.now();
 
-      // Parse and throw proper error
-      const apiError = parseGoogleAPIError(error);
-      throw new Error(apiError.userMessage);
+      try {
+        console.log(`   ⏱️  Calling ${model.name} (${model.id})...`);
+        response = await callWithPayload(primaryContent, model.id);
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        console.log(`   ✅ ${model.name} completed in ${duration}s`);
+
+        if (i > 0) {
+          fallbackUsed = true;
+          fallbackMessage = `${models[0].name} was unavailable. Generated successfully with ${model.name}.`;
+        }
+        break; // Success — exit the loop
+      } catch (error: any) {
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        console.error(`   ❌ ${model.name} failed after ${duration}s`);
+
+        // If server error and there's a next model to try, continue to next fallback
+        if (isServerError(error) && i < models.length - 1) {
+          console.warn(`   ⚠️  ${model.name} returned server error. Trying next fallback...`);
+          continue;
+        }
+
+        // Last model or non-server error — throw with parsed error
+        const apiError = parseGoogleAPIError(error);
+        throw new Error(apiError.userMessage);
+      }
     }
 
     if (!response) {
@@ -327,7 +358,7 @@ export async function callNanoBanana(
 
     console.log(`   ✓ Received image data: ${base64Data.length} chars (${(buffer.length / 1024).toFixed(1)}KB)`);
 
-    return { buffer };
+    return { buffer, fallbackUsed, fallbackMessage };
   } catch (error) {
     const apiError = handleAPIError(error);
 

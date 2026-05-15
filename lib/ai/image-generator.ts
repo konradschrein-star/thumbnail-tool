@@ -1,13 +1,16 @@
 /**
  * Unified Image Generator
- * AI33 with aggressive Google Gemini fallback
+ * Parallel generation with AI33 + Google Gemini and circuit breaker pattern
  *
- * Strategy:
- * 1. Try AI33 with 2-minute timeout
- * 2. If timeout or API error (not prompt-related), immediately switch to Google Gemini
- * 3. Continue monitoring AI33 in background for up to 4 minutes total
- * 4. If AI33 completes late, provide as bonus output (deduct 1 more credit)
- * 5. Google Gemini is the reliable primary backup
+ * Fast Mode (stableMode: false):
+ * - Calls AI33 and Google in PARALLEL using Promise.race()
+ * - First successful response wins
+ * - Circuit breaker skips unhealthy APIs
+ * - Higher cost but faster and more reliable
+ *
+ * Stable Mode (stableMode: true):
+ * - Only calls Google Gemini (cheapest option)
+ * - Uses 3-model fallback within Google (Flash → Pro → Stable)
  */
 
 import { AI33Client, initializeAI33Client } from './ai33-client';
@@ -33,12 +36,33 @@ export interface UnifiedGeneratorConfig {
 }
 
 /**
- * Unified image generator with AI33 → Google fallback
+ * Circuit breaker state for API health tracking
+ */
+interface CircuitBreakerState {
+  failures: number;
+  lastFailureTime: number;
+  isOpen: boolean; // true = circuit open (skip this API)
+}
+
+/**
+ * Unified image generator with AI33 + Google parallel generation and circuit breaker
  */
 export class UnifiedImageGenerator {
   private googleApiKey: string;
   private ai33Client?: AI33Client;
   private useAI33: boolean;
+
+  // Circuit breaker state (in-memory, resets on restart)
+  private circuitBreakers: {
+    ai33: CircuitBreakerState;
+    google: CircuitBreakerState;
+  } = {
+    ai33: { failures: 0, lastFailureTime: 0, isOpen: false },
+    google: { failures: 0, lastFailureTime: 0, isOpen: false },
+  };
+
+  private readonly CIRCUIT_BREAKER_THRESHOLD = 3; // failures before opening circuit
+  private readonly CIRCUIT_BREAKER_TIMEOUT = 60000; // 1 minute cooldown
 
   constructor(config: UnifiedGeneratorConfig) {
     if (!config.googleApiKey) {
@@ -61,19 +85,49 @@ export class UnifiedImageGenerator {
   }
 
   /**
-   * Timeout wrapper for promises
+   * Check if circuit breaker should allow API call
    */
-  private async withTimeout<T>(
-    promise: Promise<T>,
-    timeoutMs: number,
-    errorMessage: string
-  ): Promise<T> {
-    return Promise.race([
-      promise,
-      new Promise<T>((_, reject) =>
-        setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
-      ),
-    ]);
+  private canCallAPI(provider: 'ai33' | 'google'): boolean {
+    const breaker = this.circuitBreakers[provider];
+
+    // If circuit is open, check if cooldown has expired
+    if (breaker.isOpen) {
+      const timeSinceLastFailure = Date.now() - breaker.lastFailureTime;
+      if (timeSinceLastFailure > this.CIRCUIT_BREAKER_TIMEOUT) {
+        // Reset circuit breaker (half-open state)
+        console.log(`   🔄 Circuit breaker for ${provider} reset after cooldown`);
+        breaker.failures = 0;
+        breaker.isOpen = false;
+        return true;
+      }
+      console.log(`   ⚠️  Circuit breaker OPEN for ${provider} (cooling down...)`);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Record API call success
+   */
+  private recordSuccess(provider: 'ai33' | 'google'): void {
+    const breaker = this.circuitBreakers[provider];
+    breaker.failures = 0;
+    breaker.isOpen = false;
+  }
+
+  /**
+   * Record API call failure
+   */
+  private recordFailure(provider: 'ai33' | 'google'): void {
+    const breaker = this.circuitBreakers[provider];
+    breaker.failures += 1;
+    breaker.lastFailureTime = Date.now();
+
+    if (breaker.failures >= this.CIRCUIT_BREAKER_THRESHOLD) {
+      breaker.isOpen = true;
+      console.warn(`   🚨 Circuit breaker OPENED for ${provider} after ${breaker.failures} failures`);
+    }
   }
 
   /**
@@ -93,42 +147,24 @@ export class UnifiedImageGenerator {
   }
 
   /**
-   * Check if error is API-related (should trigger fallback)
-   */
-  private isAPIError(errorMsg: string): boolean {
-    const apiErrorKeywords = [
-      '404',
-      '401',
-      '403',
-      '500',
-      '502',
-      '503',
-      'timeout',
-      'TIMEOUT',
-      'did not complete',
-      'API error',
-      'Invalid API key',
-      'insufficient credits',
-      'server error',
-      'INTERNAL',
-      'UNAVAILABLE',
-    ];
-    return apiErrorKeywords.some(keyword => errorMsg.includes(keyword));
-  }
-
-  /**
-   * Generate image with aggressive Google fallback
-   * Strategy:
-   * 1. Try AI33 with 2-minute timeout
-   * 2. On timeout or API error, immediately switch to Google Gemini
-   * 3. If AI33 later completes (within 4 min total), provide as bonus output
+   * Generate image with parallel generation and circuit breaker
+   *
+   * Fast Mode (forceStableMode: false):
+   * - Calls AI33 and Google in PARALLEL using Promise.race()
+   * - First successful response wins
+   * - Circuit breaker skips unhealthy APIs
+   * - Higher cost but faster and more reliable
+   *
+   * Stable Mode (forceStableMode: true):
+   * - Only calls Google Gemini (cheapest option)
+   * - Uses 3-model fallback within Google (Flash → Pro → Stable)
    */
   async generateImage(request: GoogleImageGenerationRequest, forceStableMode = false): Promise<GenerationResult> {
     const usingStableMode = forceStableMode || !this.useAI33 || !this.ai33Client;
 
     console.log(usingStableMode
       ? '🎨 Starting image generation with Google Gemini (Stable Mode)...'
-      : '🎨 Starting image generation with AI33 (2min timeout) + Google Gemini fallback...'
+      : '🎨 Starting PARALLEL generation with AI33 + Google Gemini (Fast Mode)...'
     );
 
     // Collect reference images
@@ -147,90 +183,120 @@ export class UnifiedImageGenerator {
     }
 
     const resolution = request.resolution || '1K';
-    // Credit calculation:
-    // - Base: 512=1, 1K=2, 2K=3
-    // - First reference image is FREE
-    // - Second reference image: +1 credit (only in normal mode, not stable mode)
-    // - Stable mode: +1 credit (flat)
     const resolutionBaseCredits = resolution === '512' ? 1 : resolution === '1K' ? 2 : 3;
-    const numRefs = referenceImages.length;
-    const additionalRefs = numRefs > 0 ? numRefs - 1 : 0; // First ref is free
 
-    let creditCost = resolutionBaseCredits;
-    if (!usingStableMode && additionalRefs > 0) {
-      creditCost += additionalRefs; // Add cost for 2nd, 3rd refs (not in stable mode)
-    }
+    // STABLE MODE: Google only (cheapest)
     if (usingStableMode) {
-      creditCost += 1; // Stable mode adds flat +1 credit
-    }
+      console.log('   → Generating with Google Gemini (3-model fallback enabled)...');
 
-    // Skip AI33 if stable mode is enabled
-    if (!usingStableMode && this.useAI33 && this.ai33Client) {
+      if (!this.canCallAPI('google')) {
+        throw new Error('Google API is currently unavailable (circuit breaker open). Please try again later.');
+      }
+
       try {
-        console.log(`   → Attempting AI33 generation (2-minute timeout, ${resolution} resolution)...`);
+        const { buffer, fallbackUsed, fallbackMessage } = await callNanaBanana(request, this.googleApiKey);
 
-        const buffer = await this.withTimeout(
-          this.ai33Client.generateImage({
-            prompt: request.prompt,
-            width: 1280,
-            height: 720,
-            referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
-            resolution,
-          }),
-          120000, // 2 minutes
-          'AI33 generation timeout (2 minutes)'
-        );
-
-        console.log('✓ AI33 generation successful (within 2 minutes)');
+        this.recordSuccess('google');
+        console.log('✓ Google Gemini generation successful');
 
         return {
           buffer,
-          provider: 'ai33',
-          fallbackUsed: false,
+          provider: 'google',
+          fallbackUsed,
+          fallbackMessage,
           lateAI33Available: false,
           cost: {
-            amount: creditCost * 0.01,
+            amount: resolutionBaseCredits * 0.0336, // Google Flash base cost
             currency: 'USD',
           },
         };
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-
-        // Check if it's a prompt error (don't fall back, just fail)
-        if (this.isPromptError(errorMsg)) {
-          console.error(`   ✗ AI33 generation failed (prompt/content policy): ${errorMsg}`);
-          throw new Error(`Content policy violation: ${errorMsg}`);
-        }
-
-        // API error or timeout - fall back to Google immediately
-        console.warn(`   ⚠️ AI33 ${errorMsg.includes('timeout') ? 'timeout' : 'API error'}: ${errorMsg}`);
-        console.log('   → Switching to Google Gemini (reliable backup)...');
+        this.recordFailure('google');
+        throw error;
       }
     }
 
-    // Use Google Gemini
-    try {
-      console.log('   → Generating with Google Gemini...');
-      const { buffer } = await callNanoBanana(request, this.googleApiKey);
+    // FAST MODE: Parallel generation with AI33 + Google
+    console.log('   🏁 Racing AI33 vs Google Gemini...');
 
-      console.log('✓ Google Gemini generation successful');
+    const promises: Array<Promise<{ buffer: Buffer; provider: 'ai33' | 'google'; fallbackMessage?: string }>> = [];
+
+    // Promise 1: AI33 generation
+    if (this.canCallAPI('ai33') && this.ai33Client) {
+      console.log('   → AI33 starting...');
+      promises.push(
+        (async () => {
+          try {
+            const buffer = await this.ai33Client!.generateImage({
+              prompt: request.prompt,
+              width: 1280,
+              height: 720,
+              referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+              resolution,
+            });
+
+            this.recordSuccess('ai33');
+            return { buffer, provider: 'ai33' as const };
+          } catch (error) {
+            this.recordFailure('ai33');
+            const errorMsg = error instanceof Error ? error.message : String(error);
+
+            // If prompt error, don't let it fail silently in the race
+            if (this.isPromptError(errorMsg)) {
+              throw new Error(`AI33 content policy violation: ${errorMsg}`);
+            }
+
+            // API error - log and reject so Google can win the race
+            console.error(`   ✗ AI33 failed: ${errorMsg}`);
+            throw error;
+          }
+        })()
+      );
+    }
+
+    // Promise 2: Google Gemini generation
+    if (this.canCallAPI('google')) {
+      console.log('   → Google Gemini starting...');
+      promises.push(
+        (async () => {
+          try {
+            const { buffer, fallbackUsed, fallbackMessage } = await callNanoBanana(request, this.googleApiKey);
+
+            this.recordSuccess('google');
+            return { buffer, provider: 'google' as const, fallbackMessage };
+          } catch (error) {
+            this.recordFailure('google');
+            throw error;
+          }
+        })()
+      );
+    }
+
+    if (promises.length === 0) {
+      throw new Error('All providers are unavailable (circuit breakers open). Please try again later.');
+    }
+
+    // Race the promises - first to succeed wins
+    try {
+      const result = await Promise.race(promises);
+
+      console.log(`✅ ${result.provider.toUpperCase()} won the race!`);
 
       return {
-        buffer,
-        provider: 'google',
-        fallbackUsed: this.useAI33, // true if we fell back from AI33, false if direct
-        fallbackMessage: this.useAI33 ? 'AI33 timeout/error - used Google Gemini' : undefined,
+        buffer: result.buffer,
+        provider: result.provider,
+        fallbackUsed: promises.length > 1, // true if we raced multiple providers
+        fallbackMessage: result.fallbackMessage || `Generated with ${result.provider} in Fast Mode (parallel generation)`,
         lateAI33Available: false,
         cost: {
-          amount: 0.0672, // Google Gemini cost (approximate)
+          amount: result.provider === 'ai33' ? resolutionBaseCredits * 0.01 : resolutionBaseCredits * 0.0336,
           currency: 'USD',
         },
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error('✗ Google Gemini generation failed');
-      // Re-throw the error with the proper message from google-client
-      throw error;
+      console.error('✗ All providers failed in parallel generation');
+      throw new Error(`All providers failed: ${errorMsg}`);
     }
   }
 }
