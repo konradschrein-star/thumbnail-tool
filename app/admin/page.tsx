@@ -1420,14 +1420,20 @@ export default function EnhancedAdminPage() {
               </div>
             </div>
 
-            {/* Jobs Table */}
+            {/* Jobs Table - Enhanced */}
             <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-900/50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Preview
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Duration
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         User
@@ -1439,79 +1445,136 @@ export default function EnhancedAdminPage() {
                         Channel
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        Archetype
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Created
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700">
-                    {filteredJobs.map((job) => (
-                      <tr key={job.id} className="hover:bg-gray-900/30">
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(job.status)}
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded border ${getStatusColor(
-                                job.status
-                              )}`}
-                            >
-                              {job.status}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="text-sm text-white">{job.user?.email ?? 'Unknown user'}</div>
-                          {job.user?.role && (
-                            <span
-                              className={`text-xs ${
-                                job.user.role === 'ADMIN'
-                                  ? 'text-purple-400'
-                                  : 'text-gray-500'
-                              }`}
-                            >
-                              {job.user.role}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="text-sm text-white max-w-xs truncate">
-                            {job.videoTopic}
-                          </div>
-                          {job.thumbnailText && (
-                            <div className="text-xs text-gray-400 max-w-xs truncate">
-                              "{job.thumbnailText}"
+                    {filteredJobs.map((job) => {
+                      // Calculate duration in seconds
+                      const duration = job.completedAt
+                        ? Math.round((new Date(job.completedAt).getTime() - new Date(job.createdAt).getTime()) / 1000)
+                        : null;
+
+                      return (
+                        <tr key={job.id} className="hover:bg-gray-900/30">
+                          {/* Thumbnail Preview */}
+                          <td className="px-6 py-4">
+                            {job.outputUrl ? (
+                              <a
+                                href={job.outputUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block group relative"
+                              >
+                                <div className="w-24 h-14 bg-gray-900 rounded overflow-hidden border border-gray-700 group-hover:border-blue-500 transition-colors">
+                                  <img
+                                    src={job.outputUrl}
+                                    alt="Thumbnail"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                              </a>
+                            ) : (
+                              <div className="w-24 h-14 bg-gray-900/50 rounded border border-gray-700 flex items-center justify-center">
+                                <ImageIcon className="w-6 h-6 text-gray-600" />
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Status with Error Message */}
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(job.status)}
+                                <span
+                                  className={`px-2 py-1 text-xs font-medium rounded border ${getStatusColor(
+                                    job.status
+                                  )}`}
+                                >
+                                  {job.status}
+                                </span>
+                              </div>
+                              {job.status === 'failed' && job.errorMessage && (
+                                <div className="mt-1 p-2 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400 max-w-xs">
+                                  <div className="flex items-start gap-1">
+                                    <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                    <span className="break-words">{job.errorMessage}</span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
-                          {job.channel?.name || 'N/A'}
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
-                          {job.archetype?.name || 'N/A'}
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-400">
-                          {formatDate(job.createdAt)}
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap text-sm">
-                          {job.outputUrl && (
-                            <a
-                              href={job.outputUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                            >
-                              <Eye className="w-4 h-4" />
-                              View
-                            </a>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+
+                          {/* Duration */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {duration !== null ? (
+                              <div className="flex items-center gap-1.5">
+                                <Clock className="w-4 h-4 text-gray-400" />
+                                <span className={`text-sm font-medium ${
+                                  duration > 60
+                                    ? 'text-yellow-400'
+                                    : duration > 30
+                                    ? 'text-blue-400'
+                                    : 'text-green-400'
+                                }`}>
+                                  {duration < 60
+                                    ? `${duration}s`
+                                    : `${Math.floor(duration / 60)}m ${duration % 60}s`
+                                  }
+                                </span>
+                              </div>
+                            ) : job.status === 'processing' ? (
+                              <span className="text-xs text-yellow-400 animate-pulse">Processing...</span>
+                            ) : (
+                              <span className="text-xs text-gray-500">N/A</span>
+                            )}
+                          </td>
+
+                          {/* User */}
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-white">{job.user?.email ?? 'Unknown user'}</div>
+                            {job.user?.role && (
+                              <span
+                                className={`text-xs ${
+                                  job.user.role === 'ADMIN'
+                                    ? 'text-purple-400'
+                                    : 'text-gray-500'
+                                }`}
+                              >
+                                {job.user.role}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Video Topic */}
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-white max-w-xs truncate">
+                              {job.videoTopic}
+                            </div>
+                            {job.thumbnailText && (
+                              <div className="text-xs text-gray-400 max-w-xs truncate">
+                                "{job.thumbnailText}"
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Channel */}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            {job.channel?.name || 'N/A'}
+                          </td>
+
+                          {/* Created */}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            {formatDate(job.createdAt)}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
