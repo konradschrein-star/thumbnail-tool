@@ -193,7 +193,7 @@ export class UnifiedImageGenerator {
       if (this.canCallAPI('google')) {
         try {
           console.log('   → Trying Google Flash...');
-          const { buffer, fallbackUsed, fallbackMessage } = await callNanaBanana(request, this.googleApiKey);
+          const { buffer, fallbackUsed, fallbackMessage } = await callNanoBanana(request, this.googleApiKey);
 
           this.recordSuccess('google');
           console.log('✓ Google Flash generation successful');

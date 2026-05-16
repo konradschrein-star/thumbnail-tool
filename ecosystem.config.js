@@ -22,7 +22,7 @@ module.exports = {
       cwd: '/opt/thumbnail-generator',
       env: {
         NODE_ENV: 'production',
-        WORKER_CONCURRENCY: 2, // Process 2 jobs concurrently
+        WORKER_CONCURRENCY: 10, // Process 10 jobs concurrently
       },
       instances: 1,
       autorestart: true,

@@ -135,8 +135,8 @@ async function processThumbnailJob(job: Job<ThumbnailJobData, void, 'thumbnail-g
 
     // Generate image with archetype + optional persona reference - WRAP IN TRY-CATCH
     const resolution = job.data.resolution || '1K';
-    const stableMode = job.data.stableMode !== undefined ? job.data.stableMode : true; // Default to stable mode
-    console.log(`   → Using resolution: ${resolution} ${stableMode ? '(Stable Mode - Google Gemini)' : '(AI33 with Google fallback)'}`);
+    const stableMode = job.data.stableMode !== undefined ? job.data.stableMode : false; // Default to fast mode (parallel racing)
+    console.log(`   → Using resolution: ${resolution} ${stableMode ? '(Stable Mode - Google Gemini)' : '(Fast Mode - AI33 racing Google)'}`);
 
     let generationResult;
     try {
