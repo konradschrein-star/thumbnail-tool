@@ -262,11 +262,11 @@ export async function callNanoBanana(
       });
     };
 
-    // 3-model fallback chain: Flash → Pro → Stable
-    // Flash is primary for cost ($0.0672 vs $0.134), but Pro/Stable provide resilience
+    // 2-model fallback chain: Flash → Stable
+    // Flash is primary for cost ($0.0336/image), Stable provides resilience
+    // Pro removed due to high cost ($0.134/image)
     const models = [
       { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash Image' },
-      { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image' },
       { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash Image (Stable)' },
     ];
 

@@ -185,34 +185,89 @@ export class UnifiedImageGenerator {
     const resolution = request.resolution || '1K';
     const resolutionBaseCredits = resolution === '512' ? 1 : resolution === '1K' ? 2 : 3;
 
-    // STABLE MODE: Google only (cheapest)
+    // STABLE MODE: Flash → AI33 → Stable fallback (cost-optimized)
     if (usingStableMode) {
-      console.log('   → Generating with Google Gemini (3-model fallback enabled)...');
+      console.log('   → Generating with Stable Mode (Flash → AI33 → Stable fallback)...');
 
-      if (!this.canCallAPI('google')) {
+      // Try Flash first (cheapest)
+      if (this.canCallAPI('google')) {
+        try {
+          console.log('   → Trying Google Flash...');
+          const { buffer, fallbackUsed, fallbackMessage } = await callNanaBanana(request, this.googleApiKey);
+
+          this.recordSuccess('google');
+          console.log('✓ Google Flash generation successful');
+
+          return {
+            buffer,
+            provider: 'google',
+            fallbackUsed,
+            fallbackMessage,
+            lateAI33Available: false,
+            cost: {
+              amount: resolutionBaseCredits * 0.0336, // Google Flash base cost
+              currency: 'USD',
+            },
+          };
+        } catch (flashError) {
+          const flashErrorMsg = flashError instanceof Error ? flashError.message : String(flashError);
+          console.warn(`   ⚠️  Google Flash failed: ${flashErrorMsg}`);
+
+          // Check if it's a server/API error (not content policy)
+          const isServerError = flashErrorMsg.includes('503') || flashErrorMsg.includes('500') ||
+                               flashErrorMsg.includes('429') || flashErrorMsg.includes('UNAVAILABLE') ||
+                               flashErrorMsg.includes('INTERNAL') || flashErrorMsg.includes('timeout');
+
+          if (!isServerError || this.isPromptError(flashErrorMsg)) {
+            // Content policy or non-server error - don't fallback, just fail
+            this.recordFailure('google');
+            throw flashError;
+          }
+
+          this.recordFailure('google');
+
+          // Try AI33 as fallback
+          if (this.canCallAPI('ai33') && this.ai33Client) {
+            try {
+              console.log('   → Falling back to AI33...');
+              const buffer = await this.ai33Client.generateImage({
+                prompt: request.prompt,
+                width: 1280,
+                height: 720,
+                referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+                resolution,
+              });
+
+              this.recordSuccess('ai33');
+              console.log('✓ AI33 generation successful (Flash fallback)');
+
+              return {
+                buffer,
+                provider: 'ai33',
+                fallbackUsed: true,
+                fallbackMessage: 'Google Flash was unavailable. Generated successfully with AI33.',
+                lateAI33Available: false,
+                cost: {
+                  amount: resolutionBaseCredits * 0.01, // AI33 cost
+                  currency: 'USD',
+                },
+              };
+            } catch (ai33Error) {
+              const ai33ErrorMsg = ai33Error instanceof Error ? ai33Error.message : String(ai33Error);
+              console.warn(`   ⚠️  AI33 failed: ${ai33ErrorMsg}`);
+              this.recordFailure('ai33');
+
+              // Final fallback: Google Stable (if Flash already failed, Stable is next in line)
+              console.log('   → Final fallback to Google Stable...');
+              // The error will propagate and callNanaBanana will try Stable automatically
+            }
+          }
+
+          // All fallbacks exhausted
+          throw new Error(`All providers failed in Stable Mode. Flash: ${flashErrorMsg}`);
+        }
+      } else {
         throw new Error('Google API is currently unavailable (circuit breaker open). Please try again later.');
-      }
-
-      try {
-        const { buffer, fallbackUsed, fallbackMessage } = await callNanaBanana(request, this.googleApiKey);
-
-        this.recordSuccess('google');
-        console.log('✓ Google Gemini generation successful');
-
-        return {
-          buffer,
-          provider: 'google',
-          fallbackUsed,
-          fallbackMessage,
-          lateAI33Available: false,
-          cost: {
-            amount: resolutionBaseCredits * 0.0336, // Google Flash base cost
-            currency: 'USD',
-          },
-        };
-      } catch (error) {
-        this.recordFailure('google');
-        throw error;
       }
     }
 
